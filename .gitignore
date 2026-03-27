@@ -1,0 +1,44 @@
+# Rust
+/target/
+/target-local/
+Cargo.lock
+
+# WebAssembly
+/pkg/
+*.wasm
+
+# Output (렌더링 결과물)
+/output/
+
+# Docker
+.docker/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 폰트
+/ttfs/windows/
+
+# 외부 참조
+/webhwp/
+/saved/
+.claude/
+
+# 환경변수 (민감 정보)
+.env
+.env.docker
+
+# E2E 스크린샷
+rhwp-studio/e2e/screenshots/
+
+# 비공개 테스트
+rhwp-studio/e2e/kps-ai*.test.mjs
+
+# 공개 리포 원본 파일 (prepare-github.sh용)
+CLAUDE.public.md
+README.public.md

@@ -1,0 +1,36 @@
+services:
+  dev:
+    build: .
+    env_file: .env.docker
+    volumes:
+      - .:/app
+      - cargo-cache:/usr/local/cargo/registry
+      - cargo-bin:/usr/local/cargo/bin
+    working_dir: /app
+    command: cargo build
+
+  test:
+    build: .
+    env_file: .env.docker
+    volumes:
+      - .:/app
+      - cargo-cache:/usr/local/cargo/registry
+      - cargo-bin:/usr/local/cargo/bin
+    working_dir: /app
+    command: cargo test
+
+  wasm:
+    build: .
+    env_file: .env.docker
+    volumes:
+      - .:/app
+      - cargo-cache:/usr/local/cargo/registry
+      - cargo-bin:/usr/local/cargo/bin
+      - wasm-pack-cache:/root/.cache/.wasm-pack
+    working_dir: /app
+    command: wasm-pack build --target web
+
+volumes:
+  cargo-cache:
+  cargo-bin:
+  wasm-pack-cache:

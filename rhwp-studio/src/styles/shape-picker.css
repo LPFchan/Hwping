@@ -1,0 +1,55 @@
+/* ─── 도형 선택 드롭다운 (한컴 스타일 층구조) ─── */
+.shape-picker {
+  background: #fafafa;
+  border: 1px solid #748bc9;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
+  z-index: 10000;
+  font-size: 12px;
+  min-width: 180px;
+}
+.shape-picker-title {
+  padding: 4px 10px;
+  background: #e7eaf4;
+  font-weight: bold;
+  font-size: 11px;
+  color: #335095;
+  border-bottom: 1px solid #c0c0c0;
+}
+.shape-picker-title:not(:first-child) {
+  border-top: 1px solid #c0c0c0;
+}
+.shape-picker-grid {
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+}
+.shape-picker-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+  cursor: pointer;
+  padding: 4px 4px;
+  min-width: 36px;
+}
+.shape-picker-btn:hover {
+  background: #e7eaf4;
+  border-color: #748bc9;
+}
+.shape-picker-icon {
+  font-size: 18px;
+  line-height: 22px;
+  color: #333;
+}
+.shape-picker-label {
+  font-size: 9px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 52px;
+  text-align: center;
+}
