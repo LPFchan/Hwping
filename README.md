@@ -74,12 +74,14 @@ cargo test                     # Run tests (755+ tests)
 
 ### WASM Build
 
+WASM 빌드는 Docker를 사용합니다. 플랫폼에 관계없이 동일한 `wasm-pack` + Rust 툴체인 환경을 보장하기 위함입니다.
+
 ```bash
-cp .env.docker.example .env.docker   # First time: copy env template
+cp .env.docker.example .env.docker   # 최초 1회: 환경변수 템플릿 복사
 docker compose --env-file .env.docker run --rm wasm
 ```
 
-Build output: `pkg/` directory.
+빌드 결과물은 `pkg/` 디렉토리에 생성됩니다.
 
 ### Web Editor
 
