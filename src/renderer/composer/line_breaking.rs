@@ -335,6 +335,7 @@ fn fill_lines(
     available_width_px: f64,
     indent_px: f64,
     default_tab_width: f64,
+    korean_break_unit: u8,
 ) -> Vec<LineBreakResult> {
     if tokens.is_empty() {
         return vec![LineBreakResult {
@@ -432,12 +433,17 @@ fn fill_lines(
             BreakToken::Text { start_idx, end_idx, width, max_font_size } => {
                 if *max_font_size > line_max_fs { line_max_fs = *max_font_size; }
 
-                // 단일 문자 CJK/한글 토큰은 줄바꿈 가능 지점으로 처리
-                // CJK 문자(한자/일본어)와 한글 글자 단위 토큰은 문자 경계에서 줄바꿈 가능
-                // (어절 모드 한글은 여러 글자가 하나의 토큰이므로 여기에 해당 안 됨)
+                // 단일 문자 토큰의 줄바꿈 가능 지점 처리:
+                // - CJK 한자/일본어: 항상 글자 경계에서 줄바꿈 가능
+                // - 한글: korean_break_unit=1(글자 단위)일 때만 줄바꿈 가능
                 if *end_idx - *start_idx == 1 && *start_idx > line_start_idx {
                     let c = text_chars[*start_idx];
-                    if is_cjk_char(c) {
+                    let allow_break = if is_hangul(c) {
+                        korean_break_unit == 1 // 글자 단위일 때만
+                    } else {
+                        is_cjk_ideograph(c) // 한자/일본어는 항상
+                    };
+                    if allow_break {
                         last_break_token_idx = Some(ti);
                         last_break_char_idx = *start_idx;
                         width_at_last_break = line_width;
@@ -660,7 +666,7 @@ pub(crate) fn reflow_line_segs(
         &text_chars, &para.char_offsets, &para.char_shapes,
         styles, english_break_unit, korean_break_unit,
     );
-    let line_breaks = fill_lines(&tokens, &text_chars, available_width_px, indent_px, tab_width);
+    let line_breaks = fill_lines(&tokens, &text_chars, available_width_px, indent_px, tab_width, korean_break_unit);
 
     let mut new_line_segs: Vec<LineSeg> = Vec::new();
     for lb in &line_breaks {
