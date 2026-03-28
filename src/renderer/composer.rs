@@ -961,8 +961,11 @@ fn convert_pua_enclosed_numbers(composed: &mut ComposedParagraph) {
 }
 
 mod line_breaking;
+pub mod lineseg_compare;
 
 pub(crate) use line_breaking::{reflow_line_segs, recalculate_section_vpos, is_line_start_forbidden, is_line_end_forbidden, tokenize_paragraph, BreakToken};
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod lineseg_compare_tests;
