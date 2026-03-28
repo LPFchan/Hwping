@@ -328,7 +328,14 @@ fn measure_token_width(
     total
 }
 
+/// px를 HWPUNIT(i32)로 변환 (내림, DPI=96 기준: px * 75)
+#[inline]
+fn to_hwp(px: f64) -> i32 {
+    (px * 75.0) as i32
+}
+
 /// 토큰을 줄에 배치하는 Greedy 알고리즘
+/// 한컴과 동일한 결과를 위해 HWPUNIT 정수로 폭을 누적한다.
 fn fill_lines(
     tokens: &[BreakToken],
     text_chars: &[char],
@@ -346,43 +353,32 @@ fn fill_lines(
         }];
     }
 
-    let tab_w = if default_tab_width > 0.0 { default_tab_width } else { 48.0 };
+    let tab_w_hwp = to_hwp(if default_tab_width > 0.0 { default_tab_width } else { 48.0 });
+    let tab_w_px = if default_tab_width > 0.0 { default_tab_width } else { 48.0 };
     let mut results = Vec::new();
     let mut line_start_idx = 0usize;
-    let mut line_width = 0.0f64;
+    let mut lw = 0i32; // HWPUNIT 정수 누적
     let mut line_max_fs = 0.0f64;
     let mut is_first_line = true;
 
-    // 마지막으로 줄 바꿈 가능했던 지점
     let mut last_break_token_idx: Option<usize> = None;
     let mut last_break_char_idx: usize = 0;
-    let mut width_at_last_break = 0.0f64;
+    let mut width_at_last_break = 0i32;
     let mut fs_at_last_break = 0.0f64;
 
-    let effective_width = |first: bool| -> f64 {
+    let eff_w = |first: bool| -> i32 {
         if indent_px > 0.0 {
-            if first { (available_width_px - indent_px).max(1.0) } else { available_width_px }
+            if first { to_hwp((available_width_px - indent_px).max(1.0)) } else { to_hwp(available_width_px) }
         } else if indent_px < 0.0 {
-            if first { available_width_px } else { (available_width_px + indent_px).max(1.0) }
+            if first { to_hwp(available_width_px) } else { to_hwp((available_width_px + indent_px).max(1.0)) }
         } else {
-            available_width_px
+            to_hwp(available_width_px)
         }
-    };
-
-    // HWPUNIT 정수 비교: px float 누적의 반올림 오차를 방지
-    // 한컴은 HWPUNIT(i32) 정수로 폭을 누적하므로, 줄바꿈 판정 시 HWPUNIT로 비교
-    let exceeds_width = |line_w: f64, token_w: f64, first: bool| -> bool {
-        let ew = effective_width(first);
-        let line_hwp = (line_w * 75.0) as i32;
-        let token_hwp = (token_w * 75.0) as i32;
-        let ew_hwp = (ew * 75.0) as i32;
-        line_hwp + token_hwp > ew_hwp
     };
 
     for (ti, token) in tokens.iter().enumerate() {
         match token {
             BreakToken::LineBreak { idx } => {
-                // 강제 줄 바꿈
                 results.push(LineBreakResult {
                     start_idx: line_start_idx,
                     end_idx: *idx + 1,
@@ -390,18 +386,19 @@ fn fill_lines(
                     has_line_break: true,
                 });
                 line_start_idx = *idx + 1;
-                line_width = 0.0;
+                lw = 0;
                 line_max_fs = 0.0;
                 is_first_line = false;
                 last_break_token_idx = None;
             }
             BreakToken::Tab { idx, max_font_size } => {
-                let next_tab = ((line_width / tab_w).floor() + 1.0) * tab_w;
-                let tab_advance = next_tab - line_width;
+                // 탭 계산은 px로 수행 후 HWPUNIT 변환 (정밀도 유지)
+                let lw_px = lw as f64 / 75.0;
+                let next_tab_px = ((lw_px / tab_w_px).floor() + 1.0) * tab_w_px;
+                let next_tab_hwp = to_hwp(next_tab_px);
                 if *max_font_size > line_max_fs { line_max_fs = *max_font_size; }
 
-                if (next_tab * 75.0) as i32 > (effective_width(is_first_line) * 75.0) as i32 && line_start_idx < *idx {
-                    // 탭이 줄을 넘기면 줄 바꿈
+                if next_tab_hwp > eff_w(is_first_line) && line_start_idx < *idx {
                     if let Some(_) = last_break_token_idx {
                         results.push(LineBreakResult {
                             start_idx: line_start_idx,
@@ -410,7 +407,7 @@ fn fill_lines(
                             has_line_break: false,
                         });
                         line_start_idx = last_break_char_idx;
-                        line_width = line_width - width_at_last_break;
+                        lw = lw - width_at_last_break;
                     } else {
                         results.push(LineBreakResult {
                             start_idx: line_start_idx,
@@ -419,103 +416,93 @@ fn fill_lines(
                             has_line_break: false,
                         });
                         line_start_idx = *idx;
-                        line_width = 0.0;
+                        lw = 0;
                         line_max_fs = *max_font_size;
                     }
                     is_first_line = false;
                     last_break_token_idx = None;
-                    // 새 줄에서 탭 재계산
-                    let next_tab2 = ((line_width / tab_w).floor() + 1.0) * tab_w;
-                    line_width = next_tab2;
+                    let lw_px2 = lw as f64 / 75.0;
+                    let next_tab2 = ((lw_px2 / tab_w_px).floor() + 1.0) * tab_w_px;
+                    lw = to_hwp(next_tab2);
                 } else {
-                    // 줄 바꿈 가능 지점 기록
                     last_break_token_idx = Some(ti);
                     last_break_char_idx = *idx;
-                    width_at_last_break = line_width;
+                    width_at_last_break = lw;
                     fs_at_last_break = line_max_fs;
-                    line_width = next_tab;
-                    let _ = tab_advance; // 사용됨 (next_tab - line_width)
+                    lw = next_tab_hwp;
                 }
             }
             BreakToken::Space { idx, width, max_font_size } => {
                 if *max_font_size > line_max_fs { line_max_fs = *max_font_size; }
-                // 공백은 줄 바꿈 가능 지점
                 last_break_token_idx = Some(ti);
                 last_break_char_idx = *idx;
-                width_at_last_break = line_width;
+                width_at_last_break = lw;
                 fs_at_last_break = line_max_fs;
-                line_width += *width;
+                lw += to_hwp(*width);
             }
             BreakToken::Text { start_idx, end_idx, width, max_font_size } => {
                 if *max_font_size > line_max_fs { line_max_fs = *max_font_size; }
 
-                // 단일 문자 토큰의 줄바꿈 가능 지점 처리:
-                // - CJK 한자/일본어: 항상 글자 경계에서 줄바꿈 가능
-                // - 한글: korean_break_unit=1(글자 단위)일 때만 줄바꿈 가능
+                // 단일 문자 CJK/한글 토큰의 줄바꿈 가능 지점 처리
                 if *end_idx - *start_idx == 1 && *start_idx > line_start_idx {
                     let c = text_chars[*start_idx];
                     let allow_break = if is_hangul(c) {
-                        korean_break_unit == 1 // 글자 단위일 때만
+                        korean_break_unit == 1
                     } else {
-                        is_cjk_ideograph(c) // 한자/일본어는 항상
+                        is_cjk_ideograph(c)
                     };
                     if allow_break {
                         last_break_token_idx = Some(ti);
                         last_break_char_idx = *start_idx;
-                        width_at_last_break = line_width;
+                        width_at_last_break = lw;
                         fs_at_last_break = line_max_fs;
                     }
                 }
 
-                if exceeds_width(line_width, *width, is_first_line) {
+                let w_hwp = to_hwp(*width);
+                if lw + w_hwp > eff_w(is_first_line) {
                     if *start_idx > line_start_idx {
-                        // 줄 시작 이후에 위치한 토큰 → 줄 바꿈 필요
                         if let Some(_) = last_break_token_idx {
-                            // 공백/탭 지점에서 줄 바꿈
                             results.push(LineBreakResult {
                                 start_idx: line_start_idx,
                                 end_idx: last_break_char_idx,
                                 max_font_size: fs_at_last_break,
                                 has_line_break: false,
                             });
-                            // 줄 바꿈 지점 뒤 공백 건너뛰기
                             let mut next_start = last_break_char_idx;
                             while next_start < text_chars.len() && text_chars[next_start] == ' ' {
                                 next_start += 1;
                             }
                             line_start_idx = next_start;
-                            // 줄 바꿈 이후 토큰들의 폭 재계산
-                            line_width = recalc_width_from(tokens, ti, next_start, text_chars, tab_w, 0.0);
-                            line_width += *width; // 현재 토큰 추가
+                            lw = recalc_width_hwp(tokens, ti, next_start);
+                            lw += w_hwp;
                             line_max_fs = *max_font_size;
                             is_first_line = false;
                             last_break_token_idx = None;
                             continue;
                         }
                     }
-                    // 줄 바꿈 지점 없거나 첫 토큰이 줄 초과 — 글자 단위 분할
-                    let (results_part, remaining_width, remaining_fs) = char_level_break(
+                    let (results_part, remaining_w, remaining_fs) = char_level_break_hwp(
                         text_chars, *start_idx, *end_idx,
-                        &mut line_start_idx, line_width, line_max_fs,
-                        effective_width(is_first_line), available_width_px,
+                        &mut line_start_idx, lw, line_max_fs,
+                        eff_w(is_first_line), eff_w(false),
                         is_first_line,
                     );
                     for r in results_part {
                         results.push(r);
                         is_first_line = false;
                     }
-                    line_width = remaining_width;
+                    lw = remaining_w;
                     line_max_fs = remaining_fs;
                     last_break_token_idx = None;
                     continue;
                 } else {
-                    line_width += *width;
+                    lw += w_hwp;
                 }
             }
         }
     }
 
-    // 마지막 줄 완료
     let last_end = tokens.last().map(|t| match t {
         BreakToken::Text { end_idx, .. } => *end_idx,
         BreakToken::Space { idx, .. } | BreakToken::Tab { idx, .. } | BreakToken::LineBreak { idx } => *idx + 1,
@@ -530,7 +517,6 @@ fn fill_lines(
         });
     }
 
-    // 빈 결과 방지
     if results.is_empty() {
         results.push(LineBreakResult {
             start_idx: 0,
@@ -543,24 +529,20 @@ fn fill_lines(
     results
 }
 
-/// 줄 바꿈 지점 이후 토큰의 누적 폭 재계산
-fn recalc_width_from(
+/// 줄 바꿈 지점 이후 토큰의 누적 폭 재계산 (HWPUNIT)
+fn recalc_width_hwp(
     tokens: &[BreakToken],
     current_token_idx: usize,
     new_line_start: usize,
-    text_chars: &[char],
-    _tab_w: f64,
-    _initial_width: f64,
-) -> f64 {
-    // 현재 토큰 이전의 토큰 중 new_line_start 이후에 속하는 것들의 폭 합산
-    let mut w = 0.0;
+) -> i32 {
+    let mut w = 0i32;
     for t in &tokens[..current_token_idx] {
         match t {
             BreakToken::Text { start_idx, width, .. } if *start_idx >= new_line_start => {
-                w += *width;
+                w += to_hwp(*width);
             }
             BreakToken::Space { idx, width, .. } if *idx >= new_line_start => {
-                w += *width;
+                w += to_hwp(*width);
             }
             _ => {}
         }
@@ -568,27 +550,27 @@ fn recalc_width_from(
     w
 }
 
-/// 긴 단어 폴백: 글자 단위 분할
-fn char_level_break(
+/// 긴 단어 폴백: 글자 단위 분할 (HWPUNIT)
+fn char_level_break_hwp(
     text_chars: &[char],
     token_start: usize,
     token_end: usize,
     line_start_idx: &mut usize,
-    mut line_width: f64,
+    mut lw: i32,
     mut line_max_fs: f64,
-    first_line_width: f64,
-    normal_width: f64,
+    first_line_w: i32,
+    normal_w: i32,
     mut is_first_line: bool,
-) -> (Vec<LineBreakResult>, f64, f64) {
+) -> (Vec<LineBreakResult>, i32, f64) {
     let mut results = Vec::new();
-    let mut current_width = if is_first_line { first_line_width } else { normal_width };
+    let mut current_w = if is_first_line { first_line_w } else { normal_w };
 
     for ci in token_start..token_end {
         let ch = text_chars[ci];
-        // 글자 폭 추정: 네이티브 히우리스틱
-        let char_width = if is_cjk_char(ch) { line_max_fs.max(12.0) } else { line_max_fs.max(12.0) * 0.5 };
+        let char_w_px = if is_cjk_char(ch) { line_max_fs.max(12.0) } else { line_max_fs.max(12.0) * 0.5 };
+        let char_w = to_hwp(char_w_px);
 
-        if line_width + char_width > current_width && ci > *line_start_idx {
+        if lw + char_w > current_w && ci > *line_start_idx {
             results.push(LineBreakResult {
                 start_idx: *line_start_idx,
                 end_idx: ci,
@@ -596,15 +578,15 @@ fn char_level_break(
                 has_line_break: false,
             });
             *line_start_idx = ci;
-            line_width = char_width;
+            lw = char_w;
             is_first_line = false;
-            current_width = normal_width;
+            current_w = normal_w;
         } else {
-            line_width += char_width;
+            lw += char_w;
         }
     }
 
-    (results, line_width, line_max_fs)
+    (results, lw, line_max_fs)
 }
 
 /// 문단의 line_segs를 텍스트 내용과 컬럼 너비에 맞게 재계산한다.
