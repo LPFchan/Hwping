@@ -361,14 +361,22 @@ fn fill_lines(
 
     let effective_width = |first: bool| -> f64 {
         if indent_px > 0.0 {
-            // 들여쓰기: 첫 줄 = available - indent (좁아짐), 이후 줄 = available
             if first { (available_width_px - indent_px).max(1.0) } else { available_width_px }
         } else if indent_px < 0.0 {
-            // 내어쓰기: 첫 줄 = available (전체 폭), 이후 줄 = available - |indent| (좁아짐)
             if first { available_width_px } else { (available_width_px + indent_px).max(1.0) }
         } else {
             available_width_px
         }
+    };
+
+    // HWPUNIT 정수 비교: px float 누적의 반올림 오차를 방지
+    // 한컴은 HWPUNIT(i32) 정수로 폭을 누적하므로, 줄바꿈 판정 시 HWPUNIT로 비교
+    let exceeds_width = |line_w: f64, token_w: f64, first: bool| -> bool {
+        let ew = effective_width(first);
+        let line_hwp = (line_w * 75.0) as i32;
+        let token_hwp = (token_w * 75.0) as i32;
+        let ew_hwp = (ew * 75.0) as i32;
+        line_hwp + token_hwp > ew_hwp
     };
 
     for (ti, token) in tokens.iter().enumerate() {
@@ -392,7 +400,7 @@ fn fill_lines(
                 let tab_advance = next_tab - line_width;
                 if *max_font_size > line_max_fs { line_max_fs = *max_font_size; }
 
-                if next_tab > effective_width(is_first_line) && line_start_idx < *idx {
+                if (next_tab * 75.0) as i32 > (effective_width(is_first_line) * 75.0) as i32 && line_start_idx < *idx {
                     // 탭이 줄을 넘기면 줄 바꿈
                     if let Some(_) = last_break_token_idx {
                         results.push(LineBreakResult {
@@ -459,7 +467,7 @@ fn fill_lines(
                     }
                 }
 
-                if line_width + *width > effective_width(is_first_line) {
+                if exceeds_width(line_width, *width, is_first_line) {
                     if *start_idx > line_start_idx {
                         // 줄 시작 이후에 위치한 토큰 → 줄 바꿈 필요
                         if let Some(_) = last_break_token_idx {
