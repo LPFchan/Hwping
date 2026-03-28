@@ -273,6 +273,139 @@ mod tests {
         }
     }
 
+    /// 원본 줄바꿈 위치에서의 텍스트 폭 vs available_width 비교
+    /// 한컴이 줄을 나누는 정확한 지점에서 rhwp가 측정한 폭을 확인
+    #[test]
+    fn test_lineseg_linebreak_width_analysis() {
+        use crate::renderer::layout::{estimate_text_width, resolved_to_text_style};
+        use crate::renderer::style_resolver::detect_lang_category;
+        use crate::renderer::composer::{find_active_char_shape, tokenize_paragraph, BreakToken};
+
+        let Some((document, styles)) = load_raw("samples/lseg-01-basic.hwp") else { return };
+        let dpi = 96.0;
+        let section = &document.sections[0];
+        let page_def = &section.section_def.page_def;
+        let column_def = find_column_def_for_paragraph(&section.paragraphs, 0);
+        let layout = PageLayoutInfo::from_page_def(page_def, &column_def, dpi);
+        let col_area = &layout.column_areas[0];
+
+        for (pi, para) in section.paragraphs.iter().enumerate() {
+            if para.line_segs.is_empty() || para.text.is_empty() { continue; }
+            if para.line_segs[0].line_height == 0 { continue; }
+
+            let para_style = styles.para_styles.get(para.para_shape_id as usize);
+            let margin_left = para_style.map(|s| s.margin_left).unwrap_or(0.0);
+            let margin_right = para_style.map(|s| s.margin_right).unwrap_or(0.0);
+            let available_width = col_area.width - margin_left - margin_right;
+            let indent = para_style.map(|s| s.indent).unwrap_or(0.0);
+
+            let text_chars: Vec<char> = para.text.chars().collect();
+
+            eprintln!("\n=== 문단 {} (줄 {}개, 가용폭={:.1}px, 들여쓰기={:.1}px) ===",
+                pi, para.line_segs.len(), available_width, indent);
+
+            // 원본 LINE_SEG의 줄바꿈 위치 기준으로 각 줄 텍스트 폭 측정
+            for (li, ls) in para.line_segs.iter().enumerate() {
+                let utf16_start = ls.text_start as usize;
+                let utf16_end = if li + 1 < para.line_segs.len() {
+                    para.line_segs[li + 1].text_start as usize
+                } else {
+                    // 마지막 줄: 문단 끝까지
+                    para.char_offsets.last().map(|&o| o as usize + 1).unwrap_or(text_chars.len())
+                };
+
+                let char_start = para.char_offsets.iter()
+                    .position(|&o| o as usize >= utf16_start).unwrap_or(0);
+                let char_end = para.char_offsets.iter()
+                    .position(|&o| o as usize >= utf16_end).unwrap_or(text_chars.len());
+                let line_text: String = text_chars[char_start..char_end.min(text_chars.len())].iter().collect();
+                let is_last_line = li + 1 >= para.line_segs.len();
+
+                // 줄 텍스트에서 trailing space 제거하여 측정 (줄 끝 공백은 줄바꿈 시 흡수됨)
+                let trimmed = line_text.trim_end();
+                let trailing_spaces = line_text.len() - trimmed.len();
+
+                // 문자별 개별 폭 합산 (양자화 없이)
+                let mut raw_total = 0.0f64;
+                let mut char_count_hangul = 0usize;
+                let mut char_count_space = 0usize;
+                let mut char_count_other = 0usize;
+
+                for (ci, ch) in trimmed.chars().enumerate() {
+                    let pos = char_start + ci;
+                    let utf16_pos = if pos < para.char_offsets.len() { para.char_offsets[pos] } else { pos as u32 };
+                    let style_id = find_active_char_shape(&para.char_shapes, utf16_pos);
+                    let lang = detect_lang_category(ch);
+                    let ts = resolved_to_text_style(&styles, style_id, lang);
+                    let cw = estimate_text_width(&ch.to_string(), &ts);
+                    raw_total += cw;
+
+                    if ch >= '\u{AC00}' && ch <= '\u{D7AF}' { char_count_hangul += 1; }
+                    else if ch == ' ' { char_count_space += 1; }
+                    else { char_count_other += 1; }
+                }
+
+                let eff_width = if li == 0 { (available_width - indent.max(0.0)).max(1.0) } else { available_width };
+                let margin = eff_width - raw_total;
+
+                eprintln!(
+                    "  L{}: chars=[{}..{}) len={} (trailing_sp={}) | sum={:.1}px eff_width={:.1}px margin={:.1}px {}",
+                    li, char_start, char_end, trimmed.chars().count(), trailing_spaces,
+                    raw_total, eff_width, margin,
+                    if is_last_line { "(마지막줄)" } else if margin < 0.0 { "*** 초과! ***" } else { "" }
+                );
+                eprintln!(
+                    "    한글:{} 공백:{} 기타:{}",
+                    char_count_hangul, char_count_space, char_count_other
+                );
+            }
+
+            // 토큰화 결과 분석 — fill_lines에 전달되는 토큰들의 폭 합산
+            let english_break_unit = para_style.map(|s| s.english_break_unit).unwrap_or(0);
+            let korean_break_unit = para_style.map(|s| s.korean_break_unit).unwrap_or(0);
+            let tokens = tokenize_paragraph(
+                &text_chars, &para.char_offsets, &para.char_shapes,
+                &styles, english_break_unit, korean_break_unit,
+            );
+            let mut token_width_sum = 0.0f64;
+            let mut token_count = 0usize;
+            for tok in &tokens {
+                match tok {
+                    BreakToken::Text { width, start_idx, end_idx, .. } => {
+                        token_width_sum += width;
+                        token_count += 1;
+                        if token_count <= 10 {
+                            let tok_text: String = text_chars[*start_idx..*end_idx].iter().collect();
+                            eprintln!("    T[{}]: Text({:.1}px) [{}..{}) \"{}\"",
+                                token_count - 1, width, start_idx, end_idx, tok_text);
+                        }
+                    }
+                    BreakToken::Space { width, idx, .. } => {
+                        token_width_sum += width;
+                        token_count += 1;
+                        if token_count <= 10 {
+                            eprintln!("    T[{}]: Space({:.1}px) idx={}", token_count - 1, width, idx);
+                        }
+                    }
+                    _ => { token_count += 1; }
+                }
+            }
+            eprintln!("  토큰 {}개, 폭 합계={:.1}px (available={:.1}px)", tokens.len(), token_width_sum, available_width);
+
+            // rhwp reflow 결과와 비교
+            let mut para_clone = para.clone();
+            crate::renderer::composer::reflow_line_segs(&mut para_clone, available_width, &styles, dpi);
+            eprintln!("  --- reflow 결과: {}줄 ---", para_clone.line_segs.len());
+            for (li, ls) in para_clone.line_segs.iter().enumerate() {
+                let orig_ts = para.line_segs.get(li).map(|o| o.text_start);
+                eprintln!(
+                    "  R{}: text_start={} (원본={})",
+                    li, ls.text_start, orig_ts.map(|t| t.to_string()).unwrap_or("없음".into())
+                );
+            }
+        }
+    }
+
     // ─── 통제된 샘플 (lseg-*) 개별 비교 ───
 
     #[test]
