@@ -5,7 +5,7 @@
 
 use crate::model::paragraph::{CharShapeRef, LineSeg, Paragraph};
 use crate::model::style::LineSpacingType;
-use crate::renderer::layout::{estimate_text_width, resolved_to_text_style, is_cjk_char};
+use crate::renderer::layout::{estimate_text_width, estimate_text_width_unrounded, resolved_to_text_style, is_cjk_char};
 use crate::renderer::style_resolver::{ResolvedStyleSet, detect_lang_category};
 use crate::renderer::px_to_hwpunit;
 use super::{find_active_char_shape, is_lang_neutral};

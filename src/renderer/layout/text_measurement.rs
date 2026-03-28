@@ -655,6 +655,46 @@ pub(crate) fn estimate_text_width(text: &str, style: &TextStyle) -> f64 {
     default_measurer().estimate_text_width(text, style)
 }
 
+/// 텍스트 폭 추정 (round 없이 raw px 반환)
+///
+/// 줄바꿈 엔진 전용. 단일 문자 토큰의 반올림 누적 오차를 방지한다.
+/// 한컴은 HWPUNIT 정수로 폭을 누적하므로, round 없이 px를 합산한 뒤
+/// 줄바꿈 비교 시점에서 available_width와 비교하는 것이 더 정확하다.
+pub(crate) fn estimate_text_width_unrounded(text: &str, style: &TextStyle) -> f64 {
+    let measurer = EmbeddedTextMeasurer;
+    let (font_size, ratio, tab_w) = style_params(style);
+    let chars: Vec<char> = text.chars().collect();
+    let cluster_len = build_cluster_len(&chars);
+    let char_count = chars.len();
+
+    let char_width = |i: usize| -> f64 {
+        let c = chars[i];
+        if c == '\u{2007}' {
+            return font_size * 0.5 * ratio + style.letter_spacing + style.extra_char_spacing;
+        }
+        let base_w = if let Some(w) = measure_char_width_embedded(&style.font_family, style.bold, style.italic, c, font_size) {
+            w
+        } else if cluster_len[i] > 1 || is_cjk_char(c) { font_size } else { font_size * 0.5 };
+        let mut w = base_w * ratio + style.letter_spacing + style.extra_char_spacing;
+        if c == ' ' { w += style.extra_word_spacing; }
+        w
+    };
+
+    let mut total = 0.0;
+    for i in 0..char_count {
+        if cluster_len[i] == 0 { continue; }
+        let c = chars[i];
+        if c == '\t' {
+            let abs_x = style.line_x_offset + total;
+            let next_abs = ((abs_x / tab_w).floor() + 1.0) * tab_w;
+            total = (next_abs - style.line_x_offset).max(total);
+            continue;
+        }
+        total += char_width(i);
+    }
+    total // round 없이 반환
+}
+
 /// 글자별 X 위치 경계값 계산
 ///
 /// N글자 → N+1개 경계값을 반환한다 (0번째는 0.0, N번째는 전체 폭).
