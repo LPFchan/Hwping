@@ -27,7 +27,8 @@ Thumbs.db
 # 외부 참조
 /webhwp/
 /webgian/
-/saved/
+/saved/*.hwp
+!/saved/blank2010.hwp
 .claude/
 
 # 환경변수 (민감 정보)
