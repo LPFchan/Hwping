@@ -1077,8 +1077,15 @@ impl LayoutEngine {
                     }
                 }
                 text_style.line_x_offset = x - col_area.x;
-                text_style.extra_word_spacing = extra_word_sp;
-                text_style.extra_char_spacing = extra_char_sp;
+                // 탭이 있는 줄: 마지막 탭 이전 run에는 extra_word_spacing 비적용
+                // (탭 앞 공백에 spacing을 적용하면 탭이 다음 탭 정지로 점프)
+                let run_after_last_tab = if let Some(tab_pos_in_line) = last_tab_pos {
+                    run_char_pos > comp_line.char_start + tab_pos_in_line
+                } else {
+                    true // 탭 없으면 모든 run에 적용
+                };
+                text_style.extra_word_spacing = if run_after_last_tab { extra_word_sp } else { 0.0 };
+                text_style.extra_char_spacing = if run_after_last_tab { extra_char_sp } else { 0.0 };
                 let run_border_fill_id = styles.char_styles.get(run.char_style_id as usize)
                     .map(|cs| cs.border_fill_id).unwrap_or(0);
                 let full_width = if run.char_overlap.is_some() {
