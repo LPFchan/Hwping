@@ -606,8 +606,8 @@ fn resolve_single_para_style(ps: &ParaShape, tab_defs: &[TabDef], dpi: f64) -> R
         _ => hwpunit_to_px(ps.line_spacing, dpi),
     };
 
-    // 기본 탭 간격: HWP 기본값 40pt (4000 HWPUNIT)
-    let default_tab_width = hwpunit_to_px(4000, dpi); // 40pt = 4000 HWPUNIT
+    // 기본 탭 간격: HWP 기본값 80pt (8000 HWPUNIT)
+    let default_tab_width = hwpunit_to_px(4000, dpi);
 
     // 커스텀 탭 정지 해소: TabDef.tabs[] → px 변환
     // TabItem.position은 ParaShape 여백과 동일하게 2배 스케일로 저장되므로
