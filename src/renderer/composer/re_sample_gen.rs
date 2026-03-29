@@ -294,6 +294,46 @@ mod tests {
         }
     }
 
+    // ─── 영문 폰트별 샘플 (Task 404) ───
+
+    #[test]
+    fn test_gen_re_english_font_variations() {
+        // 가변폭 + 고정폭 폰트로 순수 영문 테스트
+        let fonts = [
+            // 가변폭
+            ("arial", "Arial"),
+            ("times", "Times New Roman"),
+            ("hcr-batang", "함초롬바탕"),
+            // 고정폭
+            ("courier", "Courier New"),
+            ("dotumche", "돋움체"),
+            ("gulimche", "굴림체"),
+        ];
+
+        // 순수 영문 (공백 없이 연속 — char_level_break 경로)
+        let latin_nospace = "abcdefghijklmnopqrstuvwxyz".repeat(8);
+        // 영문 단어 (공백 포함 — 정상 줄바꿈 경로)
+        let latin_words = "The quick brown fox jumps over the lazy dog and then runs back again to test line breaking behavior in this sample document ";
+        let latin_words_long = latin_words.repeat(3);
+        // 한영 혼합
+        let mixed = "한글과English가Mixed된Text입니다Test문장Sentence한글English한글English";
+        let mixed_long = mixed.repeat(3);
+
+        for (suffix, font_name) in &fonts {
+            // 영문 연속 (공백 없음)
+            let output = format!("samples/re-eng-nospace-{}.hwp", suffix);
+            let _ = generate_sample_with_font("", &output, &[&latin_nospace], Some(font_name));
+
+            // 영문 단어 (공백 있음)
+            let output = format!("samples/re-eng-words-{}.hwp", suffix);
+            let _ = generate_sample_with_font("", &output, &[&latin_words_long], Some(font_name));
+
+            // 한영 혼합
+            let output = format!("samples/re-eng-mixed-{}.hwp", suffix);
+            let _ = generate_sample_with_font("", &output, &[&mixed_long], Some(font_name));
+        }
+    }
+
     // ─── 일괄 생성 ───
 
     #[test]
