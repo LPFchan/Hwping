@@ -360,6 +360,7 @@ mod tests {
             "template/blank-malgun.hwp",
             "samples/re-eng-mixed-batang-arial-empty.hwp",
             "samples/re-mixed-malgun-timesnew-hancom.hwp",
+            "samples/re-eng-nospace-malgun-times.hwp",  // + char_shapes_ref 출력
         ];
 
         for path in &templates {
@@ -381,6 +382,15 @@ mod tests {
             // char_shapes: font_ids 확인
             for (ci, cs) in doc.doc_info.char_shapes.iter().enumerate() {
                 eprintln!("  char_shapes[{}]: font_ids={:?} base_size={} spacings={:?} ratios={:?}", ci, cs.font_ids, cs.base_size, cs.spacings, cs.ratios);
+            }
+            // 문단의 char_shape_ref 확인
+            for (pi, para) in doc.sections[0].paragraphs.iter().enumerate() {
+                let refs: Vec<String> = para.char_shapes.iter()
+                    .map(|r| format!("pos={}→cs_id={}", r.start_pos, r.char_shape_id))
+                    .collect();
+                if !refs.is_empty() {
+                    eprintln!("  para[{}] char_shapes: {:?}", pi, refs);
+                }
             }
         }
     }

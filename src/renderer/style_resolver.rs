@@ -568,7 +568,7 @@ fn resolve_ttf_font(name: &str) -> Option<&'static str> {
         // 영어(1) 전용 TTF 치환 (webhwp lang=1)
         "MS Sans Serif" => Some("함초롬돋움"),
         "Tahoma" => Some("함초롬돋움"),
-        "Times New Roman" => Some("함초롬바탕"),
+        // "Times New Roman" — 메트릭 DB에 있으므로 치환하지 않음
         // 백묵 계열
         "백묵 굴림" => Some("굴림"),
         "백묵 돋움" => Some("돋움"),
