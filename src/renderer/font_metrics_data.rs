@@ -78,7 +78,7 @@ fn resolve_metric_alias(name: &str) -> &str {
         "나눔고딕" => "NanumGothic",
         "나눔명조" => "NanumMyeongjo",
         // 윈도우 시스템 폰트 (가변폭)
-        "바탕체" => "Batang",
+        "바탕체" => "BatangChe",
         "굴림" => "Gulim",
         "궁서" => "Gungsuh",
         // 윈도우 시스템 폰트 (고정폭)
