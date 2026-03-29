@@ -93,12 +93,23 @@ mod tests {
         // raw_stream 무효화
         core.document.sections[0].raw_stream = None;
 
-        // 직렬화
+        // 1. LINE_SEG가 채워진 버전 저장 (rhwp 렌더링 확인용)
         let bytes = crate::serializer::serialize_document(&core.document)
             .map_err(|e| format!("{:?}", e))?;
-        fs::write(output_path, bytes).map_err(|e| e.to_string())?;
-
+        fs::write(output_path, &bytes).map_err(|e| e.to_string())?;
         eprintln!("생성: {} ({}문단)", output_path, texts.len());
+
+        // 2. LINE_SEG를 비운 버전 저장 (한컴 역공학용: *-empty.hwp)
+        let empty_path = output_path.replace(".hwp", "-empty.hwp");
+        for para in &mut core.document.sections[0].paragraphs {
+            para.line_segs = vec![crate::model::paragraph::LineSeg::default()];
+        }
+        core.document.sections[0].raw_stream = None;
+        let empty_bytes = crate::serializer::serialize_document(&core.document)
+            .map_err(|e| format!("{:?}", e))?;
+        fs::write(&empty_path, &empty_bytes).map_err(|e| e.to_string())?;
+        eprintln!("생성: {} (LINE_SEG 비움)", empty_path);
+
         Ok(())
     }
 
