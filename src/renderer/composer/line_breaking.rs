@@ -452,7 +452,11 @@ fn fill_lines(
             BreakToken::Text { start_idx, end_idx, width, max_font_size, ref char_widths } => {
                 if *max_font_size > line_max_fs { line_max_fs = *max_font_size; }
 
+                let w_hwp = to_hwp(*width);
+
                 // 단일 문자 CJK/한글 토큰의 줄바꿈 가능 지점 처리
+                // 이 글자를 포함한 후 break point 갱신 (end_idx 사용)
+                // → 초과 시 이 글자까지 L0에 포함하고 다음 토큰부터 다음 줄
                 if *end_idx - *start_idx == 1 && *start_idx > line_start_idx {
                     let c = text_chars[*start_idx];
                     let allow_break = if is_hangul(c) {
@@ -460,15 +464,14 @@ fn fill_lines(
                     } else {
                         is_cjk_ideograph(c)
                     };
-                    if allow_break {
+                    // 이 글자가 줄에 들어가는 경우에만 break point 갱신
+                    if allow_break && lw + w_hwp <= eff_w(is_first_line) + LINE_BREAK_TOLERANCE {
                         last_break_token_idx = Some(ti);
-                        last_break_char_idx = *start_idx;
-                        width_at_last_break = lw;
+                        last_break_char_idx = *end_idx; // 이 글자 다음 (이 글자 포함)
+                        width_at_last_break = lw + w_hwp; // 이 글자 폭 포함
                         fs_at_last_break = line_max_fs;
                     }
                 }
-
-                let w_hwp = to_hwp(*width);
                 // 한컴은 HWPUNIT 정수 양자화 시 미세한 반올림 차이를 허용
                 // 12 HU(~0.17mm) 이내의 초과는 줄에 포함 (경험적 허용 오차)
                 const LINE_BREAK_TOLERANCE: i32 = 15;
