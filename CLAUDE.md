@@ -227,9 +227,11 @@ local/task{N+1}──커밋──커밋──┤
 ### 타스크 번호 관리
 
 - **GitHub Issues**를 타스크 번호로 사용한다. 자동 채번으로 중복 방지.
-- 브랜치명: `local/task{issue번호}` (예: `local/task405`)
-- 커밋 메시지: `Task #{issue번호}: 내용`
+- 새 타스크 등록: `gh issue create --repo edwardkim/rhwp --title "제목" --body "설명"`
+- 브랜치명: `local/task{issue번호}` (예: `local/task1`)
+- 커밋 메시지: `Task #1: 내용` (Issue 번호 참조)
 - `mydocs/orders/`에서 Issue 번호를 참조한다.
+- 타스크 완료 시: `gh issue close {번호}` 또는 커밋 메시지에 `closes #번호`
 
 ### 타스크 진행 절차
 
