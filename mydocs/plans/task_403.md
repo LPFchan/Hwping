@@ -1,99 +1,64 @@
-# Task 403: VSCode 확장으로 rhwp 제공하기 설계
+# Task 403: 역공학용 HWP 샘플 자동 생성
 
 ## 수행 목표
 
-VSCode에서 HWP/HWPX 파일을 열어볼 수 있는 확장(Extension)의 아키텍처를 설계한다. 기존 WASM 렌더링 파이프라인을 최대한 재활용하여, rhwp-studio와 동일한 품질의 문서 뷰어를 VSCode 내에서 제공하는 것이 목표이다.
+테스트 케이스로 통제된 HWP 파일을 프로그래밍 생성하고, 작업지시자가 한컴에서 검증한 후 LINE_SEG를 분석하는 체계적 역공학 프로세스를 구축한다.
 
 ## 배경
 
-- rhwp는 이미 WASM 빌드(`pkg/`)를 통해 웹 환경에서 HWP 렌더링을 지원한다.
-- rhwp-studio는 Canvas 2D 기반 뷰어/에디터로, wasm-bridge.ts가 WASM API를 래핑한다.
-- VSCode의 Custom Editor API는 Webview를 통해 바이너리 파일의 커스텀 뷰어를 제공할 수 있다.
-- WASM 렌더러가 Canvas 2D, SVG, HTML 세 가지 출력을 지원하므로 Webview에서 재활용 가능하다.
+Task 398~400에서 시행착오 방식으로 줄바꿈 정합성을 개선했으나, 한컴의 정확한 알고리즘을 역공학하는 데 한계가 있었다. 하나의 변수만 변경하고 나머지를 고정한 통제 실험이 필요하다.
 
-## 현황 분석
-
-### 재활용 가능 자산
-
-| 자산 | 위치 | 용도 |
-|------|------|------|
-| WASM 바이너리 | `pkg/rhwp_bg.wasm` (3.3MB) | HWP 파싱 + 렌더링 엔진 |
-| WASM JS 래퍼 | `pkg/rhwp.js` | wasm-bindgen 생성 인터페이스 |
-| TypeScript 타입 | `pkg/rhwp.d.ts` | HwpDocument API 타입 정의 |
-| WASM Bridge | `rhwp-studio/src/core/wasm-bridge.ts` | 150+ 메서드 래퍼 (참조용) |
-| Canvas View | `rhwp-studio/src/view/canvas-view.ts` | 가상 스크롤 + 페이지 렌더링 |
-| Page Renderer | `rhwp-studio/src/view/page-renderer.ts` | 단일 페이지 Canvas 렌더링 |
-
-### VSCode Extension API 핵심
-
-| API | 설명 |
-|-----|------|
-| `CustomReadonlyEditorProvider` | 읽기 전용 커스텀 에디터 (뷰어 단계에 적합) |
-| `CustomEditorProvider` | 읽기/쓰기 커스텀 에디터 (편집 단계) |
-| `WebviewPanel` | HTML/CSS/JS를 렌더링하는 샌드박스 환경 |
-| `workspace.fs` | 파일 읽기/쓰기 API |
-
-### 렌더링 파이프라인 재활용 전략
+### 역공학 프로세스
 
 ```
-[VSCode에서 .hwp 파일 열기]
-    ↓
-Extension Host: 파일 바이너리 읽기 (workspace.fs)
-    ↓
-Webview: WASM 초기화 + HwpDocument 생성
-    ↓
-Webview: renderPageToCanvas() 또는 renderPageSvg()
-    ↓
-Canvas/SVG로 문서 표시
+1. rhwp 테스트가 HWP 샘플 파일을 생성 (samples/re-*.hwp)
+2. 작업지시자가 한컴에서 열어 의도대로 렌더링되는지 검증
+3. 검증된 샘플을 rhwp LINE_SEG 비교 테스트로 분석
+4. 차이 패턴에서 한컴의 계산 공식 도출
+5. rhwp 코드에 반영 → 일치율 측정 → 반복
 ```
 
-## 소스 관리 전략
+## 구현 계획
 
-### 디렉토리 구조
+### 1단계: HWP 샘플 생성 테스트 프레임워크
 
-```
-rhwp/                          # 모노레포 루트
-├── src/                       # Rust 코어 (파서 + 렌더러)
-├── pkg/                       # WASM 빌드 출력
-├── rhwp-studio/               # 웹 뷰어/에디터 (기존)
-├── rhwp-vscode/               # VSCode 확장 (신규, 독립 패키지)
-│   ├── package.json           # 확장 매니페스트 + 의존성
-│   ├── tsconfig.json
-│   ├── src/
-│   │   ├── extension.ts       # 확장 진입점
-│   │   ├── hwp-editor-provider.ts
-│   │   └── webview/           # Webview 전용 코드
-│   ├── media/                 # 아이콘, 스타일시트
-│   └── webpack.config.js      # 번들러 설정
-└── ...
-```
+- DocumentCore를 프로그래밍으로 생성하여 HWP 파일로 저장하는 헬퍼 함수
+- 폰트, 글자 크기, 줄간격, 정렬, 여백, 들여쓰기 등을 파라미터로 지정
+- `samples/re-*.hwp`로 출력
 
-### 분리 원칙
+### 2단계: 1차 샘플 세트 — 기본 폭 측정
 
-- **`rhwp-vscode/`는 `rhwp-studio/`와 완전히 독립된 패키지**로 관리한다.
-- 두 패키지 간 소스 코드 공유(import)는 하지 않는다.
-- 공통 의존성은 `pkg/` (WASM 빌드 출력)뿐이며, 이를 각자의 방식으로 참조한다.
-  - `rhwp-studio`: Vite를 통해 `pkg/` 참조
-  - `rhwp-vscode`: webpack 번들 시 `pkg/`의 WASM 파일을 확장에 포함
-- Webview 내부 코드(가상 스크롤, 페이지 렌더링 등)는 rhwp-studio를 **참조**하되, 복사 후 VSCode Webview 환경에 맞게 독립 구현한다.
+| 파일 | 내용 | 검증 대상 |
+|------|------|----------|
+| re-01-hangul-only | "가나다라..." 반복, 2~3줄 | 한글 전각 폭 |
+| re-02-space-count | "가 나 다 라..." 공백 포함, 2~3줄 | 공백 폭 |
+| re-03-latin-only | "abcdef..." 반복, 2~3줄 | 영문 폭 |
+| re-04-digit-only | "12345..." 반복, 2~3줄 | 숫자 폭 |
+| re-05-mixed-koen | "한글English" 반복, 2~3줄 | 한영 혼합 |
+| re-06-punctuation | "가,나.다!라?" 반복, 2~3줄 | 구두점 폭 |
 
-## 설계 범위
+### 3단계: 2차 샘플 세트 — 줄바꿈 경계
 
-### 포함 (v1 — 읽기 전용 뷰어)
+| 파일 | 내용 | 검증 대상 |
+|------|------|----------|
+| re-11-boundary-exact | 한글만 정확히 1줄 + 1자 | 줄바꿈 경계 |
+| re-12-boundary-space | 1줄 꽉 찬 상태 + 공백 + 한글 | 공백 줄바꿈 |
 
-- HWP/HWPX 파일 더블클릭 시 문서 뷰어로 열기
-- 페이지 단위 렌더링 (Canvas 2D)
-- 가상 스크롤 (대용량 문서 대응)
-- 줌 인/아웃
-- 페이지 네비게이션
+### 4단계: 3차 샘플 세트 — 폰트별
 
-### 향후 확장 (v2+)
+동일 텍스트, 다른 폰트 (바탕/바탕체/돋움/굴림)
 
-- 텍스트 편집 (CustomEditorProvider로 전환)
-- 텍스트 검색
-- 아웃라인 뷰 (목차/제목 네비게이션)
-- SVG/PDF 내보내기 명령
+## 공통 설정
 
-## 승인 요청
+- 용지: A4 (210×297mm)
+- 여백: 좌30 우30 상20 하15 mm
+- 줄 나눔 기준: 글자
+- 최소 공백: 100%
+- 양쪽 정렬
+- 여백/들여쓰기 없음 (별도 명시 제외)
 
-위 수행계획서를 검토 후 승인 부탁드립니다. 승인 후 구현 계획서를 작성하겠습니다.
+## 산출물
+
+- HWP 샘플 생성 테스트 (`src/` 내 테스트 모듈)
+- 생성된 `samples/re-*.hwp` 파일
+- 역공학 분석 결과 문서

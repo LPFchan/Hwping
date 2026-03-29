@@ -808,8 +808,8 @@ fn dump_controls(args: &[String]) {
             // line_segs 출력
             if !para.line_segs.is_empty() {
                 for (li, ls) in para.line_segs.iter().enumerate() {
-                    println!("  ls[{}]: vpos={}, lh={}, th={}, bl={}, ls={}, cs={}, sw={}, tag=0x{:08X}",
-                        li, ls.vertical_pos, ls.line_height, ls.text_height,
+                    println!("  ls[{}]: ts={}, vpos={}, lh={}, th={}, bl={}, ls={}, cs={}, sw={}, tag=0x{:08X}",
+                        li, ls.text_start, ls.vertical_pos, ls.line_height, ls.text_height,
                         ls.baseline_distance, ls.line_spacing, ls.column_start, ls.segment_width, ls.tag);
                 }
             }

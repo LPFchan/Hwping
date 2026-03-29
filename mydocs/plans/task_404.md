@@ -1,41 +1,16 @@
-# Task 404: VSCode 확장 Marketplace 게시 준비
+# Task 404: 영문 폭 측정 및 줄바꿈 역공학
 
 ## 수행 목표
 
-rhwp-vscode 패키지를 VSCode Marketplace에 게시할 수 있도록 필수 자산 및 메타데이터를 보완한다.
+re-03(영문 ts±1), re-05(한영 혼합 ts-8) 불일치의 근본 원인을 규명하고 해결한다. 고정폭/가변폭 영문 폰트별 샘플로 체계적 역공학.
 
-## 작업 항목
+## 구현 계획
 
-| 항목 | 설명 |
-|------|------|
-| 아이콘 | 128x128 PNG 확장 아이콘 생성 (`media/icon.png`) |
-| README.md | Marketplace 설명 페이지 (기능 소개, 스크린샷, 사용법) |
-| CHANGELOG.md | 버전별 변경 이력 (v0.1.0 초기 릴리즈) |
-| LICENSE | MIT 라이선스 파일 복사 |
-| package.json | `repository`, `icon`, `keywords`, `bugs` 필드 보완 |
-| .vscodeignore | `.vscode/`, 불필요 파일 제외 추가 |
-| vsce package 검증 | `.vsix` 패키징 테스트 |
+### 1단계: 영문 폰트별 샘플 생성
 
-## 구현 단계
+가변폭: Arial, Times New Roman, 함초롬바탕
+고정폭: Courier New, 돋움체, 굴림체
 
-### 1단계: 메타데이터 및 문서 작성
+### 2단계: 한컴 정답지 비교 → 차이 패턴 도출
 
-- `rhwp-vscode/README.md` 작성 (기능, 사용법, 빌드 방법)
-- `rhwp-vscode/CHANGELOG.md` 작성
-- `rhwp-vscode/LICENSE` 루트에서 복사
-- `package.json` 필드 보완
-
-### 2단계: 아이콘 생성
-
-- SVG로 아이콘 디자인 → 128x128 PNG 변환
-- `rhwp-vscode/media/icon.png` 배치
-
-### 3단계: 패키징 검증
-
-- `.vscodeignore` 정리
-- `vsce package` 실행 → `.vsix` 생성 확인
-- 경고/오류 해결
-
-## 승인 요청
-
-위 수행계획서를 검토 후 승인 부탁드립니다.
+### 3단계: 차이 원인 수정

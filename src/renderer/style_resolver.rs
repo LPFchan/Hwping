@@ -568,7 +568,7 @@ fn resolve_ttf_font(name: &str) -> Option<&'static str> {
         // 영어(1) 전용 TTF 치환 (webhwp lang=1)
         "MS Sans Serif" => Some("함초롬돋움"),
         "Tahoma" => Some("함초롬돋움"),
-        "Times New Roman" => Some("함초롬바탕"),
+        // "Times New Roman" — 메트릭 DB에 있으므로 치환하지 않음
         // 백묵 계열
         "백묵 굴림" => Some("굴림"),
         "백묵 돋움" => Some("돋움"),
@@ -606,8 +606,8 @@ fn resolve_single_para_style(ps: &ParaShape, tab_defs: &[TabDef], dpi: f64) -> R
         _ => hwpunit_to_px(ps.line_spacing, dpi),
     };
 
-    // 기본 탭 간격: HWP 기본값 40pt (4000 HWPUNIT)
-    let default_tab_width = hwpunit_to_px(4000, dpi); // 40pt = 4000 HWPUNIT
+    // 기본 탭 간격: HWP 기본값 80pt (8000 HWPUNIT)
+    let default_tab_width = hwpunit_to_px(4000, dpi);
 
     // 커스텀 탭 정지 해소: TabDef.tabs[] → px 변환
     // TabItem.position은 ParaShape 여백과 동일하게 2배 스케일로 저장되므로
