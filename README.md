@@ -262,6 +262,30 @@ local/task{N}  ──커밋──커밋──┐
 
 > `mydocs/`의 문서는 AI 기반 소프트웨어 개발의 교육 자료로 활용됩니다.
 
+### 문서 생성 규칙
+
+모든 문서는 **한국어**로 작성합니다.
+
+```
+mydocs/
+├── orders/           # 오늘 할일 (yyyymmdd.md)
+├── plans/            # 수행 계획서, 구현 계획서
+│   └── archives/     # 완료된 계획서 보관
+├── working/          # 단계별 완료 보고서
+├── report/           # 기본 보고서
+├── feedback/         # 코드 리뷰 피드백
+├── tech/             # 기술 사항 정리 문서
+├── manual/           # 매뉴얼, 가이드 문서
+└── troubleshootings/ # 트러블슈팅 관련 문서
+```
+
+| 문서 유형 | 위치 | 파일명 규칙 |
+|----------|------|------------|
+| 오늘 할일 | `orders/` | `yyyymmdd.md` — 마일스톤(M100)+Issue(#1) 형식 |
+| 수행 계획서 | `plans/` | Issue 번호 참조 |
+| 완료 보고서 | `working/` | Issue 번호 참조 |
+| 기술 문서 | `tech/` | 주제별 자유 명명 |
+
 ## Architecture
 
 ```mermaid
