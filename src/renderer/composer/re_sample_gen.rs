@@ -298,6 +298,7 @@ mod tests {
             "template/blank-dotum.hwp",
             "template/blank-batangche.hwp",
             "template/blank-malgun.hwp",
+            "samples/re-eng-mixed-batang-arial-empty.hwp",
         ];
 
         for path in &templates {
