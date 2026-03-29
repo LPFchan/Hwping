@@ -468,4 +468,72 @@ mod tests {
         eprintln!("\n=== 1차 샘플 생성 완료 ===");
         eprintln!("검증 필요: samples/re-01 ~ re-06.hwp를 한컴에서 열어 확인");
     }
+
+    // ─── 멀티사이즈 샘플 (Issue #1) ───
+
+    #[test]
+    fn test_gen_re_multisize() {
+        // 한 문단 내에 두 가지 크기를 혼합하여 줄별 line_height 검증
+        let sizes: Vec<(&str, i32, i32)> = vec![
+            ("10-16", 1000, 1600),  // 10pt + 16pt
+            ("10-20", 1000, 2000),  // 10pt + 20pt
+            ("8-14",   800, 1400),  // 8pt + 14pt
+            ("10-10", 1000, 1000),  // 동일 크기 (기준선)
+        ];
+
+        for (suffix, base_size, big_size) in &sizes {
+            let output = format!("samples/re-multisize-{}.hwp", suffix);
+
+            let data = fs::read("template/empty.hwp").unwrap();
+            let mut core = crate::document_core::DocumentCore::from_bytes(&data).unwrap();
+
+            // CharShape 추가: 큰 글자용
+            let mut big_cs = core.document.doc_info.char_shapes[0].clone();
+            big_cs.base_size = *big_size;
+            big_cs.raw_data = None;
+            let big_cs_id = core.document.doc_info.char_shapes.len() as u32;
+            core.document.doc_info.char_shapes.push(big_cs);
+            core.document.doc_info.raw_stream = None;
+            core.document.doc_info.raw_stream_dirty = true;
+
+            // 기본 CharShape의 base_size 설정
+            core.document.doc_info.char_shapes[0].base_size = *base_size;
+            core.document.doc_info.char_shapes[0].raw_data = None;
+
+            // 텍스트 삽입
+            let text = "가나다라마바사아자차카타파하가나다라마바사아자차카타파하가나다라마바사아자차카타파하가나다라마바사아자차카타파하";
+            let _ = core.insert_text_native(0, 0, 0, text);
+
+            // CharShapeRef: 1/3 기본, 1/3 큰 글자, 1/3 기본
+            let para = &mut core.document.sections[0].paragraphs[0];
+            let text_len = para.text.chars().count();
+            let big_start = text_len / 3;
+            let big_end = text_len * 2 / 3;
+            let big_start_utf16 = para.char_offsets.get(big_start).copied().unwrap_or(0);
+            let big_end_utf16 = para.char_offsets.get(big_end).copied().unwrap_or(0);
+
+            para.char_shapes = vec![
+                crate::model::paragraph::CharShapeRef { start_pos: 0, char_shape_id: 0 },
+                crate::model::paragraph::CharShapeRef { start_pos: big_start_utf16, char_shape_id: big_cs_id },
+                crate::model::paragraph::CharShapeRef { start_pos: big_end_utf16, char_shape_id: 0 },
+            ];
+
+            core.document.sections[0].raw_stream = None;
+
+            // LINE_SEG 채워진 버전
+            let bytes = crate::serializer::serialize_document(&core.document).unwrap();
+            fs::write(&output, &bytes).unwrap();
+
+            // LINE_SEG 비운 버전
+            let empty_path = output.replace(".hwp", "-empty.hwp");
+            for p in &mut core.document.sections[0].paragraphs {
+                p.line_segs = vec![crate::model::paragraph::LineSeg::default()];
+            }
+            core.document.sections[0].raw_stream = None;
+            let empty_bytes = crate::serializer::serialize_document(&core.document).unwrap();
+            fs::write(&empty_path, &empty_bytes).unwrap();
+
+            eprintln!("생성: {} (기본={}pt, 큰={}pt)", output, base_size / 100, big_size / 100);
+        }
+    }
 }
