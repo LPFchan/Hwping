@@ -100,13 +100,10 @@ mod tests {
                 para.char_shapes = vec![first_style];
             }
 
-            // line_segs 초기화 (한컴이 재계산하도록)
-            para.line_segs = vec![crate::model::paragraph::LineSeg {
-                line_height: 1000, // 10pt 기본
-                text_height: 1000,
-                baseline_distance: 850,
-                ..Default::default()
-            }];
+            // line_segs를 line_height=0으로 설정
+            // → from_bytes 로드 시 reflow_zero_height_paragraphs가 자동 재계산
+            // → 한컴도 열 때 자체적으로 LINE_SEG 재계산
+            para.line_segs = vec![crate::model::paragraph::LineSeg::default()];
 
             // 구역나누기/단정의 컨트롤은 유지, 나머지 제거
             // (첫 문단의 SectionDef/ColumnDef가 없으면 페이지 크기 0으로 됨)
