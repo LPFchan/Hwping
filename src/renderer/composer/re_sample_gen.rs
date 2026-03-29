@@ -18,51 +18,44 @@ mod tests {
         generate_sample_with_options(template_path, output_path, texts, None, None)
     }
 
-    /// 폰트만 변경
-    fn generate_sample_with_font(
-        template_path: &str,
-        output_path: &str,
-        texts: &[&str],
-        font_name: Option<&str>,
-    ) -> Result<(), String> {
-        generate_sample_with_options(template_path, output_path, texts, font_name, None)
+    /// 폰트별 템플릿 경로 매핑
+    /// 한컴에서 직접 만든 폰트별 빈 문서를 템플릿으로 사용
+    fn font_template(font_name: &str) -> &'static str {
+        match font_name {
+            "바탕" => "template/blank-batang.hwp",
+            "바탕체" => "template/blank-batangche.hwp",
+            "돋움" | "돋움체" => "template/blank-dotum.hwp",  // 돋움체 템플릿 없으면 돋움 사용
+            "맑은 고딕" => "template/blank-malgun.hwp",
+            _ => "template/empty.hwp", // 기본 함초롬바탕
+        }
     }
 
-    /// empty.hwp 템플릿에 DocumentCore API로 텍스트 삽입하여 샘플 생성
-    fn generate_sample_with_options(
+    /// 폰트별 템플릿 사용
+    fn generate_sample_with_font(
         _template_path: &str,
         output_path: &str,
         texts: &[&str],
         font_name: Option<&str>,
+    ) -> Result<(), String> {
+        let template = font_name.map(font_template).unwrap_or("template/empty.hwp");
+        generate_sample_with_options(template, output_path, texts, None, None)
+    }
+
+    /// 템플릿에 DocumentCore API로 텍스트 삽입하여 샘플 생성
+    fn generate_sample_with_options(
+        template_path: &str,
+        output_path: &str,
+        texts: &[&str],
+        _font_name: Option<&str>,  // 미사용 (폰트는 템플릿으로 결정)
         alignment: Option<crate::model::style::Alignment>,
     ) -> Result<(), String> {
-        // 빈 문서 템플릿 로드 (컨트롤 마커 구조가 올바른 상태)
-        let empty_path = Path::new("template/empty.hwp");
-        if !empty_path.exists() {
-            return Err("template/empty.hwp 없음".to_string());
+        let tmpl = Path::new(template_path);
+        if !tmpl.exists() {
+            return Err(format!("템플릿 없음: {}", template_path));
         }
-        let data = fs::read(empty_path).map_err(|e| e.to_string())?;
+        let data = fs::read(tmpl).map_err(|e| e.to_string())?;
         let mut core = crate::document_core::DocumentCore::from_bytes(&data)
             .map_err(|e| format!("{:?}", e))?;
-
-        // 폰트 변경
-        if let Some(fname) = font_name {
-            for lang_fonts in &mut core.document.doc_info.font_faces {
-                if lang_fonts.is_empty() {
-                    lang_fonts.push(crate::model::style::Font {
-                        raw_data: None,
-                        name: fname.to_string(),
-                        alt_type: 0,
-                        alt_name: None,
-                        default_name: None,
-                    });
-                } else {
-                    lang_fonts[0].name = fname.to_string();
-                    lang_fonts[0].raw_data = None;
-                }
-            }
-            core.document.doc_info.raw_stream = None;
-        }
 
         // 정렬 변경
         if let Some(align) = alignment {
@@ -72,6 +65,7 @@ mod tests {
                 core.document.doc_info.para_shapes[ps_id].alignment = align;
                 core.document.doc_info.para_shapes[ps_id].raw_data = None;
                 core.document.doc_info.raw_stream = None;
+                core.document.doc_info.raw_stream_dirty = true;
             }
         }
 
@@ -294,20 +288,53 @@ mod tests {
         }
     }
 
+    // ─── 폰트 설정 분석 (Task 404) ───
+
+    #[test]
+    fn test_analyze_font_config() {
+        let templates = [
+            "template/empty.hwp",
+            "template/blank-batang.hwp",
+            "template/blank-dotum.hwp",
+            "template/blank-batangche.hwp",
+            "template/blank-malgun.hwp",
+        ];
+
+        for path in &templates {
+            let p = Path::new(path);
+            if !p.exists() { continue; }
+            let data = fs::read(p).unwrap();
+            let doc = crate::parser::parse_document(&data).unwrap();
+
+            eprintln!("\n=== {} ===", path);
+
+            // font_faces: 7개 언어 카테고리별 폰트 목록
+            let lang_names = ["한글", "영어", "한자", "일어", "기타", "기호", "사용자"];
+            for (li, fonts) in doc.doc_info.font_faces.iter().enumerate() {
+                let lang = if li < lang_names.len() { lang_names[li] } else { "?" };
+                let names: Vec<&str> = fonts.iter().map(|f| f.name.as_str()).collect();
+                eprintln!("  font_faces[{}]({}): {:?}", li, lang, names);
+            }
+
+            // char_shapes: font_ids 확인
+            for (ci, cs) in doc.doc_info.char_shapes.iter().enumerate() {
+                eprintln!("  char_shapes[{}]: font_ids={:?} base_size={}", ci, cs.font_ids, cs.base_size);
+            }
+        }
+    }
+
     // ─── 영문 폰트별 샘플 (Task 404) ───
 
     #[test]
     fn test_gen_re_english_font_variations() {
         // 가변폭 + 고정폭 폰트로 순수 영문 테스트
+        // 보유 템플릿 기반 폰트 테스트
         let fonts = [
-            // 가변폭
-            ("arial", "Arial"),
-            ("times", "Times New Roman"),
-            ("hcr-batang", "함초롬바탕"),
-            // 고정폭
-            ("courier", "Courier New"),
-            ("dotumche", "돋움체"),
-            ("gulimche", "굴림체"),
+            ("batang", "바탕"),        // 가변폭, 한컴 HFT 아닌 윈도우 폰트
+            ("batangche", "바탕체"),    // 고정폭
+            ("dotum", "돋움"),         // 가변폭
+            ("malgun", "맑은 고딕"),    // 가변폭
+            ("hcr-batang", "함초롬바탕"), // 가변폭, 한컴 HFT (기본 템플릿)
         ];
 
         // 순수 영문 (공백 없이 연속 — char_level_break 경로)
