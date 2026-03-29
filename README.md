@@ -221,19 +221,46 @@ scripts/                       # Build & quality tools
 └── dashboard.html             # Quality dashboard with trend tracking
 ```
 
-## Development with Claude Code
+## Development
 
-This project is developed using **Claude Code** (Anthropic's AI coding agent) as a pair programming partner. The entire development process — from task planning to implementation to code review — is documented in `mydocs/`.
+이 프로젝트는 **Claude Code** (Anthropic AI 코딩 에이전트)를 페어 프로그래밍 파트너로 사용하여 개발합니다.
 
-### Human-AI Collaboration Protocol
+### Git 워크플로우
 
-1. **Task Registration**: `mydocs/orders/yyyymmdd.md`
-2. **Plan Approval**: `mydocs/plans/task_{N}.md` → review → approval
-3. **Implementation**: `local/task{N}` branch → implement → test
-4. **Debug Protocol**: `--debug-overlay` + `dump-pages` + `dump` for precise paragraph identification
-5. **Code Review**: 4 rounds of code review documented in `mydocs/feedback/`
+```
+local/task{N}  ──커밋──커밋──┐
+                              ├─→ devel merge (관련 타스크 묶어서)
+                              ├─→ main merge + 태그 (릴리즈 시점)
+```
 
-> The documentation in `mydocs/` serves as an educational resource for AI-assisted software development.
+| 브랜치 | 용도 |
+|--------|------|
+| `main` | 릴리즈 (태그: v0.5.0 등) |
+| `devel` | 개발 통합 |
+| `local/task{N}` | GitHub Issue 번호 기반 타스크 브랜치 |
+
+### 타스크 관리
+
+- **GitHub Issues**로 타스크 번호 자동 채번 — 중복 방지
+- **GitHub Milestones**로 타스크 그룹화
+- 마일스톤 표기: `M{버전}` (예: M100=v1.0.0, M05x=v0.5.x)
+- 오늘할일: `mydocs/orders/yyyymmdd.md` — `M100 #1` 형식으로 참조
+- 커밋 메시지: `Task #1: 내용` — `closes #1`로 Issue 자동 종료
+
+### 타스크 진행 절차
+
+1. `gh issue create` → GitHub Issue 등록 (마일스톤 지정)
+2. `local/task{issue번호}` 브랜치 생성
+3. 수행계획서 작성 → 승인 → 구현 → 테스트
+4. devel merge → `closes #{번호}`
+
+### 디버깅 프로토콜
+
+1. `export-svg --debug-overlay` → 문단/표 식별
+2. `dump-pages -p N` → 배치 목록과 높이
+3. `dump -s N -p M` → ParaShape, LINE_SEG 상세
+
+> `mydocs/`의 문서는 AI 기반 소프트웨어 개발의 교육 자료로 활용됩니다.
 
 ## Architecture
 

@@ -308,17 +308,55 @@ await screenshot(page, 'my-test');
 await closeBrowser(browser);
 ```
 
-## 9. 브랜치 관리
+## 9. Git 워크플로우
+
+### 브랜치 구조
 
 ```
-main          ← 최종 릴리즈
-devel         ← 개발 통합
-local/taskN   ← 타스크별 작업 브랜치
+main              ← 릴리즈 (태그: v0.5.0 등)
+devel             ← 개발 통합
+local/task{N}     ← GitHub Issue 번호 기반 타스크 브랜치
 ```
 
-- 타스크 시작: `git checkout -b local/taskN` (devel에서)
-- 타스크 완료: `git checkout devel && git merge local/taskN --no-ff`
-- 릴리즈: `git checkout main && git merge devel --no-ff` (작업지시자 요청 시만)
+### 타스크 번호 관리
+
+- **GitHub Issues**로 타스크 번호 자동 채번 (수동 번호 할당 금지)
+- **GitHub Milestones**로 타스크 그룹화
+- 마일스톤 표기: `M{버전}` (예: M100=v1.0.0, M05x=v0.5.x)
+
+### 진행 절차
+
+```bash
+# 1. GitHub Issue 등록
+gh issue create --repo edwardkim/rhwp --title "제목" --body "설명" --milestone "v1.0.0"
+
+# 2. 타스크 브랜치 생성
+git checkout -b local/task1 devel
+
+# 3. 구현 + 커밋
+git commit -m "Task #1: 내용"
+
+# 4. devel에 merge + Issue 종료
+git checkout devel && git merge local/task1
+git push origin devel    # closes #1 포함 시 자동 종료
+# 또는 수동: gh issue close 1
+
+# 5. 릴리즈 (작업지시자 요청 시만)
+git checkout main && git merge devel && git push origin main
+```
+
+### 오늘할일 표기
+
+`mydocs/orders/yyyymmdd.md`에서 마일스톤+이슈 형식으로 참조:
+
+```markdown
+## M100 — 조판 엔진 체계화
+
+| Issue | 타스크 | 상태 |
+|-------|--------|------|
+| [#1](https://github.com/edwardkim/rhwp/issues/1) | baseline 역공학 | 완료 |
+| [#2](https://github.com/edwardkim/rhwp/issues/2) | 편집 갭 수정 | 대기 |
+```
 
 ## 10. 기여 시 주의사항
 
