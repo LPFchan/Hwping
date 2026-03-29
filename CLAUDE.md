@@ -227,10 +227,11 @@ local/task{N+1}──커밋──커밋──┤
 ### 타스크 번호 관리
 
 - **GitHub Issues**를 타스크 번호로 사용한다. 자동 채번으로 중복 방지.
-- 새 타스크 등록: `gh issue create --repo edwardkim/rhwp --title "제목" --body "설명"`
+- **마일스톤 표기**: `M{버전}` (예: M100=v1.0.0, M05x=v0.5.x)
+- 새 타스크 등록: `gh issue create --repo edwardkim/rhwp --title "제목" --body "설명" --milestone "v1.0.0"`
 - 브랜치명: `local/task{issue번호}` (예: `local/task1`)
 - 커밋 메시지: `Task #1: 내용` (Issue 번호 참조)
-- `mydocs/orders/`에서 Issue 번호를 참조한다.
+- `mydocs/orders/`에서 `M100 #1` 형식으로 마일스톤+이슈 참조
 - 타스크 완료 시: `gh issue close {번호}` 또는 커밋 메시지에 `closes #번호`
 
 ### 타스크 진행 절차
