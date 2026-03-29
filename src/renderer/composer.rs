@@ -969,3 +969,5 @@ pub(crate) use line_breaking::{reflow_line_segs, recalculate_section_vpos, is_li
 mod tests;
 #[cfg(test)]
 mod lineseg_compare_tests;
+#[cfg(test)]
+mod re_sample_gen;
