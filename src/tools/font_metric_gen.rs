@@ -42,18 +42,20 @@ struct TableEntry {
     length: u32,
 }
 
-fn parse_table_directory(data: &[u8]) -> Vec<TableEntry> {
-    // TTC (TrueType Collection) 처리: 첫 번째 폰트 사용
-    let (header_off, num_tables) = if &data[0..4] == b"ttcf" {
-        // TTC 헤더: 오프셋 배열의 첫 번째 엔트리
-        let font_offset = read_u32_be(data, 12) as usize;
-        let nt = read_u16_be(data, font_offset + 4);
-        (font_offset, nt)
+/// TTC 내 모든 폰트의 오프셋 배열 반환 (단일 TTF면 [0])
+fn get_font_offsets(data: &[u8]) -> Vec<usize> {
+    if data.len() >= 12 && &data[0..4] == b"ttcf" {
+        let num_fonts = read_u32_be(data, 8) as usize;
+        (0..num_fonts)
+            .map(|i| read_u32_be(data, 12 + i * 4) as usize)
+            .collect()
     } else {
-        // 단일 TTF
-        let nt = read_u16_be(data, 4);
-        (0, nt)
-    };
+        vec![0]
+    }
+}
+
+fn parse_table_directory_at(data: &[u8], header_off: usize) -> Vec<TableEntry> {
+    let num_tables = read_u16_be(data, header_off + 4);
 
     let mut tables = Vec::new();
     for i in 0..num_tables as usize {
@@ -286,41 +288,53 @@ struct FontMetric {
     char_widths: HashMap<u32, u16>,
 }
 
+/// 단일 TTF 또는 TTC의 모든 폰트를 파싱
 fn parse_ttf(path: &Path) -> Result<FontMetric, String> {
+    parse_ttf_all(path).and_then(|v| v.into_iter().next().ok_or_else(|| "폰트 없음".to_string()))
+}
+
+fn parse_ttf_all(path: &Path) -> Result<Vec<FontMetric>, String> {
     let data = fs::read(path).map_err(|e| format!("{}: {}", path.display(), e))?;
     if data.len() < 12 {
         return Err(format!("{}: 파일이 너무 작음", path.display()));
     }
 
-    let tables = parse_table_directory(&data);
-    if tables.is_empty() {
-        return Err(format!("{}: 테이블 디렉토리 비어있음", path.display()));
-    }
-
-    let head = parse_head(&data, &tables);
-    let num_glyphs = parse_maxp(&data, &tables);
-    let cmap = parse_cmap(&data, &tables);
-    let hmtx = parse_hmtx(&data, &tables, num_glyphs);
-    let family_name = parse_name(&data, &tables);
-
-    // cmap + hmtx 결합: char → width
-    let mut char_widths = HashMap::new();
-    for (&codepoint, &glyph_id) in &cmap {
-        if (glyph_id as usize) < hmtx.len() {
-            char_widths.insert(codepoint, hmtx[glyph_id as usize]);
-        }
-    }
-
+    let offsets = get_font_offsets(&data);
     let file_name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+    let mut results = Vec::new();
 
-    Ok(FontMetric {
-        family_name,
-        file_name,
-        em_size: head.units_per_em,
-        bold: (head.mac_style & 0x01) != 0,
-        italic: (head.mac_style & 0x02) != 0,
-        char_widths,
-    })
+    for &font_off in &offsets {
+        let tables = parse_table_directory_at(&data, font_off);
+        if tables.is_empty() { continue; }
+
+        let head = parse_head(&data, &tables);
+        let num_glyphs = parse_maxp(&data, &tables);
+        let cmap = parse_cmap(&data, &tables);
+        let hmtx = parse_hmtx(&data, &tables, num_glyphs);
+        let family_name = parse_name(&data, &tables);
+
+        let mut char_widths = HashMap::new();
+        for (&codepoint, &glyph_id) in &cmap {
+            if (glyph_id as usize) < hmtx.len() {
+                char_widths.insert(codepoint, hmtx[glyph_id as usize]);
+            }
+        }
+
+        results.push(FontMetric {
+            family_name,
+            file_name: file_name.clone(),
+            em_size: head.units_per_em,
+            bold: (head.mac_style & 0x01) != 0,
+            italic: (head.mac_style & 0x02) != 0,
+            char_widths,
+        });
+    }
+
+    if results.is_empty() {
+        Err(format!("{}: 폰트 없음", path.display()))
+    } else {
+        Ok(results)
+    }
 }
 
 // ─── 한글 음절 분해 압축 ───
@@ -866,13 +880,15 @@ fn main() {
 
         println!("TTF 파싱 중... ({} 파일)", entries.len());
         for entry in &entries {
-            match parse_ttf(&entry.path()) {
-                Ok(m) => {
-                    if !list_mode {
-                        print_diagnostic(&m);
-                        println!();
+            match parse_ttf_all(&entry.path()) {
+                Ok(fonts) => {
+                    for m in fonts {
+                        if !list_mode {
+                            print_diagnostic(&m);
+                            println!();
+                        }
+                        metrics.push(m);
                     }
-                    metrics.push(m);
                 }
                 Err(e) => errors.push(e),
             }

@@ -77,7 +77,9 @@ fn resolve_metric_alias(name: &str) -> &str {
         "나눔고딕" => "NanumGothic",
         "나눔명조" => "NanumMyeongjo",
         "바탕체" => "Batang",
-        "굴림" | "굴림체" | "돋움체" => "Gulim",
+        "굴림" => "Gulim",
+        "돋움" => "Gulim", // 돋움과 굴림은 동일한 글리프 폭 (가변폭)
+        // 굴림체/돋움체/바탕체/궁서체는 고정폭 — 별도 메트릭 필요 (미등록 시 휴리스틱)
         _ => name,
     }
 }
