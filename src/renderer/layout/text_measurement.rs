@@ -248,6 +248,7 @@ impl TextMeasurer for EmbeddedTextMeasurer {
             w
         };
 
+        let mut tab_char_idx = 0usize; // inline_tabs 인덱스
         for i in 0..char_count {
             let c = chars[i];
             if cluster_len[i] == 0 {
@@ -255,7 +256,27 @@ impl TextMeasurer for EmbeddedTextMeasurer {
                 continue;
             }
             if c == '\t' {
-                if has_custom_tabs {
+                // HWPX 인라인 탭: inline_tabs에서 width/type 사용
+                if tab_char_idx < style.inline_tabs.len() {
+                    let ext = &style.inline_tabs[tab_char_idx];
+                    let tab_width_px = ext[0] as f64 * 96.0 / 7200.0;
+                    let tab_type = ext[2];
+                    let tab_target = x + tab_width_px;
+                    match tab_type {
+                        1 => { // 오른쪽
+                            let seg_w = measure_segment_from(&chars, &cluster_len, i + 1, &char_width);
+                            x = (tab_target - seg_w).max(x);
+                        }
+                        2 => { // 가운데
+                            let seg_w = measure_segment_from(&chars, &cluster_len, i + 1, &char_width);
+                            x = (tab_target - seg_w / 2.0).max(x);
+                        }
+                        _ => { // 왼쪽(0)
+                            x = tab_target.max(x);
+                        }
+                    }
+                    tab_char_idx += 1;
+                } else if has_custom_tabs {
                     let abs_x = style.line_x_offset + x;
                     let (tab_pos, tab_type, _) = find_next_tab_stop(
                         abs_x, &style.tab_stops, tab_w,
@@ -271,15 +292,17 @@ impl TextMeasurer for EmbeddedTextMeasurer {
                             let seg_w = measure_segment_from(&chars, &cluster_len, i + 1, &char_width);
                             x = (rel_tab - seg_w / 2.0).max(x);
                         }
-                        _ => { // 왼쪽(0), 소수점(3) → 왼쪽과 동일 처리
+                        _ => { // 왼쪽(0), 소수점(3)
                             x = rel_tab.max(x);
                         }
                     }
+                    tab_char_idx += 1;
                 } else {
-                    // 기본 등간격 탭: 라인 절대 위치(line_x_offset + x) 기준으로 계산
+                    // 기본 등간격 탭
                     let abs_x = style.line_x_offset + x;
                     let next_abs = ((abs_x / tab_w).floor() + 1.0) * tab_w;
                     x = (next_abs - style.line_x_offset).max(x);
+                    tab_char_idx += 1;
                 }
                 positions.push(x);
                 continue;
@@ -613,6 +636,7 @@ pub(crate) fn resolved_to_text_style(styles: &ResolvedStyleSet, char_style_id: u
             available_width: 0.0,
             line_x_offset: 0.0,
             tab_leaders: Vec::new(),
+            inline_tabs: Vec::new(),
             extra_word_spacing: 0.0,
             extra_char_spacing: 0.0,
             outline_type: cs.outline_type,

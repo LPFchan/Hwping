@@ -1026,6 +1026,7 @@ impl LayoutEngine {
                 text_style.tab_stops = tab_stops.clone();
                 text_style.auto_tab_right = auto_tab_right;
                 text_style.available_width = available_width;
+                text_style.inline_tabs = composed.tab_extended.clone();
                 // 교차 run 오른쪽/가운데 탭: 이전 run이 \t로 끝났고
                 // 해당 탭이 오른쪽/가운데 탭이면 이 run을 역방향으로 이동
                 if let Some((tab_pos, tab_type)) = pending_right_tab_render.take() {
