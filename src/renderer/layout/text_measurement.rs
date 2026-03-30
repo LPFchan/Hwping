@@ -105,21 +105,43 @@ fn measure_segment_from(
 
 /// 탭 문자의 위치로부터 탭 리더 정보를 추출한다.
 pub fn extract_tab_leaders(text: &str, positions: &[f64], style: &TextStyle) -> Vec<TabLeaderInfo> {
-    if style.tab_stops.is_empty() && !style.auto_tab_right {
-        return Vec::new();
-    }
+    extract_tab_leaders_with_extended(text, positions, style, &[])
+}
+
+/// 탭 리더 추출 (tab_extended 지원)
+/// tab_extended: HWPX 인라인 탭 또는 HWP 탭 확장 데이터 (ext[1] = leader/fill_type)
+pub fn extract_tab_leaders_with_extended(
+    text: &str, positions: &[f64], style: &TextStyle, tab_extended: &[[u16; 7]],
+) -> Vec<TabLeaderInfo> {
     let tab_w = if style.default_tab_width > 0.0 { style.default_tab_width } else { 48.0 };
     let mut leaders = Vec::new();
+    let mut tab_idx = 0usize; // tab_extended 인덱스
     for (i, c) in text.chars().enumerate() {
         if c == '\t' && i + 1 < positions.len() {
             let before_x = positions[i];
             let after_x = positions[i + 1];
-            let abs_before = style.line_x_offset + before_x;
-            // 어느 탭 정지가 매칭되었는지 역추적
-            let (_, _, fill_type) = find_next_tab_stop(
-                abs_before, &style.tab_stops, tab_w,
-                style.auto_tab_right, style.available_width,
-            );
+
+            // 1. tab_extended에서 leader 가져오기 (HWPX 인라인 탭)
+            let ext_fill = if tab_idx < tab_extended.len() {
+                tab_extended[tab_idx][1] as u8 // ext[1] = leader/fill_type
+            } else {
+                0
+            };
+
+            // 2. TabDef에서 fill_type 가져오기 (HWP TabDef)
+            let tabdef_fill = if !style.tab_stops.is_empty() || style.auto_tab_right {
+                let abs_before = style.line_x_offset + before_x;
+                let (_, _, ft) = find_next_tab_stop(
+                    abs_before, &style.tab_stops, tab_w,
+                    style.auto_tab_right, style.available_width,
+                );
+                ft
+            } else {
+                0
+            };
+
+            // 둘 중 하나라도 fill이 있으면 리더 추가
+            let fill_type = if ext_fill > 0 { ext_fill } else { tabdef_fill };
             if fill_type > 0 && after_x > before_x + 1.0 {
                 leaders.push(TabLeaderInfo {
                     start_x: before_x,
@@ -127,6 +149,7 @@ pub fn extract_tab_leaders(text: &str, positions: &[f64], style: &TextStyle) -> 
                     fill_type,
                 });
             }
+            tab_idx += 1;
         }
     }
     leaders
