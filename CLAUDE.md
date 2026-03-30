@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 문서 폴더 구조 (`mydocs/` 하위):
 - `orders/` - 오늘 할일 문서 (yyyymmdd.md)
-- `plans/` - 수행 계획서, 구현 계획서 (task_{number}.md)
+- `plans/` - 수행 계획서, 구현 계획서 (task_{milestone}_{number}.md)
 - `plans/archives/` - 완료된 계획서 보관
 - `working/` - 단계별 완료 보고서
 - `report/` - 기본 보고서
