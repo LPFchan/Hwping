@@ -81,6 +81,8 @@ async function run() {
 
     // ── 2. 범위 1: 문단 추가 (Enter) ──
     console.log('\n[2] 문단 추가 (Enter 키)...');
+    await typeText(page, 'TC #2: 문단 추가 (Enter)');
+    await pressEnter(page);
     await typeText(page, 'First paragraph');
     await pressEnter(page);
     await typeText(page, 'Second paragraph');
@@ -88,14 +90,16 @@ async function run() {
     await typeText(page, 'Third paragraph');
 
     const parasAfterSplit = await getParaCount(page);
-    check(parasAfterSplit >= initParas + 2, `Enter 후 문단 수: ${parasAfterSplit} (기대: ${initParas + 2}+)`);
+    check(parasAfterSplit >= initParas + 3, `Enter 후 문단 수: ${parasAfterSplit} (기대: ${initParas + 3}+)`);
 
     const text0 = await getParaText(page, 0, 0);
     const text1 = await getParaText(page, 0, 1);
     const text2 = await getParaText(page, 0, 2);
-    check(text0.includes('First'), `문단 0 텍스트: "${text0}"`);
-    check(text1.includes('Second'), `문단 1 텍스트: "${text1}"`);
-    check(text2.includes('Third'), `문단 2 텍스트: "${text2}"`);
+    const text3 = await getParaText(page, 0, 3);
+    check(text0.includes('TC #2'), `문단 0 제목: "${text0}"`);
+    check(text1.includes('First'), `문단 1 텍스트: "${text1}"`);
+    check(text2.includes('Second'), `문단 2 텍스트: "${text2}"`);
+    check(text3.includes('Third'), `문단 3 텍스트: "${text3}"`);
 
     const pagesAfterSplit = await getPageCount(page);
     check(pagesAfterSplit === initPages, `Enter 후 페이지 수 불변: ${pagesAfterSplit}`);
@@ -110,7 +114,7 @@ async function run() {
     const parasAfterMerge = await getParaCount(page);
     check(parasAfterMerge === parasAfterSplit - 1, `Backspace 후 문단 수: ${parasAfterMerge} (기대: ${parasAfterSplit - 1})`);
 
-    const mergedText = await getParaText(page, 0, 1);
+    const mergedText = await getParaText(page, 0, 2);
     check(mergedText.includes('Second') && mergedText.includes('Third'),
       `병합된 문단 텍스트: "${mergedText}"`);
     await screenshot(page, 'edit-02-merge');
@@ -120,7 +124,9 @@ async function run() {
     await createNewDocument(page);
     await clickEditArea(page);
 
-    // 50개 문단 생성 (Enter로 분할 → 페이지 넘침 유발)
+    // 제목 + 50개 문단 생성 (Enter로 분할 → 페이지 넘침 유발)
+    await page.keyboard.type('TC #4: pagination', { delay: 5 });
+    await page.keyboard.press('Enter');
     for (let i = 0; i < 50; i++) {
       await page.keyboard.type('Line ' + i, { delay: 5 });
       await page.keyboard.press('Enter');
@@ -139,6 +145,8 @@ async function run() {
     await createNewDocument(page);
     await clickEditArea(page);
 
+    await page.keyboard.type('TC #5: line wrap', { delay: 5 });
+    await page.keyboard.press('Enter');
     const longSentence = 'The quick brown fox jumps over the lazy dog. ';
     for (let i = 0; i < 10; i++) {
       await page.keyboard.type(longSentence, { delay: 5 });
@@ -157,14 +165,18 @@ async function run() {
       const w = window.__wasm;
       if (!w?.doc) return { error: 'no doc' };
       try {
-        // 1) 첫 문단에 텍스트 입력
-        w.doc.insertText(0, 0, 0, 'Before table paragraph');
+        // 0) 제목
+        w.doc.insertText(0, 0, 0, 'TC #6: table insert');
+        w.doc.splitParagraph(0, 0, 19);
+
+        // 1) 텍스트 문단
+        w.doc.insertText(0, 1, 0, 'Before table paragraph');
 
         // 2) Enter로 새 문단 생성
-        w.doc.splitParagraph(0, 0, 22);
+        w.doc.splitParagraph(0, 1, 22);
 
-        // 3) 두 번째 문단에 표 삽입 (2x2)
-        const tableResult = JSON.parse(w.doc.createTable(0, 1, 0, 2, 2));
+        // 3) 세 번째 문단에 표 삽입 (2x2)
+        const tableResult = JSON.parse(w.doc.createTable(0, 2, 0, 2, 2));
         const tblPara = tableResult.paraIdx ?? 1;
         const tblCtrl = tableResult.controlIdx ?? 0;
 
@@ -184,13 +196,14 @@ async function run() {
         window.__eventBus?.emit('document-changed');
 
         // 검증
-        const text0 = w.doc.getTextRange(0, 0, 0, 50);
+        const textTitle = w.doc.getTextRange(0, 0, 0, 50);
+        const textBefore = w.doc.getTextRange(0, 1, 0, 50);
         const textAfter = w.doc.getTextRange(0, afterParaIdx, 0, 50);
         const cellText = w.doc.getTextInCell(0, tblPara, tblCtrl, 0, 0, 0, 50);
         const pageCount = w.doc.pageCount();
 
         return {
-          text0, textAfter, cellText, pageCount,
+          textTitle, textBefore, textAfter, cellText, pageCount,
           tblPara, tblCtrl, totalParas, afterParaIdx,
           ok: true
         };
@@ -203,8 +216,10 @@ async function run() {
     } else {
       check(cellResult.ok === true,
         `표 삽입 성공 (tblPara=${cellResult.tblPara}, totalParas=${cellResult.totalParas})`);
-      check(cellResult.text0?.includes('Before table'),
-        `표 앞 문단: "${cellResult.text0}"`);
+      check(cellResult.textTitle?.includes('TC #6'),
+        `제목: "${cellResult.textTitle}"`);
+      check(cellResult.textBefore?.includes('Before table'),
+        `표 앞 문단: "${cellResult.textBefore}"`);
       check(cellResult.cellText === 'Cell A1',
         `셀[0] 텍스트: "${cellResult.cellText}"`);
       check(cellResult.textAfter?.includes('After table'),
@@ -240,10 +255,12 @@ async function run() {
       const w = window.__wasm;
       if (!w?.doc) return { error: 'no doc' };
       try {
-        w.doc.insertText(0, 0, 0, 'Before page break');
+        w.doc.insertText(0, 0, 0, 'TC #7: page break');
+        w.doc.splitParagraph(0, 0, 18);
+        w.doc.insertText(0, 1, 0, 'Before page break');
         const beforePages = w.doc.pageCount();
 
-        w.doc.insertPageBreak(0, 0, 17);  // 텍스트 끝에 페이지 브레이크
+        w.doc.insertPageBreak(0, 1, 17);  // 텍스트 끝에 페이지 브레이크
         window.__eventBus?.emit('document-changed');
         const afterPages = w.doc.pageCount();
         const paraCount = w.doc.getParagraphCount(0);
@@ -270,20 +287,22 @@ async function run() {
       const w = window.__wasm;
       if (!w?.doc) return { error: 'no doc' };
       try {
-        // 5개 문단 생성
-        w.doc.insertText(0, 0, 0, 'Paragraph 1');
-        w.doc.splitParagraph(0, 0, 11);
-        w.doc.insertText(0, 1, 0, 'Paragraph 2');
+        // 제목 + 5개 문단 생성
+        w.doc.insertText(0, 0, 0, 'TC #8: vpos cascade');
+        w.doc.splitParagraph(0, 0, 19);
+        w.doc.insertText(0, 1, 0, 'Paragraph 1');
         w.doc.splitParagraph(0, 1, 11);
-        w.doc.insertText(0, 2, 0, 'Paragraph 3');
+        w.doc.insertText(0, 2, 0, 'Paragraph 2');
         w.doc.splitParagraph(0, 2, 11);
-        w.doc.insertText(0, 3, 0, 'Paragraph 4');
+        w.doc.insertText(0, 3, 0, 'Paragraph 3');
         w.doc.splitParagraph(0, 3, 11);
-        w.doc.insertText(0, 4, 0, 'Paragraph 5');
+        w.doc.insertText(0, 4, 0, 'Paragraph 4');
+        w.doc.splitParagraph(0, 4, 11);
+        w.doc.insertText(0, 5, 0, 'Paragraph 5');
 
-        // 각 문단의 줄 정보 조회 (vpos 확인)
+        // 각 문단의 줄 정보 조회 (vpos 확인, 제목 제외 1~5)
         const lines = [];
-        for (let p = 0; p < 5; p++) {
+        for (let p = 1; p < 6; p++) {
           try {
             const info = JSON.parse(w.doc.getLineInfo(0, p, 0));
             lines.push(info);
@@ -292,11 +311,11 @@ async function run() {
 
         // 문단 1에 긴 텍스트 삽입 → 높이 증가 → 후속 문단 vpos cascade
         const longText = 'ABCDEFGHIJ '.repeat(50);
-        w.doc.insertText(0, 0, 11, longText);
+        w.doc.insertText(0, 1, 11, longText);
         window.__eventBus?.emit('document-changed');
 
         const linesAfter = [];
-        for (let p = 0; p < 5; p++) {
+        for (let p = 1; p < 6; p++) {
           try {
             const info = JSON.parse(w.doc.getLineInfo(0, p, 0));
             linesAfter.push(info);
@@ -330,15 +349,17 @@ async function run() {
       const w = window.__wasm;
       if (!w?.doc) return { error: 'no doc' };
       try {
-        w.doc.insertText(0, 0, 0, 'AAABBBCCC');
+        w.doc.insertText(0, 0, 0, 'TC #9: stability');
+        w.doc.splitParagraph(0, 0, 16);
+        w.doc.insertText(0, 1, 0, 'AAABBBCCC');
 
         // 분할 → 병합 → 분할 → 병합 반복
         for (let i = 0; i < 5; i++) {
-          w.doc.splitParagraph(0, 0, 3);  // 'AAA' | 'BBBCCC'
-          w.doc.mergeParagraph(0, 1);     // 'AAABBBCCC'
+          w.doc.splitParagraph(0, 1, 3);  // 'AAA' | 'BBBCCC'
+          w.doc.mergeParagraph(0, 2);     // 'AAABBBCCC'
         }
 
-        const text = w.doc.getTextRange(0, 0, 0, 50);
+        const text = w.doc.getTextRange(0, 1, 0, 50);
         const paraCount = w.doc.getParagraphCount(0);
         const pageCount = w.doc.pageCount();
         window.__eventBus?.emit('document-changed');
@@ -351,8 +372,8 @@ async function run() {
     } else {
       check(stabilityResult.text === 'AAABBBCCC',
         `5회 분할/병합 후 텍스트 보존: "${stabilityResult.text}"`);
-      check(stabilityResult.paraCount === 1,
-        `5회 분할/병합 후 문단 수: ${stabilityResult.paraCount}`);
+      check(stabilityResult.paraCount === 2,
+        `5회 분할/병합 후 문단 수: ${stabilityResult.paraCount} (제목+본문)`);
       check(stabilityResult.pageCount === 1,
         `5회 분할/병합 후 페이지 수: ${stabilityResult.pageCount}`);
     }
