@@ -18,6 +18,8 @@ pub mod render_tree;
 pub mod scheduler;
 pub mod style_resolver;
 pub mod svg;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod pdf;
 pub mod typeset;
 #[cfg(target_arch = "wasm32")]
 pub mod web_canvas;

@@ -9,6 +9,7 @@ fn main() {
         Some("--help") | Some("-h") => print_help(),
         Some("--version") | Some("-V") => println!("rhwp v{}", rhwp::version()),
         Some("export-svg") => export_svg(&args[2..]),
+        Some("export-pdf") => export_pdf(&args[2..]),
         Some("info") => show_info(&args[2..]),
         Some("dump") => dump_controls(&args[2..]),
         Some("dump-pages") => dump_pages(&args[2..]),
@@ -206,6 +207,154 @@ fn export_svg(args: &[String]) {
     }
 
     println!("내보내기 완료: {}개 SVG 파일 → {}/", pages.len(), output_dir);
+}
+
+fn export_pdf(args: &[String]) {
+    if args.is_empty() {
+        eprintln!("오류: HWP 파일 경로를 지정해주세요.");
+        eprintln!("사용법: rhwp export-pdf <파일.hwp> [-o 출력.pdf] [-p 페이지]");
+        return;
+    }
+
+    let file_path = &args[0];
+    let mut output_file = String::new();
+    let mut target_page: Option<u32> = None;
+
+    let mut i = 1;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--output" | "-o" => {
+                if i + 1 < args.len() {
+                    output_file = args[i + 1].clone();
+                    i += 2;
+                } else {
+                    eprintln!("오류: --output 뒤에 파일 경로가 필요합니다.");
+                    return;
+                }
+            }
+            "--page" | "-p" => {
+                if i + 1 < args.len() {
+                    match args[i + 1].parse::<u32>() {
+                        Ok(n) => target_page = Some(n),
+                        Err(_) => {
+                            eprintln!("오류: 페이지 번호가 올바르지 않습니다.");
+                            return;
+                        }
+                    }
+                    i += 2;
+                } else {
+                    eprintln!("오류: --page 뒤에 페이지 번호가 필요합니다.");
+                    return;
+                }
+            }
+            _ => { i += 1; }
+        }
+    }
+
+    // 기본 출력 파일명
+    if output_file.is_empty() {
+        let stem = Path::new(file_path)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("output");
+        output_file = format!("output/{}.pdf", stem);
+    }
+
+    let data = match fs::read(file_path) {
+        Ok(d) => d,
+        Err(e) => {
+            eprintln!("오류: 파일을 읽을 수 없습니다 - {}: {}", file_path, e);
+            return;
+        }
+    };
+
+    let mut doc = match rhwp::wasm_api::HwpDocument::from_bytes(&data) {
+        Ok(d) => d,
+        Err(e) => {
+            eprintln!("오류: HWP 파싱 실패 - {}", e);
+            return;
+        }
+    };
+
+    let page_count = doc.page_count();
+    println!("문서 로드 완료: {} ({}페이지)", file_path, page_count);
+
+    // 출력 디렉토리 생성
+    if let Some(parent) = Path::new(&output_file).parent() {
+        if !parent.exists() {
+            let _ = fs::create_dir_all(parent);
+        }
+    }
+
+    // 페이지 범위 결정
+    let pages: Vec<u32> = match target_page {
+        Some(p) => {
+            if p >= page_count {
+                eprintln!("오류: 페이지 번호가 범위를 벗어났습니다 (0~{})", page_count - 1);
+                return;
+            }
+            vec![p]
+        }
+        None => (0..page_count).collect(),
+    };
+
+    // SVG 렌더링 → PDF 변환
+    let mut svg_pages: Vec<String> = Vec::new();
+    for page_num in &pages {
+        match doc.render_page_svg(*page_num) {
+            Ok(svg) => svg_pages.push(svg),
+            Err(e) => {
+                eprintln!("오류: 페이지 {} 렌더링 실패 - {:?}", page_num, e);
+                return;
+            }
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use rhwp::renderer::pdf;
+        if svg_pages.len() == 1 {
+            match pdf::svg_to_pdf(&svg_pages[0]) {
+                Ok(pdf_bytes) => {
+                    match fs::write(&output_file, &pdf_bytes) {
+                        Ok(_) => println!("  → {} ({}KB)", output_file, pdf_bytes.len() / 1024),
+                        Err(e) => eprintln!("오류: PDF 저장 실패 - {}", e),
+                    }
+                }
+                Err(e) => eprintln!("오류: PDF 변환 실패 - {}", e),
+            }
+        } else {
+            // 다중 페이지: 개별 PDF 생성 (향후 병합 구현)
+            match pdf::svgs_to_pdfs(&svg_pages) {
+                Ok(pdfs) => {
+                    if pdfs.len() == 1 {
+                        match fs::write(&output_file, &pdfs[0]) {
+                            Ok(_) => println!("  → {} ({}KB)", output_file, pdfs[0].len() / 1024),
+                            Err(e) => eprintln!("오류: PDF 저장 실패 - {}", e),
+                        }
+                    } else {
+                        // 페이지별 파일 저장
+                        let stem = Path::new(&output_file)
+                            .file_stem()
+                            .and_then(|s| s.to_str())
+                            .unwrap_or("page");
+                        let dir = Path::new(&output_file).parent().unwrap_or(Path::new("output"));
+                        for (i, pdf_bytes) in pdfs.iter().enumerate() {
+                            let fname = format!("{}_{:03}.pdf", stem, pages[i] + 1);
+                            let path = dir.join(&fname);
+                            match fs::write(&path, pdf_bytes) {
+                                Ok(_) => println!("  → {} ({}KB)", path.display(), pdf_bytes.len() / 1024),
+                                Err(e) => eprintln!("오류: PDF 저장 실패 - {}", e),
+                            }
+                        }
+                    }
+                }
+                Err(e) => eprintln!("오류: PDF 변환 실패 - {}", e),
+            }
+        }
+    }
+
+    println!("PDF 내보내기 완료");
 }
 
 fn show_info(args: &[String]) {
