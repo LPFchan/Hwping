@@ -148,70 +148,87 @@ async function run() {
     check(pagesAfterLong >= 1, `긴 텍스트 후 페이지 수: ${pagesAfterLong}`);
     await screenshot(page, 'edit-05-long-text');
 
-    // ── 6. Gap 6: 셀 편집 후 composed 정합 ──
-    console.log('\n[6] Gap 6: 셀 편집 후 정합...');
+    // ── 6. 표 삽입: 텍스트 → 표 → 텍스트 구조 ──
+    console.log('\n[6] 표 삽입: 텍스트 → 표 → 텍스트...');
     await createNewDocument(page);
     await clickEditArea(page);
 
-    // WASM API로 직접 표 삽입 및 셀 편집
     const cellResult = await page.evaluate(() => {
       const w = window.__wasm;
       if (!w?.doc) return { error: 'no doc' };
       try {
-        // 표 삽입 (2x2) — createTable 반환값에서 paraIdx 확인
-        const tableResult = JSON.parse(w.doc.createTable(0, 0, 0, 2, 2));
-        const tblPara = tableResult.paraIdx ?? 0;
+        // 1) 첫 문단에 텍스트 입력
+        w.doc.insertText(0, 0, 0, 'Before table paragraph');
+
+        // 2) Enter로 새 문단 생성
+        w.doc.splitParagraph(0, 0, 22);
+
+        // 3) 두 번째 문단에 표 삽입 (2x2)
+        const tableResult = JSON.parse(w.doc.createTable(0, 1, 0, 2, 2));
+        const tblPara = tableResult.paraIdx ?? 1;
         const tblCtrl = tableResult.controlIdx ?? 0;
 
-        // 셀에 텍스트 삽입
+        // 4) 셀에 텍스트 삽입
         w.doc.insertTextInCell(0, tblPara, tblCtrl, 0, 0, 0, 'Cell A1');
         w.doc.insertTextInCell(0, tblPara, tblCtrl, 1, 0, 0, 'Cell A2');
         w.doc.insertTextInCell(0, tblPara, tblCtrl, 2, 0, 0, 'Cell B1');
         w.doc.insertTextInCell(0, tblPara, tblCtrl, 3, 0, 0, 'Cell B2');
 
-        // 셀 내 문단 분할 (Enter)
-        w.doc.splitParagraphInCell(0, tblPara, tblCtrl, 0, 0, 7);
-
-        // 셀 내 문단 텍스트 확인
-        const text0 = w.doc.getTextInCell(0, tblPara, tblCtrl, 0, 0, 0, 50);
-        const text1 = w.doc.getTextInCell(0, tblPara, tblCtrl, 0, 1, 0, 50);
+        // 5) 표 다음 문단에 텍스트 입력
+        //    표 삽입으로 문단이 추가되었으므로 표 다음 문단 인덱스 확인
+        const totalParas = w.doc.getParagraphCount(0);
+        const afterParaIdx = totalParas - 1;  // 마지막 문단
+        w.doc.insertText(0, afterParaIdx, 0, 'After table paragraph');
 
         // 캔버스 재렌더링 트리거
         window.__eventBus?.emit('document-changed');
 
+        // 검증
+        const text0 = w.doc.getTextRange(0, 0, 0, 50);
+        const textAfter = w.doc.getTextRange(0, afterParaIdx, 0, 50);
+        const cellText = w.doc.getTextInCell(0, tblPara, tblCtrl, 0, 0, 0, 50);
         const pageCount = w.doc.pageCount();
-        return { text0, text1, pageCount, tblPara, tblCtrl, ok: true };
+
+        return {
+          text0, textAfter, cellText, pageCount,
+          tblPara, tblCtrl, totalParas, afterParaIdx,
+          ok: true
+        };
       } catch (e) { return { error: e.message, stack: e.stack }; }
     });
-    // 렌더링 안정화 대기
     await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
 
     if (cellResult.error) {
-      console.log(`  SKIP: 표 삽입 API 오류 (${cellResult.error})`);
+      console.log(`  SKIP: 표 삽입 오류 (${cellResult.error})`);
     } else {
-      check(cellResult.ok === true, `표 삽입 + 셀 편집 성공 (tblPara=${cellResult.tblPara}, tblCtrl=${cellResult.tblCtrl})`);
-      check(cellResult.text0 === 'Cell A1',
-        `셀[0] 분할 후 첫 문단: "${cellResult.text0}"`);
-      // offset 7에서 split → 둘째 문단은 빈 문자열 (정상)
-      check(cellResult.text1 === '' || cellResult.text1 !== undefined,
-        `셀[0] 분할 후 둘째 문단(빈): "${cellResult.text1}"`);
-      check(cellResult.pageCount >= 1, `표 삽입 후 페이지 수: ${cellResult.pageCount}`);
+      check(cellResult.ok === true,
+        `표 삽입 성공 (tblPara=${cellResult.tblPara}, totalParas=${cellResult.totalParas})`);
+      check(cellResult.text0?.includes('Before table'),
+        `표 앞 문단: "${cellResult.text0}"`);
+      check(cellResult.cellText === 'Cell A1',
+        `셀[0] 텍스트: "${cellResult.cellText}"`);
+      check(cellResult.textAfter?.includes('After table'),
+        `표 뒤 문단: "${cellResult.textAfter}"`);
+      check(cellResult.pageCount >= 1, `페이지 수: ${cellResult.pageCount}`);
 
-      // 표 렌더링 확인: SVG에 셀 텍스트 글자가 포함되는지
-      // (SVG는 글자별 개별 <text> 요소이므로 글자 단위로 확인)
+      // SVG 렌더링: 표 앞/뒤 텍스트 + 셀 텍스트 확인
       const svgCheck = await page.evaluate(() => {
         const w = window.__wasm;
         if (!w?.doc) return { ok: false };
         try {
           const svg = w.doc.renderPageSvg(0);
-          const hasC = svg.includes('>C<');  // "Cell" 의 C
-          const hasRect = svg.includes('<rect') || svg.includes('<line');  // 표 테두리
-          return { ok: hasC && hasRect, hasC, hasRect, svgLen: svg.length };
+          const hasBefore = svg.includes('>B<');   // "Before"의 B
+          const hasCell = svg.includes('>C<');     // "Cell"의 C
+          const hasAfter = svg.includes('>A<');    // "After"의 A
+          const hasRect = svg.includes('<rect') || svg.includes('<line');
+          return { ok: hasBefore && hasCell && hasAfter && hasRect,
+                   hasBefore, hasCell, hasAfter, hasRect };
         } catch (e) { return { ok: false, error: e.message }; }
       });
-      check(svgCheck.ok, `SVG 표 렌더링 확인 (셀 글자=${svgCheck.hasC}, 테두리=${svgCheck.hasRect}, len=${svgCheck.svgLen})`);
+      check(svgCheck.ok,
+        `SVG 렌더링 (앞=${svgCheck.hasBefore} 셀=${svgCheck.hasCell} 뒤=${svgCheck.hasAfter} 테두리=${svgCheck.hasRect})`);
     }
-    await screenshot(page, 'edit-06-cell-edit');
+    await screenshot(page, 'edit-06-table-insert');
 
     // ── 7. Gap 7: 페이지 브레이크 삽입 ──
     console.log('\n[7] Gap 7: 페이지 브레이크...');
