@@ -141,11 +141,13 @@ pub fn extract_tab_leaders_with_extended(
             };
 
             // 둘 중 하나라도 fill이 있으면 리더 추가
+            // 오른쪽 정렬 텍스트 앞에 공백 1개 간격 확보
             let fill_type = if ext_fill > 0 { ext_fill } else { tabdef_fill };
             if fill_type > 0 && after_x > before_x + 1.0 {
+                let space_gap = style.font_size * 0.25;
                 leaders.push(TabLeaderInfo {
                     start_x: before_x,
-                    end_x: after_x,
+                    end_x: (after_x - space_gap).max(before_x),
                     fill_type,
                 });
             }
@@ -286,6 +288,10 @@ impl TextMeasurer for EmbeddedTextMeasurer {
                     match tab_type {
                         1 => { // 오른쪽
                             let seg_w = measure_segment_from(&chars, &cluster_len, i + 1, &char_width);
+                            if tab_type == 1 {
+                                eprintln!("[DEBUG_TAB_POS] RIGHT tab: abs_x={:.2}, tab_pos={:.2}, line_x_offset={:.2}, rel_tab={:.2}, seg_w={:.2}, avail_w={:.2}, result_x={:.2}",
+                                    abs_x, tab_pos, style.line_x_offset, rel_tab, seg_w, style.available_width, (rel_tab - seg_w).max(x));
+                            }
                             x = (rel_tab - seg_w).max(x);
                         }
                         2 => { // 가운데

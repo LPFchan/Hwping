@@ -1056,8 +1056,11 @@ impl LayoutEngine {
                     estimate_text_width(&run.text, &text_style)
                 };
                 // 탭 리더 계산: 탭이 포함된 run에서 채움 기호 정보 추출
+                // inline_tabs를 일시 제거하여 tab_stops 기반 위치 계산과 일관되게 함
                 if has_tabs && run.text.contains('\t') {
+                    let saved_inline_tabs = std::mem::take(&mut text_style.inline_tabs);
                     let positions = compute_char_positions(&run.text, &text_style);
+                    text_style.inline_tabs = saved_inline_tabs;
                     text_style.tab_leaders = extract_tab_leaders_with_extended(&run.text, &positions, &text_style, &composed.tab_extended);
                 }
                 // 교차 run 오른쪽/가운데 탭 감지:
