@@ -1,25 +1,21 @@
 //! PDF 렌더러 (Task #21)
 //!
-//! SVG 렌더러의 출력을 svg2pdf로 변환하여 PDF를 생성한다.
-//! 네이티브 전용 (WASM 미지원).
+//! SVG 렌더러의 출력을 svg2pdf + pdf-writer로 PDF를 생성한다.
+//! 단일/다중 페이지 모두 지원. 네이티브 전용 (WASM 미지원).
 
 /// 폰트 데이터베이스를 초기화 (시스템 폰트 + 프로젝트 폰트 로드)
 #[cfg(not(target_arch = "wasm32"))]
 fn create_fontdb() -> usvg::fontdb::Database {
     let mut fontdb = usvg::fontdb::Database::new();
-    // 시스템 폰트 로드
     fontdb.load_system_fonts();
-    // 프로젝트 폰트 디렉토리 로드
     for dir in &["ttfs", "ttfs/windows", "ttfs/hwp"] {
         if std::path::Path::new(dir).exists() {
             fontdb.load_fonts_dir(dir);
         }
     }
-    // WSL 환경: Windows 폰트 디렉토리
     if std::path::Path::new("/mnt/c/Windows/Fonts").exists() {
         fontdb.load_fonts_dir("/mnt/c/Windows/Fonts");
     }
-    // 한글 폰트 fallback 설정
     fontdb.set_serif_family("바탕");
     fontdb.set_sans_serif_family("맑은 고딕");
     fontdb.set_monospace_family("D2Coding");
@@ -48,7 +44,7 @@ pub fn svg_to_pdf(svg_content: &str) -> Result<Vec<u8>, String> {
     Ok(pdf)
 }
 
-/// 여러 SVG 페이지를 단일 PDF로 병합
+/// 여러 SVG 페이지를 단일 다중 페이지 PDF로 생성
 #[cfg(not(target_arch = "wasm32"))]
 pub fn svgs_to_pdf(svg_pages: &[String]) -> Result<Vec<u8>, String> {
     if svg_pages.is_empty() {
@@ -58,120 +54,104 @@ pub fn svgs_to_pdf(svg_pages: &[String]) -> Result<Vec<u8>, String> {
         return svg_to_pdf(&svg_pages[0]);
     }
 
-    // 각 SVG를 개별 PDF로 변환
+    use pdf_writer::{Pdf, Ref, Finish};
+    use std::collections::HashMap;
+
     let fontdb = create_fontdb();
     let mut options = usvg::Options::default();
     options.fontdb = std::sync::Arc::new(fontdb);
 
-    let mut page_pdfs: Vec<Vec<u8>> = Vec::new();
+    let mut alloc = Ref::new(1);
+    let catalog_ref = alloc.bump();
+    let page_tree_ref = alloc.bump();
+
+    // 각 페이지의 SVG를 파싱하여 chunk + page 정보 수집
+    struct PageData {
+        chunk: pdf_writer::Chunk,
+        svg_ref: Ref,
+        width: f32,
+        height: f32,
+    }
+
+    let mut page_datas: Vec<PageData> = Vec::new();
+
     for svg in svg_pages {
         let svg_with_fallback = add_font_fallbacks(svg);
         let tree = usvg::Tree::from_str(&svg_with_fallback, &options)
             .map_err(|e| format!("SVG 파싱 실패: {}", e))?;
-        let pdf = svg2pdf::to_pdf(&tree, svg2pdf::ConversionOptions::default(), svg2pdf::PageOptions::default())
-            .map_err(|e| format!("PDF 변환 실패: {:?}", e))?;
-        page_pdfs.push(pdf);
+
+        let (chunk, svg_ref) = svg2pdf::to_chunk(&tree, svg2pdf::ConversionOptions::default())
+            .map_err(|e| format!("SVG→chunk 변환 실패: {:?}", e))?;
+
+        let dpi_ratio = 72.0 / 96.0; // 96 DPI → 72 pt
+        let w = tree.size().width() * dpi_ratio;
+        let h = tree.size().height() * dpi_ratio;
+
+        page_datas.push(PageData { chunk, svg_ref, width: w, height: h });
     }
 
-    // lopdf로 병합
-    merge_pdfs(&page_pdfs)
-}
+    // 각 chunk를 재번호화하고 페이지 참조 수집
+    let mut page_refs: Vec<Ref> = Vec::new();
+    let mut renumbered_chunks: Vec<pdf_writer::Chunk> = Vec::new();
+    let mut svg_refs_remapped: Vec<Ref> = Vec::new();
 
-/// 여러 단일 페이지 PDF를 하나로 병합 (pdf-writer 기반)
-#[cfg(not(target_arch = "wasm32"))]
-fn merge_pdfs(pdfs: &[Vec<u8>]) -> Result<Vec<u8>, String> {
-    if pdfs.len() == 1 {
-        return Ok(pdfs[0].clone());
+    for pd in &page_datas {
+        let page_ref = alloc.bump();
+        let content_ref = alloc.bump();
+        page_refs.push(page_ref);
+
+        // chunk 재번호화
+        let mut map = HashMap::new();
+        let renumbered = pd.chunk.renumber(|old| {
+            *map.entry(old).or_insert_with(|| alloc.bump())
+        });
+
+        let remapped_svg_ref = map.get(&pd.svg_ref).copied().unwrap_or(pd.svg_ref);
+        svg_refs_remapped.push(remapped_svg_ref);
+        renumbered_chunks.push(renumbered);
     }
 
-    let mut base = lopdf::Document::load_mem(&pdfs[0])
-        .map_err(|e| format!("PDF 로드 실패: {}", e))?;
+    // PDF 생성
+    let mut pdf = Pdf::new();
+    pdf.catalog(catalog_ref).pages(page_tree_ref);
+    pdf.pages(page_tree_ref)
+        .count(page_refs.len() as i32)
+        .kids(page_refs.iter().copied());
 
-    for pdf_bytes in &pdfs[1..] {
-        let src = lopdf::Document::load_mem(pdf_bytes)
-            .map_err(|e| format!("PDF 로드 실패: {}", e))?;
+    // 각 페이지 생성
+    let svg_name = pdf_writer::Name(b"S1");
 
-        // 소스의 모든 객체를 base에 복사
-        let mut id_map = std::collections::BTreeMap::new();
-        for (&id, obj) in &src.objects {
-            let new_id = base.add_object(obj.clone());
-            id_map.insert(id, new_id);
-        }
+    for (i, pd) in page_datas.iter().enumerate() {
+        let page_ref = page_refs[i];
+        let content_ref = alloc.bump();
+        let svg_ref = svg_refs_remapped[i];
 
-        // 복사된 객체 내부의 참조를 모두 재매핑
-        let new_ids: Vec<lopdf::ObjectId> = id_map.values().copied().collect();
-        for new_id in &new_ids {
-            if let Ok(obj) = base.get_object_mut(*new_id) {
-                remap_object(obj, &id_map);
-            }
-        }
+        let mut page = pdf.page(page_ref);
+        page.media_box(pdf_writer::Rect::new(0.0, 0.0, pd.width, pd.height));
+        page.parent(page_tree_ref);
+        page.contents(content_ref);
 
-        // Pages에 새 페이지 추가
-        let src_pages = src.get_pages();
-        for (_, &page_id) in src_pages.iter() {
-            if let Some(&new_page_id) = id_map.get(&page_id) {
-                let pages_id = base.catalog()
-                    .ok()
-                    .and_then(|c| c.get(b"Pages").ok())
-                    .and_then(|p| p.as_reference().ok())
-                    .ok_or_else(|| "Pages 참조 실패".to_string())?;
+        let mut resources = page.resources();
+        resources.x_objects().pair(svg_name, svg_ref);
+        resources.finish();
+        page.finish();
 
-                // Parent 설정
-                if let Ok(page_obj) = base.get_object_mut(new_page_id) {
-                    if let lopdf::Object::Dictionary(ref mut page_dict) = page_obj {
-                        page_dict.set("Parent", lopdf::Object::Reference(pages_id));
-                    }
-                }
+        // 컨텐츠 스트림: SVG XObject를 페이지 크기에 맞게 배치
+        let mut content = pdf_writer::Content::new();
+        content.transform([pd.width, 0.0, 0.0, pd.height, 0.0, 0.0]);
+        content.x_object(svg_name);
 
-                // Kids에 추가 + Count 증가
-                if let Ok(pages_obj) = base.get_object_mut(pages_id) {
-                    if let lopdf::Object::Dictionary(ref mut dict) = pages_obj {
-                        if let Ok(kids) = dict.get_mut(b"Kids") {
-                            if let lopdf::Object::Array(ref mut arr) = kids {
-                                arr.push(lopdf::Object::Reference(new_page_id));
-                            }
-                        }
-                        if let Ok(count) = dict.get_mut(b"Count") {
-                            if let lopdf::Object::Integer(ref mut n) = count {
-                                *n += 1;
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        pdf.stream(content_ref, &content.finish());
     }
 
-    let mut output = Vec::new();
-    base.save_to(&mut output)
-        .map_err(|e| format!("PDF 저장 실패: {}", e))?;
-    Ok(output)
-}
-
-/// 재귀적으로 객체 내부의 참조를 재매핑
-#[cfg(not(target_arch = "wasm32"))]
-fn remap_object(obj: &mut lopdf::Object, id_map: &std::collections::BTreeMap<lopdf::ObjectId, lopdf::ObjectId>) {
-    match obj {
-        lopdf::Object::Reference(ref mut id) => {
-            if let Some(&new_id) = id_map.get(id) {
-                *id = new_id;
-            }
-        }
-        lopdf::Object::Array(ref mut arr) => {
-            for item in arr.iter_mut() {
-                remap_object(item, id_map);
-            }
-        }
-        lopdf::Object::Dictionary(ref mut dict) => {
-            for (_, value) in dict.iter_mut() {
-                remap_object(value, id_map);
-            }
-        }
-        lopdf::Object::Stream(ref mut stream) => {
-            for (_, value) in stream.dict.iter_mut() {
-                remap_object(value, id_map);
-            }
-        }
-        _ => {}
+    // 모든 chunk를 PDF에 추가
+    for chunk in &renumbered_chunks {
+        pdf.extend(chunk);
     }
+
+    // 문서 정보
+    let info_ref = alloc.bump();
+    pdf.document_info(info_ref).producer(pdf_writer::TextStr("rhwp"));
+
+    Ok(pdf.finish())
 }
