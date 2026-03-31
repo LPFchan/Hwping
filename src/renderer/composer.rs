@@ -324,9 +324,22 @@ fn compose_lines(para: &Paragraph) -> Vec<ComposedLine> {
             &para.char_shapes,
         );
 
+        // TAC 표 문단: lh에 표 높이가 포함된 텍스트 줄은 th로 보정 (Task #19)
+        // 표 높이는 layout의 표 렌더링에서 별도 처리됨
+        let has_tac = para.controls.iter().any(|c|
+            matches!(c, crate::model::control::Control::Table(t) if t.common.treat_as_char));
+        let corrected_lh = if has_tac
+            && line_seg.text_height > 0
+            && line_seg.text_height < line_seg.line_height / 3
+        {
+            line_seg.text_height
+        } else {
+            line_seg.line_height
+        };
+
         lines.push(ComposedLine {
             runs,
-            line_height: line_seg.line_height,
+            line_height: corrected_lh,
             baseline_distance: line_seg.baseline_distance,
             segment_width: line_seg.segment_width,
             column_start: line_seg.column_start,

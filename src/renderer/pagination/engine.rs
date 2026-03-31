@@ -145,15 +145,36 @@ impl Paginator {
                 self.process_page_break(&mut st);
             }
 
-            // tac 표: trailing line_spacing 제외한 콘텐츠 높이로 판단
+            // tac 표: 표 실측 높이 + 텍스트 줄 높이(th)로 판단 (Task #19)
             let para_height_for_fit = if has_table {
                 let has_tac = para.controls.iter().any(|c|
                     matches!(c, Control::Table(t) if t.common.treat_as_char));
                 if has_tac {
-                    let trailing_ls = para.line_segs.last()
-                        .map(|seg| crate::renderer::hwpunit_to_px(seg.line_spacing, self.dpi))
-                        .unwrap_or(0.0);
-                    (para_height - trailing_ls).max(0.0)
+                    // 표 실측 높이 합산
+                    let tac_h: f64 = para.controls.iter().enumerate()
+                        .filter_map(|(ci, c)| {
+                            if let Control::Table(t) = c {
+                                if t.common.treat_as_char {
+                                    let mt_h = measured.get_table_height(para_idx, ci).unwrap_or(0.0);
+                                    let outer = crate::renderer::hwpunit_to_px(
+                                        (t.outer_margin_top + t.outer_margin_bottom) as i32, self.dpi);
+                                    Some(mt_h + outer)
+                                } else { None }
+                            } else { None }
+                        })
+                        .sum();
+                    // 텍스트 줄 높이: th 기반 (lh에 표 높이가 포함되므로 th 사용)
+                    let text_h: f64 = para.line_segs.iter()
+                        .filter(|seg| seg.text_height > 0 && seg.text_height < seg.line_height / 3)
+                        .map(|seg| {
+                            crate::renderer::hwpunit_to_px(seg.text_height + seg.line_spacing, self.dpi)
+                        })
+                        .sum();
+                    // host spacing (sb + sa)
+                    let mp = measured.get_measured_paragraph(para_idx);
+                    let sb = mp.map(|m| m.spacing_before).unwrap_or(0.0);
+                    let sa = mp.map(|m| m.spacing_after).unwrap_or(0.0);
+                    tac_h + text_h + sb + sa
                 } else {
                     para_height
                 }
@@ -1055,8 +1076,14 @@ impl Paginator {
         if let Some(mp) = measured.get_measured_paragraph(para_idx) {
             let total_lines = mp.line_heights.len();
 
+            // 강제 줄넘김 후 TAC 표: 텍스트가 표 앞에 있음 (Task #19)
+            let has_forced_linebreak = is_tac_table && para.text.contains('\n');
             let pre_table_end_line = if vertical_offset > 0 && !para.text.is_empty() {
                 total_lines
+            } else if has_forced_linebreak && total_lines > 1 {
+                // 강제 줄넘김 전 텍스트 줄 수 = \n 개수
+                let newline_count = para.text.chars().filter(|&c| c == '\n').count();
+                newline_count.min(total_lines - 1)
             } else {
                 0
             };
@@ -1066,7 +1093,18 @@ impl Paginator {
             let is_first_table = !para.controls.iter().take(ctrl_idx)
                 .any(|c| matches!(c, Control::Table(_)));
             if pre_table_end_line > 0 && is_first_table && !is_wrap_around_table {
-                let pre_height: f64 = mp.line_advances_sum(0..pre_table_end_line);
+                // 강제 줄넘김+TAC 표: th 기반으로 텍스트 줄 높이 계산 (Task #19)
+                let pre_height: f64 = if has_forced_linebreak {
+                    para.line_segs.iter().take(pre_table_end_line)
+                        .map(|seg| {
+                            let th = crate::renderer::hwpunit_to_px(seg.text_height, self.dpi);
+                            let ls = crate::renderer::hwpunit_to_px(seg.line_spacing, self.dpi);
+                            th + ls
+                        })
+                        .sum()
+                } else {
+                    mp.line_advances_sum(0..pre_table_end_line)
+                };
                 st.current_items.push(PageItem::PartialParagraph {
                     para_index: para_idx,
                     start_line: 0,
@@ -1091,7 +1129,10 @@ impl Paginator {
             // 현재 표가 문단 내 마지막 표인지 확인 (중복 텍스트 방지)
             let is_last_table = !para.controls.iter().skip(ctrl_idx + 1)
                 .any(|c| matches!(c, Control::Table(_)));
-            let post_table_start = if table.common.treat_as_char {
+            let post_table_start = if has_forced_linebreak && pre_table_end_line > 0 {
+                // 강제 줄넘김 후 TAC 표: 표 이후 post-text 없음 (Task #19)
+                total_lines
+            } else if table.common.treat_as_char {
                 pre_table_end_line.max(1)
             } else if is_last_table && !is_first_table {
                 // 다중 표 문단의 마지막 표: pre-table 텍스트는 첫 표에서 처리했으므로
