@@ -16,12 +16,62 @@ docker compose --env-file .env.docker run --rm wasm
 
 빌드 결과물은 `pkg/` 폴더에 생성된다.
 
-### 1.2 Chrome 디버깅 모드 시작 (Windows 호스트)
+### 1.2 WSL2 네트워크 설정 (mirrored 모드)
 
-Windows CMD 또는 PowerShell에서 실행:
+WSL2에서 Windows 호스트의 Chrome CDP에 접속하려면, mirrored 네트워크 모드를 사용한다.
+mirrored 모드에서는 Windows와 WSL2가 동일한 네트워크 스택을 공유하므로 `localhost`로 직접 통신할 수 있다.
+
+**Windows 측 설정** — `C:\Users\<사용자>\.wslconfig` 파일 생성 또는 편집:
+
+```ini
+[wsl2]
+networkingMode=mirrored
+memory=20GB
+processors=8
+swap=4GB
+dnsTunneling=false
+```
+
+> `networkingMode=mirrored`는 WSL 2.0.0 이상 + Windows 11 22H2 이상에서 지원된다.
+> `wsl --version`으로 WSL 버전을 확인할 수 있다.
+
+설정 후 PowerShell에서 WSL 재시작:
+
+```powershell
+wsl --shutdown
+```
+
+### 1.3 포트 프록시 설정
+
+mirrored 모드에서도 WSL2 → Windows 호스트의 Chrome CDP 접속을 위해 포트 프록시가 필요하다.
+
+Windows **관리자 권한** PowerShell에서 실행:
+
+```powershell
+# WSL2 IP 확인
+wsl hostname -I
+# 예: 172.21.192.102
+
+# 포트 프록시 추가
+netsh interface portproxy add v4tov4 listenport=19222 listenaddress=0.0.0.0 connectport=19222 connectaddress=(wsl hostname -I)
+
+# 확인
+netsh interface portproxy show v4tov4
+```
+
+> **참고**: WSL2 IP가 변경된 경우(재부팅 등) 포트 프록시를 재설정해야 한다:
+>
+> ```powershell
+> netsh interface portproxy delete v4tov4 listenport=19222 listenaddress=0.0.0.0
+> netsh interface portproxy add v4tov4 listenport=19222 listenaddress=0.0.0.0 connectport=19222 connectaddress=(wsl hostname -I)
+> ```
+
+### 1.4 Chrome 디버깅 모드 시작 (Windows 호스트)
+
+Windows CMD에서 실행:
 
 ```cmd
-"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=19222 --remote-debugging-address=0.0.0.0 --user-data-dir="C:\temp\chrome-debug"
+start chrome --remote-debugging-port=19222 --remote-debugging-address=0.0.0.0 --user-data-dir="C:\temp\chrome-debug1"
 ```
 
 | 옵션 | 설명 |
@@ -32,95 +82,15 @@ Windows CMD 또는 PowerShell에서 실행:
 
 Chrome이 시작되면 빈 탭이 열린다. 테스트 실행 시 새 탭이 자동으로 열리고, 테스트 완료 후 자동으로 닫힌다.
 
-### 1.3 WSL2 ↔ Windows 포트 포워딩 설정
-
-Windows 11 호스트의 WSL2 Ubuntu에서 호스트 Chrome의 CDP에 접속하려면 **포트 프록시** 설정이 필요하다.
-
-Windows **관리자 권한** PowerShell에서 실행:
-
-```powershell
-# WSL2 IP 확인 (Ubuntu 쪽에서: hostname -I)
-# 예: 172.21.192.102
-
-# 포트 프록시 추가
-netsh interface portproxy add v4tov4 listenport=19222 listenaddress=0.0.0.0 connectport=19222 connectaddress=172.21.192.102
-
-# 확인
-netsh interface portproxy show v4tov4
-```
-
-| 항목 | 설명 |
-|------|------|
-| `listenport=19222` | Windows에서 수신할 포트 |
-| `listenaddress=0.0.0.0` | 모든 인터페이스에서 수신 |
-| `connectport=19222` | Chrome CDP 포트와 동일 |
-| `connectaddress=172.21.192.102` | WSL2의 IP (재부팅 시 변경될 수 있음) |
-
-Windows 방화벽이 활성화된 경우 인바운드 룰도 추가해야 한다:
-
-```powershell
-netsh advfirewall firewall add rule name="WSL2 CDP Proxy" dir=in action=allow protocol=TCP localport=19222 remoteip=172.21.192.102
-```
-
-> **주의**: WSL2 IP는 재부팅마다 변경된다. 변경 시 포트 프록시와 방화벽 룰을 재설정해야 한다.
-> 아래 **1.3.1 WSL2 IP 고정** 설정을 적용하면 재설정이 불필요하다.
->
-> ```powershell
-> # 포트 프록시 재설정
-> netsh interface portproxy delete v4tov4 listenport=19222 listenaddress=0.0.0.0
-> netsh interface portproxy add v4tov4 listenport=19222 listenaddress=0.0.0.0 connectport=19222 connectaddress=<새 WSL2 IP>
->
-> # 방화벽 룰 재설정
-> netsh advfirewall firewall delete rule name="WSL2 CDP Proxy"
-> netsh advfirewall firewall add rule name="WSL2 CDP Proxy" dir=in action=allow protocol=TCP localport=19222 remoteip=<새 WSL2 IP>
-> ```
-
-#### 1.3.1 WSL2 IP 고정 (권장)
-
-WSL2의 IP를 고정하면 재부팅마다 포트 프록시와 방화벽 룰을 재설정할 필요가 없다.
-
-**Windows 측 설정** — `C:\Users\<사용자>\.wslconfig` 파일 생성 또는 편집:
-
-```ini
-[wsl2]
-networkingMode=static
-ipAddress=172.21.192.102
-gateway=172.21.192.1
-```
-
-> `networkingMode=static`은 Windows 11 22H2 이상 + WSL 2.0.0 이상에서 지원된다.
-> `wsl --version`으로 WSL 버전을 확인할 수 있다.
-
-**WSL2 Ubuntu 측 설정** — `/etc/wsl.conf` 파일에 DNS 설정 추가:
-
-```ini
-[network]
-generateResolvConf = false
-```
-
-그리고 `/etc/resolv.conf`를 직접 생성:
+#### CDP 연결 확인 (WSL2에서)
 
 ```bash
-sudo rm /etc/resolv.conf
-echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
+curl -s http://localhost:19222/json/version
 ```
 
-설정 후 PowerShell에서 WSL 재시작:
+정상이면 Chrome 버전 정보가 JSON으로 출력된다.
 
-```powershell
-wsl --shutdown
-```
-
-> **대안 (mirrored 모드)**: WSL 2.4.4+ 에서는 `networkingMode=mirrored`를 사용하면
-> Windows와 WSL2가 동일한 IP를 공유하여 포트 프록시 자체가 불필요하다.
-> 단, mirrored 모드는 일부 네트워크 환경에서 호환성 문제가 있을 수 있다.
->
-> ```ini
-> [wsl2]
-> networkingMode=mirrored
-> ```
-
-### 1.4 Vite 개발 서버 시작 (WSL2)
+### 1.5 Vite 개발 서버 시작 (WSL2)
 
 ```bash
 cd rhwp-studio
@@ -142,12 +112,9 @@ CHROME_CDP=http://localhost:19222 node e2e/edit-pipeline.test.mjs --mode=host
 
 | 환경변수/옵션 | 설명 |
 |-------------|------|
-| `CHROME_CDP` | Windows 호스트의 Chrome CDP 주소 |
+| `CHROME_CDP` | Chrome CDP 주소 (mirrored 모드에서는 `http://localhost:19222`) |
 | `--mode=host` | 호스트 Chrome에 CDP 연결 (기본값) |
 | `--mode=headless` | WSL2 내부 headless Chrome 사용 (시각 확인 불가) |
-
-> **IP 확인**: WSL2에서 Windows 호스트 IP는 `ip route show default | awk '{print $3}'`로 확인 가능.
-> mirrored 모드에서는 `localhost`를 사용한다.
 
 ### 2.2 전체 테스트 목록
 
@@ -374,7 +341,7 @@ output/e2e/
 cd rhwp-studio
 CHROME_CDP=http://localhost:19222 node e2e/copy-paste.test.mjs --mode=host
 
-# 보고서 열기 (Windows)
+# 보고서 열기 (Windows — WSL2에서 실행)
 explorer.exe "$(wslpath -w ../output/e2e/copy-paste-report.html)"
 ```
 
@@ -483,10 +450,10 @@ runTest('나의 파일 테스트', async ({ page }) => {
 TypeError: Failed to fetch browser webSocket URL
 ```
 
-- Chrome이 디버깅 모드로 실행 중인지 확인
-- `CHROME_CDP` 환경변수의 IP/포트가 맞는지 확인
-- Windows 방화벽이 해당 포트를 차단하지 않는지 확인
-- mirrored 모드에서는 `CHROME_CDP=http://localhost:19222` 사용
+- Chrome이 디버깅 모드로 실행 중인지 확인 (`start chrome --remote-debugging-port=19222 ...`)
+- `CHROME_CDP=http://localhost:19222`로 설정되어 있는지 확인
+- 포트 프록시 설정 확인: `netsh interface portproxy show v4tov4`
+- WSL2에서 연결 테스트: `curl -s http://localhost:19222/json/version`
 
 ### 캔버스를 찾을 수 없음
 
