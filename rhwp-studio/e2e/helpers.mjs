@@ -10,10 +10,12 @@
  *   node e2e/text-flow.test.mjs --mode=headless  # headless Chrome
  */
 import puppeteer from 'puppeteer-core';
+import { TestReporter } from './report-generator.mjs';
 
 const CHROME_PATH = '/home/edward/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome';
 const CHROME_CDP = process.env.CHROME_CDP || 'http://172.21.192.1:19222';
 const VITE_URL = process.env.VITE_URL || 'http://localhost:7700';
+const REPORT_DIR = '../output/e2e';
 
 /** CLI 인수에서 --mode=host|headless 파싱 */
 function parseMode() {
@@ -23,6 +25,17 @@ function parseMode() {
 }
 
 const MODE = parseMode();
+
+// ─── 내장 리포터 (runTest에서 자동 사용) ─────────────────
+
+let _reporter = null;
+let _currentTC = '';
+let _lastScreenshot = null;
+
+/** 현재 테스트 케이스 이름 설정 (보고서 그룹화용) */
+export function setTestCase(name) {
+  _currentTC = name;
+}
 
 // ─── 브라우저/페이지 생명주기 ────────────────────────────
 
@@ -161,7 +174,7 @@ export async function typeText(page, text) {
 
 // ─── 스크린샷/조회/검증 ──────────────────────────────────
 
-/** 스크린샷을 파일로 저장 */
+/** 스크린샷을 파일로 저장 (리포터에 자동 연결) */
 export async function screenshot(page, name) {
   const dir = 'e2e/screenshots';
   const { mkdirSync, existsSync } = await import('fs');
@@ -169,6 +182,14 @@ export async function screenshot(page, name) {
   const path = `${dir}/${name}.png`;
   await page.screenshot({ path, fullPage: false });
   console.log(`  Screenshot: ${path}`);
+  _lastScreenshot = `${name}.png`;
+  // 리포터에 마지막 스크린샷 연결
+  if (_reporter) {
+    const results = _reporter.results;
+    if (results.length > 0 && !results[results.length - 1].screenshot) {
+      results[results.length - 1].screenshot = `${name}.png`;
+    }
+  }
   return path;
 }
 
@@ -190,20 +211,33 @@ export async function getParaText(page, secIdx, paraIdx, maxLen = 200) {
   }, secIdx, paraIdx, maxLen);
 }
 
-/** 테스트 결과 출력 헬퍼 */
+/** 테스트 결과 출력 + 리포터 자동 기록 */
 export function assert(condition, message) {
   if (condition) {
     console.log(`  PASS: ${message}`);
+    if (_reporter) _reporter.pass(_currentTC, message, _lastScreenshot);
   } else {
     console.error(`  FAIL: ${message}`);
+    if (_reporter) _reporter.fail(_currentTC, message, _lastScreenshot);
     process.exitCode = 1;
   }
+  _lastScreenshot = null;
 }
 
 // ─── 테스트 러너 ─────────────────────────────────────────
 
 /**
- * 테스트 실행 래퍼 — 공통 골격 (브라우저/페이지 생명주기 + 에러 처리)
+ * 테스트 파일명에서 보고서 파일명 생성
+ * e.g., "copy-paste.test.mjs" → "copy-paste-report.html"
+ */
+function getReportFilename() {
+  const scriptPath = process.argv[1] || 'unknown';
+  const basename = scriptPath.split('/').pop().replace(/\.test\.mjs$/, '');
+  return `${basename}-report.html`;
+}
+
+/**
+ * 테스트 실행 래퍼 — 공통 골격 (브라우저/페이지 생명주기 + 에러 처리 + HTML 보고서)
  *
  * 사용법:
  *   runTest('테스트 제목', async ({ page, browser }) => {
@@ -213,6 +247,10 @@ export function assert(condition, message) {
  */
 export async function runTest(title, testFn, { skipLoadApp = false } = {}) {
   console.log(`=== E2E: ${title} ===\n`);
+  _reporter = new TestReporter(title);
+  _currentTC = title;
+  _lastScreenshot = null;
+
   const browser = await launchBrowser();
   const page = await createPage(browser);
 
@@ -222,8 +260,15 @@ export async function runTest(title, testFn, { skipLoadApp = false } = {}) {
   } catch (err) {
     console.error('테스트 오류:', err.message || err);
     await screenshot(page, 'error').catch(() => {});
+    if (_reporter) _reporter.fail(_currentTC, `ERROR: ${err.message || err}`);
     process.exitCode = 1;
   } finally {
+    // HTML 보고서 생성
+    const reportFile = `${REPORT_DIR}/${getReportFilename()}`;
+    _reporter.generate(reportFile);
+    _reporter = null;
+    _currentTC = '';
+    _lastScreenshot = null;
     await closeBrowser(browser);
   }
 }

@@ -894,7 +894,7 @@ async function run() {
     if (failed > 0) process.exitCode = 1;
 
     // HTML 보고서 생성
-    reporter.generate('../output/e2e/report.html');
+    reporter.generate('../output/e2e/edit-pipeline-report.html');
 
   } catch (err) {
     console.error('테스트 오류:', err.message);
