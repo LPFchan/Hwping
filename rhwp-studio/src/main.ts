@@ -355,19 +355,32 @@ function setupEventListeners(): void {
 /** 문서 초기화 공통 시퀀스 (loadFile, createNewDocument 양쪽에서 사용) */
 async function initializeDocument(docInfo: DocumentInfo, displayName: string): Promise<void> {
   const msg = sbMessage();
-  if (docInfo.fontsUsed?.length) {
-    await loadWebFonts(docInfo.fontsUsed, (loaded, total) => {
-      msg.textContent = `폰트 로딩 중... (${loaded}/${total})`;
-    });
+  try {
+    console.log('[initDoc] 1. 폰트 로딩 시작');
+    if (docInfo.fontsUsed?.length) {
+      await loadWebFonts(docInfo.fontsUsed, (loaded, total) => {
+        msg.textContent = `폰트 로딩 중... (${loaded}/${total})`;
+      });
+    }
+    console.log('[initDoc] 2. 폰트 로딩 완료');
+    msg.textContent = displayName;
+    totalSections = docInfo.sectionCount ?? 1;
+    sbSection().textContent = `구역: 1 / ${totalSections}`;
+    console.log('[initDoc] 3. inputHandler deactivate');
+    inputHandler?.deactivate();
+    console.log('[initDoc] 4. canvasView loadDocument');
+    canvasView?.loadDocument();
+    console.log('[initDoc] 5. toolbar setEnabled');
+    toolbar?.setEnabled(true);
+    console.log('[initDoc] 6. toolbar initStyleDropdown');
+    toolbar?.initStyleDropdown();
+    console.log('[initDoc] 7. inputHandler activateWithCaretPosition');
+    inputHandler?.activateWithCaretPosition();
+    console.log('[initDoc] 8. 완료');
+  } catch (error) {
+    console.error('[initDoc] 오류:', error);
+    if (window.innerWidth < 768) alert(`초기화 오류: ${error}`);
   }
-  msg.textContent = displayName;
-  totalSections = docInfo.sectionCount ?? 1;
-  sbSection().textContent = `구역: 1 / ${totalSections}`;
-  inputHandler?.deactivate();
-  canvasView?.loadDocument();
-  toolbar?.setEnabled(true);
-  toolbar?.initStyleDropdown();
-  inputHandler?.activateWithCaretPosition();
 }
 
 async function loadFile(file: File): Promise<void> {
@@ -380,8 +393,11 @@ async function loadFile(file: File): Promise<void> {
     const elapsed = performance.now() - startTime;
     await initializeDocument(docInfo, `${file.name} — ${docInfo.pageCount}페이지 (${elapsed.toFixed(1)}ms)`);
   } catch (error) {
-    msg.textContent = `파일 로드 실패: ${error}`;
+    const errMsg = `파일 로드 실패: ${error}`;
+    msg.textContent = errMsg;
     console.error('[main] 파일 로드 실패:', error);
+    // 모바일에서 상태 메시지가 숨겨질 수 있으므로 alert으로도 표시
+    if (window.innerWidth < 768) alert(errMsg);
   }
 }
 
