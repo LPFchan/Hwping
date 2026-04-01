@@ -103,7 +103,10 @@ export async function typeText(page, text) {
 
 /** 스크린샷을 파일로 저장 */
 export async function screenshot(page, name) {
-  const path = `e2e/screenshots/${name}.png`;
+  const dir = 'e2e/screenshots';
+  const { mkdirSync, existsSync } = await import('fs');
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  const path = `${dir}/${name}.png`;
   await page.screenshot({ path, fullPage: false });
   console.log(`  Screenshot: ${path}`);
   return path;
