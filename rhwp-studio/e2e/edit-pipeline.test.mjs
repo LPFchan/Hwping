@@ -650,8 +650,9 @@ async function run() {
     // ── 16. 이미지 삽입 → 문단 높이 변경 ──
     console.log('\n[16] 이미지 삽입...');
     await createNewDocument(page);
+    await clickEditArea(page);
 
-    const imgResult = await page.evaluate(() => {
+    const imgResult = await page.evaluate(async () => {
       const w = window.__wasm;
       if (!w?.doc) return { error: 'no doc' };
       try {
@@ -661,37 +662,40 @@ async function run() {
         w.doc.splitParagraph(0, 1, 12);
         w.doc.insertText(0, 2, 0, 'After image');
 
-        // 1x1 PNG 생성 (최소 이미지)
-        const png = new Uint8Array([
-          0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A, // PNG signature
-          0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52, // IHDR
-          0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01, // 1x1
-          0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53, // RGB
-          0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41, // IDAT
-          0x54,0x08,0xD7,0x63,0xF8,0xCF,0xC0,0x00,
-          0x00,0x00,0x02,0x00,0x01,0xE2,0x21,0xBC,
-          0x33,0x00,0x00,0x00,0x00,0x49,0x45,0x4E, // IEND
-          0x44,0xAE,0x42,0x60,0x82
-        ]);
+        // 샘플 이미지 fetch
+        const resp = await fetch('/samples/images/splatoon01.jpg');
+        if (!resp.ok) return { error: 'image fetch failed' };
+        const buf = await resp.arrayBuffer();
+        const data = new Uint8Array(buf);
 
-        // insertPicture(sec, para, offset, data, width, height, ext)
-        if (typeof w.doc.insertPicture === 'function') {
-          w.doc.insertPicture(0, 2, 0, png, 7200, 7200, 'png');
-          window.__eventBus?.emit('document-changed');
-          const pageCount = w.doc.pageCount();
-          const paraCount = w.doc.getParagraphCount(0);
-          return { pageCount, paraCount, ok: true };
-        } else {
-          return { error: 'insertPicture not available' };
+        // insertPicture(sec, para, offset, data, width, height, natW, natH, ext, desc)
+        // 3인치 x 2인치 = 21600 x 14400 HWPUNIT
+        const result = JSON.parse(
+          w.doc.insertPicture(0, 2, 0, data, 21600, 14400, 300, 200, 'jpg', '테스트 이미지')
+        );
+
+        window.__eventBus?.emit('document-changed');
+        const pageCount = w.doc.pageCount();
+        const paraCount = w.doc.getParagraphCount(0);
+        // 이미지 삽입으로 문단이 밀릴 수 있으므로 마지막 문단에서 "After" 검색
+        let afterText = '';
+        for (let p = 0; p < paraCount; p++) {
+          const t = w.doc.getTextRange(0, p, 0, 30);
+          if (t.includes('After')) { afterText = t; break; }
         }
+
+        return { pageCount, paraCount, afterText, picPara: result.paraIdx, ok: true };
       } catch (e) { return { error: e.message }; }
     });
-    await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+    await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
 
     if (imgResult.error) {
       console.log(`  SKIP: ${imgResult.error}`);
     } else {
-      check(imgResult.ok, `이미지 삽입 성공 (pages=${imgResult.pageCount}, paras=${imgResult.paraCount})`);
+      check(imgResult.ok, `이미지 삽입 성공 (picPara=${imgResult.picPara})`);
+      check(imgResult.pageCount >= 1, `이미지 삽입 후 페이지 수: ${imgResult.pageCount}`);
+      check(imgResult.afterText?.includes('After'),
+        `이미지 뒤 문단 텍스트 보존: "${imgResult.afterText}"`);
     }
     await screenshot(page, 'edit-16-image-insert');
 
