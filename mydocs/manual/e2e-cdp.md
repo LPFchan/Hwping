@@ -63,6 +63,7 @@ netsh advfirewall firewall add rule name="WSL2 CDP Proxy" dir=in action=allow pr
 ```
 
 > **주의**: WSL2 IP는 재부팅마다 변경된다. 변경 시 포트 프록시와 방화벽 룰을 재설정해야 한다.
+> 아래 **1.3.1 WSL2 IP 고정** 설정을 적용하면 재설정이 불필요하다.
 >
 > ```powershell
 > # 포트 프록시 재설정
@@ -72,6 +73,51 @@ netsh advfirewall firewall add rule name="WSL2 CDP Proxy" dir=in action=allow pr
 > # 방화벽 룰 재설정
 > netsh advfirewall firewall delete rule name="WSL2 CDP Proxy"
 > netsh advfirewall firewall add rule name="WSL2 CDP Proxy" dir=in action=allow protocol=TCP localport=19222 remoteip=<새 WSL2 IP>
+> ```
+
+#### 1.3.1 WSL2 IP 고정 (권장)
+
+WSL2의 IP를 고정하면 재부팅마다 포트 프록시와 방화벽 룰을 재설정할 필요가 없다.
+
+**Windows 측 설정** — `C:\Users\<사용자>\.wslconfig` 파일 생성 또는 편집:
+
+```ini
+[wsl2]
+networkingMode=static
+ipAddress=172.21.192.102
+gateway=172.21.192.1
+```
+
+> `networkingMode=static`은 Windows 11 22H2 이상 + WSL 2.0.0 이상에서 지원된다.
+> `wsl --version`으로 WSL 버전을 확인할 수 있다.
+
+**WSL2 Ubuntu 측 설정** — `/etc/wsl.conf` 파일에 DNS 설정 추가:
+
+```ini
+[network]
+generateResolvConf = false
+```
+
+그리고 `/etc/resolv.conf`를 직접 생성:
+
+```bash
+sudo rm /etc/resolv.conf
+echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
+```
+
+설정 후 PowerShell에서 WSL 재시작:
+
+```powershell
+wsl --shutdown
+```
+
+> **대안 (mirrored 모드)**: WSL 2.4.4+ 에서는 `networkingMode=mirrored`를 사용하면
+> Windows와 WSL2가 동일한 IP를 공유하여 포트 프록시 자체가 불필요하다.
+> 단, mirrored 모드는 일부 네트워크 환경에서 호환성 문제가 있을 수 있다.
+>
+> ```ini
+> [wsl2]
+> networkingMode=mirrored
 > ```
 
 ### 1.4 Vite 개발 서버 시작 (WSL2)
