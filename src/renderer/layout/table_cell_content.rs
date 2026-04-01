@@ -374,6 +374,7 @@ impl LayoutEngine {
         y_start: f64,
         enclosing_ctx: Option<(usize, usize, &[CellPathEntry], usize)>,
         bin_data_content: &[BinDataContent],
+        host_alignment: Alignment,
     ) -> f64 {
         if table.cells.is_empty() {
             return y_start;
@@ -436,7 +437,12 @@ impl LayoutEngine {
             .map(|rx| rx.last().copied().unwrap_or(0.0))
             .fold(col_x.last().copied().unwrap_or(0.0), f64::max);
         let table_height = row_y.last().copied().unwrap_or(0.0);
-        let table_x = container.x + (container.width - table_width).max(0.0) / 2.0;
+        // TAC 표: 호스트 문단 정렬에 따라 배치
+        let table_x = match host_alignment {
+            Alignment::Center | Alignment::Distribute => container.x + (container.width - table_width).max(0.0) / 2.0,
+            Alignment::Right => container.x + (container.width - table_width).max(0.0),
+            _ => container.x, // 왼쪽 정렬 (기본)
+        };
         let table_y = y_start;
 
         // 엣지 기반 테두리 수집을 위한 그리드 생성

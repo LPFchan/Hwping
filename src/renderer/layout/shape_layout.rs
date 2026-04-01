@@ -1440,11 +1440,17 @@ impl LayoutEngine {
                             cell_para_index: pi,
                             text_direction: 0,
                         });
+                        // 호스트 문단의 정렬 속성
+                        let host_align = styles.para_styles
+                            .get(para.para_shape_id as usize)
+                            .map(|ps| ps.alignment)
+                            .unwrap_or(Alignment::Left);
                         inline_y = self.layout_embedded_table(
                             tree, shape_node, table, styles,
                             &inner_area, para_start_y,
                             Some((section_index, para_index, &table_enclosing_path, ctrl_idx_in_para)),
                             bin_data_content,
+                            host_align,
                         );
                     }
                     _ => {}
