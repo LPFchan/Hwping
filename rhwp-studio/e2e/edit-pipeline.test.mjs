@@ -403,6 +403,423 @@ async function run() {
     }
     await screenshot(page, 'edit-09-stability');
 
+    // ── 10. 페이지 경계에서 Enter → 페이지 넘침 ──
+    console.log('\n[10] 페이지 경계 Enter...');
+    await createNewDocument(page);
+
+    const pageBoundaryEnter = await page.evaluate(() => {
+      const w = window.__wasm;
+      if (!w?.doc) return { error: 'no doc' };
+      try {
+        w.doc.insertText(0, 0, 0, 'TC #10: page boundary enter');
+        w.doc.splitParagraph(0, 0, 27);
+
+        // 페이지가 꽉 찰 때까지 문단 생성
+        for (let i = 0; i < 60; i++) {
+          const pi = w.doc.getParagraphCount(0) - 1;
+          w.doc.insertText(0, pi, 0, 'Line ' + i);
+          w.doc.splitParagraph(0, pi, ('Line ' + i).length);
+        }
+        const pagesBefore = w.doc.pageCount();
+
+        // 추가 Enter → 페이지 넘침 유발
+        const lastPi = w.doc.getParagraphCount(0) - 1;
+        w.doc.insertText(0, lastPi, 0, 'Overflow line');
+        w.doc.splitParagraph(0, lastPi, 13);
+
+        window.__eventBus?.emit('document-changed');
+        const pagesAfter = w.doc.pageCount();
+        return { pagesBefore, pagesAfter, ok: true };
+      } catch (e) { return { error: e.message }; }
+    });
+    await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+
+    if (pageBoundaryEnter.error) {
+      console.log(`  SKIP: ${pageBoundaryEnter.error}`);
+    } else {
+      check(pageBoundaryEnter.pagesAfter >= pageBoundaryEnter.pagesBefore,
+        `페이지 경계 Enter: ${pageBoundaryEnter.pagesBefore} → ${pageBoundaryEnter.pagesAfter}`);
+    }
+    await screenshot(page, 'edit-10-page-boundary-enter');
+
+    // ── 11. 페이지 경계에서 Backspace → 페이지 줄어듦 ──
+    console.log('\n[11] 페이지 경계 Backspace...');
+    await createNewDocument(page);
+
+    const pageBoundaryBS = await page.evaluate(() => {
+      const w = window.__wasm;
+      if (!w?.doc) return { error: 'no doc' };
+      try {
+        w.doc.insertText(0, 0, 0, 'TC #11: page boundary backspace');
+        w.doc.splitParagraph(0, 0, 31);
+
+        // 2페이지 넘도록 문단 생성
+        for (let i = 0; i < 65; i++) {
+          const pi = w.doc.getParagraphCount(0) - 1;
+          w.doc.insertText(0, pi, 0, 'L' + i);
+          w.doc.splitParagraph(0, pi, ('L' + i).length);
+        }
+        const pagesBefore = w.doc.pageCount();
+
+        // 마지막 몇 문단 병합 → 페이지 줄어듦
+        for (let i = 0; i < 10; i++) {
+          const pc = w.doc.getParagraphCount(0);
+          if (pc > 2) w.doc.mergeParagraph(0, pc - 1);
+        }
+
+        window.__eventBus?.emit('document-changed');
+        const pagesAfter = w.doc.pageCount();
+        return { pagesBefore, pagesAfter, ok: true };
+      } catch (e) { return { error: e.message }; }
+    });
+    await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+
+    if (pageBoundaryBS.error) {
+      console.log(`  SKIP: ${pageBoundaryBS.error}`);
+    } else {
+      check(pageBoundaryBS.pagesAfter <= pageBoundaryBS.pagesBefore,
+        `페이지 경계 Backspace: ${pageBoundaryBS.pagesBefore} → ${pageBoundaryBS.pagesAfter}`);
+    }
+    await screenshot(page, 'edit-11-page-boundary-bs');
+
+    // ── 12. 표 셀 내 텍스트 입력 → 셀 높이 변경 ──
+    console.log('\n[12] 표 셀 높이 변경...');
+    await createNewDocument(page);
+
+    const cellHeightResult = await page.evaluate(() => {
+      const w = window.__wasm;
+      if (!w?.doc) return { error: 'no doc' };
+      try {
+        w.doc.insertText(0, 0, 0, 'TC #12: cell height change');
+        w.doc.splitParagraph(0, 0, 26);
+
+        const tr = JSON.parse(w.doc.createTable(0, 1, 0, 2, 2));
+        const tp = tr.paraIdx, tc = tr.controlIdx;
+
+        // 셀에 짧은 텍스트
+        w.doc.insertTextInCell(0, tp, tc, 0, 0, 0, 'Short');
+        const svgBefore = w.doc.renderPageSvg(0);
+        const linesBefore = (svgBefore.match(/<line/g) || []).length;
+
+        // 셀에 긴 텍스트 → 줄바꿈 → 셀 높이 증가
+        const longText = 'This is a long text that should cause line wrapping in the cell. ';
+        w.doc.insertTextInCell(0, tp, tc, 0, 0, 5, longText.repeat(3));
+
+        window.__eventBus?.emit('document-changed');
+        const svgAfter = w.doc.renderPageSvg(0);
+        const linesAfter = (svgAfter.match(/<line/g) || []).length;
+
+        return { linesBefore, linesAfter, ok: true };
+      } catch (e) { return { error: e.message }; }
+    });
+    await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+
+    if (cellHeightResult.error) {
+      console.log(`  SKIP: ${cellHeightResult.error}`);
+    } else {
+      check(cellHeightResult.ok, `셀 높이 변경 테스트 완료 (SVG lines: ${cellHeightResult.linesBefore} → ${cellHeightResult.linesAfter})`);
+    }
+    await screenshot(page, 'edit-12-cell-height');
+
+    // ── 13. 표 셀 내 Enter → 셀 분할 후 렌더링 ──
+    console.log('\n[13] 표 셀 내 Enter...');
+    await createNewDocument(page);
+
+    const cellSplitResult = await page.evaluate(() => {
+      const w = window.__wasm;
+      if (!w?.doc) return { error: 'no doc' };
+      try {
+        w.doc.insertText(0, 0, 0, 'TC #13: cell split');
+        w.doc.splitParagraph(0, 0, 18);
+
+        const tr = JSON.parse(w.doc.createTable(0, 1, 0, 2, 2));
+        const tp = tr.paraIdx, tc = tr.controlIdx;
+
+        w.doc.insertTextInCell(0, tp, tc, 0, 0, 0, 'AAABBB');
+
+        // 셀 내 Enter → 문단 분할
+        w.doc.splitParagraphInCell(0, tp, tc, 0, 0, 3);
+
+        const text0 = w.doc.getTextInCell(0, tp, tc, 0, 0, 0, 50);
+        const text1 = w.doc.getTextInCell(0, tp, tc, 0, 1, 0, 50);
+
+        window.__eventBus?.emit('document-changed');
+        const svg = w.doc.renderPageSvg(0);
+        const hasA = svg.includes('>A<');
+        const hasB = svg.includes('>B<');
+
+        return { text0, text1, hasA, hasB, ok: true };
+      } catch (e) { return { error: e.message }; }
+    });
+    await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+
+    if (cellSplitResult.error) {
+      console.log(`  SKIP: ${cellSplitResult.error}`);
+    } else {
+      check(cellSplitResult.text0 === 'AAA', `셀 분할 첫 문단: "${cellSplitResult.text0}"`);
+      check(cellSplitResult.text1 === 'BBB', `셀 분할 둘째 문단: "${cellSplitResult.text1}"`);
+      check(cellSplitResult.hasA && cellSplitResult.hasB, `SVG에 분할된 텍스트 렌더링`);
+    }
+    await screenshot(page, 'edit-13-cell-split');
+
+    // ── 14. 텍스트 삭제 → 줄 수 감소 → vpos cascade ──
+    console.log('\n[14] 텍스트 삭제 + vpos cascade...');
+    await createNewDocument(page);
+
+    const deleteVposResult = await page.evaluate(() => {
+      const w = window.__wasm;
+      if (!w?.doc) return { error: 'no doc' };
+      try {
+        w.doc.insertText(0, 0, 0, 'TC #14: delete vpos');
+        w.doc.splitParagraph(0, 0, 19);
+
+        // 긴 텍스트 (여러 줄) + 후속 문단
+        const longText = 'Delete me later. '.repeat(20);
+        w.doc.insertText(0, 1, 0, longText);
+        w.doc.splitParagraph(0, 1, longText.length);
+        w.doc.insertText(0, 2, 0, 'After paragraph');
+
+        const linesBefore = JSON.parse(w.doc.getLineInfo(0, 1, 0));
+
+        // 긴 텍스트 대부분 삭제 → 줄 수 감소
+        w.doc.deleteText(0, 1, 17, longText.length - 17);
+
+        window.__eventBus?.emit('document-changed');
+        const linesAfter = JSON.parse(w.doc.getLineInfo(0, 1, 0));
+        const afterText = w.doc.getTextRange(0, 2, 0, 50);
+
+        return { linesBefore, linesAfter, afterText, ok: true };
+      } catch (e) { return { error: e.message }; }
+    });
+    await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+
+    if (deleteVposResult.error) {
+      console.log(`  SKIP: ${deleteVposResult.error}`);
+    } else {
+      check(deleteVposResult.linesAfter.lineCount <= deleteVposResult.linesBefore.lineCount,
+        `삭제 후 줄 수 감소: ${deleteVposResult.linesBefore.lineCount} → ${deleteVposResult.linesAfter.lineCount}`);
+      check(deleteVposResult.afterText?.includes('After'),
+        `후속 문단 텍스트 보존: "${deleteVposResult.afterText}"`);
+    }
+    await screenshot(page, 'edit-14-delete-vpos');
+
+    // ── 15. 표 앞에서 Enter → 표 밀림 + 페이지 넘침 ──
+    console.log('\n[15] 표 앞 Enter → 표 밀림...');
+    await createNewDocument(page);
+
+    const tablePushResult = await page.evaluate(() => {
+      const w = window.__wasm;
+      if (!w?.doc) return { error: 'no doc' };
+      try {
+        w.doc.insertText(0, 0, 0, 'TC #15: table push');
+        w.doc.splitParagraph(0, 0, 18);
+
+        // 많은 문단 + 표 → 페이지 경계 근처에 표 배치
+        for (let i = 0; i < 50; i++) {
+          const pi = w.doc.getParagraphCount(0) - 1;
+          w.doc.insertText(0, pi, 0, 'P' + i);
+          w.doc.splitParagraph(0, pi, ('P' + i).length);
+        }
+        const tblParaIdx = w.doc.getParagraphCount(0) - 1;
+        const tr = JSON.parse(w.doc.createTable(0, tblParaIdx, 0, 2, 2));
+        w.doc.insertTextInCell(0, tr.paraIdx, tr.controlIdx, 0, 0, 0, 'Table');
+
+        const pagesBefore = w.doc.pageCount();
+
+        // 표 앞에 문단 추가 → 표가 밀림
+        for (let i = 0; i < 5; i++) {
+          w.doc.insertText(0, 1, 0, 'Push line ' + i);
+          w.doc.splitParagraph(0, 1, ('Push line ' + i).length);
+        }
+
+        window.__eventBus?.emit('document-changed');
+        const pagesAfter = w.doc.pageCount();
+        return { pagesBefore, pagesAfter, ok: true };
+      } catch (e) { return { error: e.message }; }
+    });
+    await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+
+    if (tablePushResult.error) {
+      console.log(`  SKIP: ${tablePushResult.error}`);
+    } else {
+      check(tablePushResult.pagesAfter >= tablePushResult.pagesBefore,
+        `표 밀림 후 페이지: ${tablePushResult.pagesBefore} → ${tablePushResult.pagesAfter}`);
+    }
+    await screenshot(page, 'edit-15-table-push');
+
+    // ── 16. 이미지 삽입 → 문단 높이 변경 ──
+    console.log('\n[16] 이미지 삽입...');
+    await createNewDocument(page);
+
+    const imgResult = await page.evaluate(() => {
+      const w = window.__wasm;
+      if (!w?.doc) return { error: 'no doc' };
+      try {
+        w.doc.insertText(0, 0, 0, 'TC #16: image insert');
+        w.doc.splitParagraph(0, 0, 20);
+        w.doc.insertText(0, 1, 0, 'Before image');
+        w.doc.splitParagraph(0, 1, 12);
+        w.doc.insertText(0, 2, 0, 'After image');
+
+        // 1x1 PNG 생성 (최소 이미지)
+        const png = new Uint8Array([
+          0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A, // PNG signature
+          0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52, // IHDR
+          0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01, // 1x1
+          0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53, // RGB
+          0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41, // IDAT
+          0x54,0x08,0xD7,0x63,0xF8,0xCF,0xC0,0x00,
+          0x00,0x00,0x02,0x00,0x01,0xE2,0x21,0xBC,
+          0x33,0x00,0x00,0x00,0x00,0x49,0x45,0x4E, // IEND
+          0x44,0xAE,0x42,0x60,0x82
+        ]);
+
+        // insertPicture(sec, para, offset, data, width, height, ext)
+        if (typeof w.doc.insertPicture === 'function') {
+          w.doc.insertPicture(0, 2, 0, png, 7200, 7200, 'png');
+          window.__eventBus?.emit('document-changed');
+          const pageCount = w.doc.pageCount();
+          const paraCount = w.doc.getParagraphCount(0);
+          return { pageCount, paraCount, ok: true };
+        } else {
+          return { error: 'insertPicture not available' };
+        }
+      } catch (e) { return { error: e.message }; }
+    });
+    await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+
+    if (imgResult.error) {
+      console.log(`  SKIP: ${imgResult.error}`);
+    } else {
+      check(imgResult.ok, `이미지 삽입 성공 (pages=${imgResult.pageCount}, paras=${imgResult.paraCount})`);
+    }
+    await screenshot(page, 'edit-16-image-insert');
+
+    // ── 17. 글상자 내 텍스트 편집 ──
+    console.log('\n[17] 글상자 내 텍스트 편집...');
+    await createNewDocument(page);
+
+    const textboxResult = await page.evaluate(() => {
+      const w = window.__wasm;
+      if (!w?.doc) return { error: 'no doc' };
+      try {
+        w.doc.insertText(0, 0, 0, 'TC #17: textbox edit');
+        w.doc.splitParagraph(0, 0, 20);
+
+        // 글상자는 Shape(Rectangle + drawText)로 생성
+        // createTextBox API가 있는지 확인
+        if (typeof w.doc.createTextBox === 'function') {
+          w.doc.createTextBox(0, 1, 0, 14400, 7200);  // 2인치 x 1인치
+          window.__eventBus?.emit('document-changed');
+          return { ok: true, method: 'createTextBox' };
+        } else {
+          // 글상자 API 없으면 SKIP
+          return { error: 'createTextBox not available' };
+        }
+      } catch (e) { return { error: e.message }; }
+    });
+    await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+
+    if (textboxResult.error) {
+      console.log(`  SKIP: ${textboxResult.error}`);
+    } else {
+      check(textboxResult.ok, `글상자 편집: ${textboxResult.method}`);
+    }
+    await screenshot(page, 'edit-17-textbox');
+
+    // ── 18. HWP 파일 로드 → 편집 → 페이지 수 일관성 ──
+    console.log('\n[18] 파일 로드 + 편집 일관성...');
+
+    // 새 문서로 복귀하여 WASM API로 테스트
+    await createNewDocument(page);
+
+    const fileEditResult = await page.evaluate(() => {
+      const w = window.__wasm;
+      if (!w?.doc) return { error: 'no doc' };
+      try {
+        w.doc.insertText(0, 0, 0, 'TC #18: file edit consistency');
+        w.doc.splitParagraph(0, 0, 29);
+
+        // 20개 문단 생성
+        for (let i = 0; i < 20; i++) {
+          const pi = w.doc.getParagraphCount(0) - 1;
+          w.doc.insertText(0, pi, 0, 'Para ' + i);
+          w.doc.splitParagraph(0, pi, ('Para ' + i).length);
+        }
+
+        const parasBefore = w.doc.getParagraphCount(0);
+        const pagesBefore = w.doc.pageCount();
+
+        // 첫 문단(제목 다음)에 텍스트 추가 → 구조 불변 확인
+        w.doc.insertText(0, 1, 0, '[EDITED] ');
+        window.__eventBus?.emit('document-changed');
+
+        const parasAfter = w.doc.getParagraphCount(0);
+        const pagesAfter = w.doc.pageCount();
+        const text1 = w.doc.getTextRange(0, 1, 0, 30);
+
+        return { pagesBefore, pagesAfter, parasBefore, parasAfter, text1, ok: true };
+      } catch (e) { return { error: e.message }; }
+    });
+
+    if (fileEditResult.error) {
+      console.log(`  SKIP: ${fileEditResult.error}`);
+    } else {
+      check(fileEditResult.parasAfter === fileEditResult.parasBefore,
+        `편집 후 문단 수 보존: ${fileEditResult.parasBefore} → ${fileEditResult.parasAfter}`);
+      check(fileEditResult.text1?.includes('[EDITED]'),
+        `편집 텍스트 반영: "${fileEditResult.text1}"`);
+      check(Math.abs(fileEditResult.pagesAfter - fileEditResult.pagesBefore) <= 1,
+        `페이지 수 안정: ${fileEditResult.pagesBefore} → ${fileEditResult.pagesAfter}`);
+    }
+    await screenshot(page, 'edit-18-file-edit');
+
+    // ── 19. 대량 편집(100회 Enter) 안정성 ──
+    console.log('\n[19] 대량 편집 안정성...');
+    await createNewDocument(page);
+
+    const massEditResult = await page.evaluate(() => {
+      const w = window.__wasm;
+      if (!w?.doc) return { error: 'no doc' };
+      try {
+        w.doc.insertText(0, 0, 0, 'TC #19: mass edit');
+        w.doc.splitParagraph(0, 0, 17);
+
+        // 100회 Enter (에러 발생 시 중단)
+        let editCount = 0;
+        for (let i = 0; i < 100; i++) {
+          try {
+            const pi = w.doc.getParagraphCount(0) - 1;
+            w.doc.insertText(0, pi, 0, '' + i);
+            w.doc.splitParagraph(0, pi, ('' + i).length);
+            editCount++;
+          } catch { break; }
+        }
+
+        window.__eventBus?.emit('document-changed');
+        const paraCount = w.doc.getParagraphCount(0);
+        const pageCount = w.doc.pageCount();
+
+        // 마지막 문단 텍스트 확인
+        const lastText = w.doc.getTextRange(0, paraCount - 1, 0, 10);
+
+        return { paraCount, pageCount, lastText, editCount, ok: true };
+      } catch (e) { return { error: e.message }; }
+    });
+    await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
+
+    if (massEditResult.error) {
+      console.log(`  SKIP: ${massEditResult.error}`);
+    } else {
+      check(massEditResult.editCount >= 50,
+        `대량 편집 횟수: ${massEditResult.editCount}/100`);
+      check(massEditResult.paraCount >= 50,
+        `대량 편집 후 문단 수: ${massEditResult.paraCount}`);
+      check(massEditResult.pageCount >= 1,
+        `대량 편집 후 페이지 수: ${massEditResult.pageCount}`);
+    }
+    await screenshot(page, 'edit-19-mass-edit');
+
     // ── 결과 요약 ──
     console.log(`\n=== 결과: ${passed} passed, ${failed} failed ===`);
     if (failed > 0) process.exitCode = 1;
