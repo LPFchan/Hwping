@@ -1295,7 +1295,7 @@ export class InputHandler {
 
   /** textarea에 포커스를 설정한다 (iOS 호환) */
   private focusTextarea(): void {
-    this.focusTextarea();
+    this.textarea.focus();
   }
 
   /** 편집 후 처리: 재렌더링 + 캐럿 갱신 */
