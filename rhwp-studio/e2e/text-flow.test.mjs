@@ -7,7 +7,7 @@
  *
  * 실행: node e2e/text-flow.test.mjs
  */
-import { launchBrowser, loadApp, clickEditArea, typeText, screenshot, assert } from './helpers.mjs';
+import { launchBrowser, loadApp, clickEditArea, typeText, screenshot, assert, closeBrowser } from './helpers.mjs';
 
 async function run() {
   console.log('=== E2E: 텍스트 플로우 테스트 ===\n');
@@ -77,8 +77,10 @@ async function run() {
     // Enter를 반복 입력하여 페이지 오버플로우 유발
     for (let i = 0; i < 40; i++) {
       await page.keyboard.press('Enter');
+      if (i % 10 === 9) await page.evaluate(() => new Promise(r => setTimeout(r, 200)));
     }
-    await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
+    // 재페이지네이션 완료 대기
+    await page.evaluate(() => new Promise(r => setTimeout(r, 1500)));
 
     const pageCount2 = await page.evaluate(() => window.__wasm?.pageCount ?? 0);
     console.log(`  페이지 수: ${pageCount2}`);
@@ -108,7 +110,8 @@ async function run() {
     await screenshot(page, 'error');
     process.exitCode = 1;
   } finally {
-    await browser.close();
+    await page.close();
+    await closeBrowser(browser);
   }
 }
 
