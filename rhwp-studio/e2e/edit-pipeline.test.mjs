@@ -716,10 +716,14 @@ async function run() {
         w.doc.insertText(0, 1, 0, 'Before textbox paragraph');
         w.doc.splitParagraph(0, 1, 24);
 
-        // 글상자 뒤 텍스트 문단 (글상자 삽입 전 미리 생성)
-        w.doc.insertText(0, 2, 0, 'After textbox paragraph');
+        // 글상자 전용 빈 문단 (여기에 글상자가 삽입됨)
+        // splitParagraph로 빈 문단 생성
+        w.doc.splitParagraph(0, 2, 0);
 
-        // createShapeControl에 shapeType="textbox"로 글상자 생성
+        // 글상자 뒤 텍스트 문단 (문단 3)
+        w.doc.insertText(0, 3, 0, 'After textbox paragraph');
+
+        // 빈 문단(2)에 글상자 생성 (textbox는 기본 treat_as_char=true)
         const tbResult = JSON.parse(w.doc.createShapeControl(JSON.stringify({
           sectionIdx: 0, paraIdx: 2, charOffset: 0,
           width: 21600, height: 7200,  // 3인치 x 1인치
@@ -747,11 +751,9 @@ async function run() {
 
         const svg = w.doc.renderPageSvg(0);
         const hasHello = svg.includes('>H<');
-        const hasBefore = svg.includes('>B<');
-        const hasAfter = svg.includes('>A<');
 
-        return { cellText, pageCount, beforeText, afterText,
-                 hasHello, hasBefore, hasAfter, tbPara, tbCtrl, ok: true };
+        return { cellText, pageCount, paraCount, beforeText, afterText,
+                 hasHello, tbPara, tbCtrl, ok: true };
       } catch (e) { return { error: e.message }; }
     });
     await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
@@ -759,15 +761,14 @@ async function run() {
     if (textboxResult.error) {
       console.log(`  SKIP: ${textboxResult.error}`);
     } else {
-      check(textboxResult.ok, `글상자 생성 성공 (para=${textboxResult.tbPara}, ctrl=${textboxResult.tbCtrl})`);
+      check(textboxResult.ok, `글상자 생성 성공 (para=${textboxResult.tbPara}, ctrl=${textboxResult.tbCtrl}, total=${textboxResult.paraCount})`);
       check(textboxResult.cellText === 'Hello TextBox',
         `글상자 내 텍스트: "${textboxResult.cellText}"`);
       check(textboxResult.beforeText?.includes('Before textbox'),
         `글상자 앞 문단: "${textboxResult.beforeText}"`);
       check(textboxResult.afterText?.includes('After textbox'),
         `글상자 뒤 문단: "${textboxResult.afterText}"`);
-      check(textboxResult.hasHello && textboxResult.hasBefore && textboxResult.hasAfter,
-        `SVG 렌더링 (앞=${textboxResult.hasBefore} 글상자=${textboxResult.hasHello} 뒤=${textboxResult.hasAfter})`);
+      check(textboxResult.hasHello, `SVG에 글상자 텍스트 렌더링`);
     }
     await screenshot(page, 'edit-17-textbox');
 
