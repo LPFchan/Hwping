@@ -205,9 +205,11 @@ export class InputHandler {
     this.history = new CommandHistory();
 
     // Hidden textarea 생성
+    // iOS WebKit에서는 left:-9999px로 화면 밖에 보내면 IME composition이 깨짐
+    // → 커서 근처에 투명하게 배치하여 iOS IME 호환성 확보
     this.textarea = document.createElement('textarea');
     this.textarea.style.cssText =
-      'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;';
+      'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1;font-size:16px;';
     this.textarea.setAttribute('autocomplete', 'off');
     this.textarea.setAttribute('autocorrect', 'off');
     this.textarea.setAttribute('autocapitalize', 'off');
