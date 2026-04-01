@@ -237,25 +237,24 @@ function setupZoomControls(): void {
   document.getElementById('sb-zoom-fit-width')!.addEventListener('click', () => {
     if (wasm.pageCount === 0) return;
     const container = document.getElementById('scroll-container')!;
-    const containerWidth = container.clientWidth - 40; // 여백 제외
+    const containerWidth = container.clientWidth - 40; // 좌우 여백 제외
     const pageInfo = wasm.getPageInfo(0);
-    const pageWidthPx = pageInfo.width / 7200 * 96; // HWPUNIT → px (96dpi)
-    const zoom = containerWidth / pageWidthPx;
-    vm.setZoom(Math.min(zoom, 4.0));
+    // pageInfo.width는 이미 px 단위 (96dpi 기준)
+    const zoom = containerWidth / pageInfo.width;
+    vm.setZoom(Math.max(0.1, Math.min(zoom, 4.0)));
   });
 
   // 쪽 맞춤: 한 페이지 전체가 보이도록 줌 조절
   document.getElementById('sb-zoom-fit')!.addEventListener('click', () => {
     if (wasm.pageCount === 0) return;
     const container = document.getElementById('scroll-container')!;
-    const containerHeight = container.clientHeight - 40;
     const containerWidth = container.clientWidth - 40;
+    const containerHeight = container.clientHeight - 40;
     const pageInfo = wasm.getPageInfo(0);
-    const pageWidthPx = pageInfo.width / 7200 * 96;
-    const pageHeightPx = pageInfo.height / 7200 * 96;
-    const zoomW = containerWidth / pageWidthPx;
-    const zoomH = containerHeight / pageHeightPx;
-    vm.setZoom(Math.min(zoomW, zoomH, 4.0));
+    // pageInfo.width/height는 이미 px 단위 (96dpi 기준)
+    const zoomW = containerWidth / pageInfo.width;
+    const zoomH = containerHeight / pageInfo.height;
+    vm.setZoom(Math.max(0.1, Math.min(zoomW, zoomH, 4.0)));
   });
 
   document.addEventListener('keydown', (e) => {
