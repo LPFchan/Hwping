@@ -1397,40 +1397,48 @@ impl Renderer for WebCanvasRenderer {
         self.ctx.set_stroke_style_str(&color);
         self.set_line_dash(&style.dash);
 
+        // 이중선/삼중선: SVG draw_multi_line과 동일한 오프셋 비율 방식
+        // (width_ratio, offset_ratio) — offset은 선 중심으로부터의 거리 비율
         match style.line_type {
-            super::LineRenderType::Double => {
-                let gap = (width * 2.0).max(3.0); // 최소 3px 간격
-                let lw = (width * 0.5).max(0.5);
-                let (nx, ny) = if line_len > 0.0 { (-dy / line_len * gap / 2.0, dx / line_len * gap / 2.0) } else { (0.0, gap / 2.0) };
-                self.ctx.set_line_width(lw);
-                self.ctx.begin_path(); self.ctx.move_to(lx1 + nx, ly1 + ny); self.ctx.line_to(lx2 + nx, ly2 + ny); self.ctx.stroke();
-                self.ctx.begin_path(); self.ctx.move_to(lx1 - nx, ly1 - ny); self.ctx.line_to(lx2 - nx, ly2 - ny); self.ctx.stroke();
-            }
-            super::LineRenderType::ThickThinDouble => {
-                let gap = (width * 2.0).max(3.0);
-                let (nx, ny) = if line_len > 0.0 { (-dy / line_len * gap / 2.0, dx / line_len * gap / 2.0) } else { (0.0, gap / 2.0) };
-                self.ctx.set_line_width((width * 0.7).max(0.7));
-                self.ctx.begin_path(); self.ctx.move_to(lx1 + nx, ly1 + ny); self.ctx.line_to(lx2 + nx, ly2 + ny); self.ctx.stroke();
-                self.ctx.set_line_width((width * 0.3).max(0.3));
-                self.ctx.begin_path(); self.ctx.move_to(lx1 - nx, ly1 - ny); self.ctx.line_to(lx2 - nx, ly2 - ny); self.ctx.stroke();
-            }
-            super::LineRenderType::ThinThickDouble => {
-                let gap = (width * 2.0).max(3.0);
-                let (nx, ny) = if line_len > 0.0 { (-dy / line_len * gap / 2.0, dx / line_len * gap / 2.0) } else { (0.0, gap / 2.0) };
-                self.ctx.set_line_width((width * 0.3).max(0.3));
-                self.ctx.begin_path(); self.ctx.move_to(lx1 + nx, ly1 + ny); self.ctx.line_to(lx2 + nx, ly2 + ny); self.ctx.stroke();
-                self.ctx.set_line_width((width * 0.7).max(0.7));
-                self.ctx.begin_path(); self.ctx.move_to(lx1 - nx, ly1 - ny); self.ctx.line_to(lx2 - nx, ly2 - ny); self.ctx.stroke();
-            }
+            super::LineRenderType::Double |
+            super::LineRenderType::ThickThinDouble |
+            super::LineRenderType::ThinThickDouble |
             super::LineRenderType::ThinThickThinTriple => {
-                let gap = (width * 1.5).max(2.5);
-                let (nx, ny) = if line_len > 0.0 { (-dy / line_len * gap, dx / line_len * gap) } else { (0.0, gap) };
-                self.ctx.set_line_width((width * 0.3).max(0.3));
-                self.ctx.begin_path(); self.ctx.move_to(lx1 + nx, ly1 + ny); self.ctx.line_to(lx2 + nx, ly2 + ny); self.ctx.stroke();
-                self.ctx.set_line_width((width * 0.5).max(0.5));
-                self.ctx.begin_path(); self.ctx.move_to(lx1, ly1); self.ctx.line_to(lx2, ly2); self.ctx.stroke();
-                self.ctx.set_line_width((width * 0.3).max(0.3));
-                self.ctx.begin_path(); self.ctx.move_to(lx1 - nx, ly1 - ny); self.ctx.line_to(lx2 - nx, ly2 - ny); self.ctx.stroke();
+                let lines: Vec<(f64, f64)> = match style.line_type {
+                    super::LineRenderType::Double => {
+                        vec![(0.30, -0.35), (0.30, 0.35)]
+                    }
+                    super::LineRenderType::ThickThinDouble => {
+                        // 굵은선(위)-얇은선(아래)
+                        vec![(0.4, -0.30), (0.2, 0.40)]
+                    }
+                    super::LineRenderType::ThinThickDouble => {
+                        // 얇은선(위)-굵은선(아래)
+                        vec![(0.2, -0.40), (0.4, 0.30)]
+                    }
+                    super::LineRenderType::ThinThickThinTriple => {
+                        vec![(0.15, -0.425), (0.30, 0.0), (0.15, 0.425)]
+                    }
+                    _ => vec![],
+                };
+
+                let (nx, ny) = if line_len > 0.0 {
+                    (-dy / line_len, dx / line_len)
+                } else {
+                    (0.0, 1.0)
+                };
+
+                for (width_ratio, offset_ratio) in &lines {
+                    let lw = (width * width_ratio).max(0.3);
+                    let off = width * offset_ratio;
+                    let ox = nx * off;
+                    let oy = ny * off;
+                    self.ctx.set_line_width(lw);
+                    self.ctx.begin_path();
+                    self.ctx.move_to(lx1 + ox, ly1 + oy);
+                    self.ctx.line_to(lx2 + ox, ly2 + oy);
+                    self.ctx.stroke();
+                }
             }
             _ => {
                 // Single line
