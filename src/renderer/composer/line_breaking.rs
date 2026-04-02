@@ -700,6 +700,30 @@ pub(crate) fn reflow_line_segs(
         new_line_segs.push(make_line_seg(0, 12.0));
     }
 
+    // 인라인 TAC 표의 높이 반영: 표가 포함된 줄의 line_height를 표 높이 이상으로 보정
+    {
+        use crate::model::control::Control;
+        let has_inline_table = para.controls.iter().any(|c|
+            matches!(c, Control::Table(t) if t.common.treat_as_char));
+        if has_inline_table {
+            for ctrl in &para.controls {
+                if let Control::Table(t) = ctrl {
+                    if t.common.treat_as_char {
+                        let table_height_hwp = t.common.height as i32;
+                        // 첫 번째 LINE_SEG의 line_height를 표 높이 이상으로 확장
+                        if let Some(seg) = new_line_segs.first_mut() {
+                            if table_height_hwp > seg.line_height {
+                                seg.line_height = table_height_hwp;
+                                seg.text_height = table_height_hwp;
+                                seg.baseline_distance = (table_height_hwp as f64 * 0.85) as i32;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // vertical_pos 누적 계산 (각 줄의 문단 내 Y 오프셋)
     // 원본 첫 LineSeg의 vertical_pos를 보존하여 vpos 체계 연속성 유지
     // (layout.rs의 vpos 보정이 문단 간 vpos 연속성을 가정하므로)
