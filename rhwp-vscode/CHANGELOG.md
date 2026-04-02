@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1] - 2026-04-02
+
+### 수정
+
+- 확대 시 캔버스 왼쪽 스크롤 불가 (#29)
+  - scroll-container에 overflow:auto + scroll-content 래퍼 도입
+
 ## [0.5.0] - 2026-04-02
 
 ### 추가

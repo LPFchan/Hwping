@@ -8,6 +8,7 @@ const vscode = acquireVsCodeApi();
 
 // DOM 요소
 const scrollContainer = document.getElementById("scroll-container")!;
+const scrollContent = document.getElementById("scroll-content")!;
 const stbPage = document.getElementById("stb-page")!;
 const stbMessage = document.getElementById("stb-message")!;
 const stbZoomVal = document.getElementById("stb-zoom-val")!;
@@ -140,7 +141,7 @@ scrollContainer.addEventListener(
 // ── 페이지 레이아웃 ──
 
 function buildPageLayout(): void {
-  scrollContainer.innerHTML = "";
+  scrollContent.innerHTML = "";
   for (let i = 0; i < pageInfos.length; i++) {
     const pi = pageInfos[i];
     const w = Math.round(pi.width * currentZoom);
@@ -152,7 +153,7 @@ function buildPageLayout(): void {
     wrapper.style.height = `${h}px`;
     wrapper.dataset.page = String(i);
 
-    scrollContainer.appendChild(wrapper);
+    scrollContent.appendChild(wrapper);
     pi.element = wrapper;
     pi.rendered = false;
   }

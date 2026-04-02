@@ -91,13 +91,17 @@ export class HwpEditorProvider implements vscode.CustomReadonlyEditorProvider {
     }
     #scroll-container {
       position: relative;
-      overflow-y: auto;
+      overflow: auto;
       flex: 1;
+      gap: 12px;
+      padding: 12px 0;
+    }
+    #scroll-content {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 12px;
-      padding: 12px 0;
+      min-width: fit-content;
     }
     .page-wrapper {
       flex-shrink: 0;
@@ -173,7 +177,7 @@ export class HwpEditorProvider implements vscode.CustomReadonlyEditorProvider {
   </style>
 </head>
 <body>
-  <div id="scroll-container" data-wasm-uri="${wasmUri}"></div>
+  <div id="scroll-container" data-wasm-uri="${wasmUri}"><div id="scroll-content"></div></div>
   <div id="status-bar">
     <span id="stb-page" class="stb-item">- / - \uca4d</span>
     <span class="stb-divider"></span>
