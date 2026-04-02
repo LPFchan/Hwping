@@ -15470,6 +15470,67 @@
         );
     }
 
+    /// 논리적 오프셋: 인라인 TAC 표 뒤에서 텍스트 삽입 검증
+    #[test]
+    fn test_logical_offset_insert_after_inline_table() {
+        let bytes = std::fs::read("saved/blank2010.hwp").expect("blank2010.hwp 읽기 실패");
+        let mut doc = HwpDocument::from_bytes(&bytes).unwrap();
+        doc.convert_to_editable_native().unwrap();
+        doc.paginate();
+
+        // Enter로 새 문단 생성 (기존 컨트롤이 있는 pi=0 대신 깨끗한 pi=1 사용)
+        doc.insert_text_native(0, 0, 0, "test").unwrap();
+        doc.split_paragraph_native(0, 0, 4).unwrap();
+
+        // pi=1에 "abc" 입력
+        doc.insert_text_native(0, 1, 0, "abc").unwrap();
+        let para = &doc.document.sections[0].paragraphs[1];
+        assert_eq!(para.text, "abc");
+        eprintln!("  pi=1 controls={} (표 삽입 전)", para.controls.len());
+
+        // offset=3 위치에 인라인 TAC 2×2 표 삽입
+        let result = doc.create_table_ex_native(0, 1, 3, 2, 2, true, Some(&[6777, 6777])).unwrap();
+        eprintln!("  createTableEx result: {}", result);
+        // logicalOffset: "abc"(3) + [표](1) = 4
+        assert!(result.contains("\"logicalOffset\":4"), "logicalOffset=4 예상: {}", result);
+
+        let para = &doc.document.sections[0].paragraphs[1];
+        eprintln!("  text='{}' controls={} char_offsets={:?}", para.text, para.controls.len(), para.char_offsets);
+
+        // 논리적 길이: "abc"(3) + [표](1) = 4
+        let logical_len = crate::document_core::helpers::logical_paragraph_length(para);
+        eprintln!("  논리적 길이: {}", logical_len);
+        assert_eq!(logical_len, 4, "논리적 길이 4 예상, 실제: {}", logical_len);
+
+        // 논리적 offset 4에 "XYZ" 삽입 → 표 뒤에 삽입되어야 함
+        let (text_off, after_ctrl) = crate::document_core::helpers::logical_to_text_offset(para, 4);
+        eprintln!("  logical 4 → text_off={} after_ctrl={}", text_off, after_ctrl);
+        assert_eq!(text_off, 3, "text_off=3 예상 (abc 뒤)");
+
+        doc.insert_text_native(0, 1, text_off, "XYZ").unwrap();
+        let para = &doc.document.sections[0].paragraphs[1];
+        assert_eq!(para.text, "abcXYZ", "표 뒤에 XYZ 삽입 예상, 실제: '{}'", para.text);
+        eprintln!("  삽입 후 text='{}' ✓", para.text);
+
+        // 논리적 길이: "abcXYZ"(6) + [표](1) = 7
+        let logical_len2 = crate::document_core::helpers::logical_paragraph_length(para);
+        assert_eq!(logical_len2, 7, "논리적 길이 7 예상, 실제: {}", logical_len2);
+
+        // logical offset 변환 검증 (삽입 후: "abcXYZ" + [표at3])
+        // a(0) b(1) c(2) [표](3) X(4) Y(5) Z(6)
+        let (t0, _) = crate::document_core::helpers::logical_to_text_offset(para, 0);
+        let (t3, _) = crate::document_core::helpers::logical_to_text_offset(para, 3);
+        let (t4, _) = crate::document_core::helpers::logical_to_text_offset(para, 4);
+        let (t7, _) = crate::document_core::helpers::logical_to_text_offset(para, 7);
+        eprintln!("  logical→text: 0→{} 3→{} 4→{} 7→{}", t0, t3, t4, t7);
+        assert_eq!(t0, 0, "logical 0 → text 0");
+        assert_eq!(t3, 3, "logical 3 → text 3 (표 위치, [표] = ctrl at text pos 3)");
+        assert_eq!(t4, 3 + 1, "logical 4 → text 4 (X, 표 뒤 첫 텍스트)");
+        assert_eq!(t7, 6, "logical 7 → text 6 (끝)");
+
+        eprintln!("  논리적 오프셋 테스트 통과 ✓");
+    }
+
     /// createTableEx: 빈 문서에서 인라인 TAC 표를 생성하여 tac-case-001.hwp와 동일한 구조 검증
     #[test]
     fn test_create_inline_tac_table() {

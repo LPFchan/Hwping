@@ -36,6 +36,72 @@ pub(crate) fn navigable_text_len(para: &Paragraph) -> usize {
 /// HWP 파서가 텍스트에서 컨트롤 문자(각 8 UTF-16 코드 유닛)를 제거한다.
 /// char_offsets의 갭(연속된 위치 차이 > 문자 폭)으로 컨트롤 원래 위치를 복원한다.
 ///
+/// 논리적 오프셋 → 텍스트 오프셋 변환.
+/// 논리적 오프셋: 텍스트 문자 + 인라인 컨트롤을 각각 1로 세는 위치.
+/// 반환: (텍스트 char_offset, 컨트롤 직후 여부)
+pub(crate) fn logical_to_text_offset(para: &Paragraph, logical_offset: usize) -> (usize, bool) {
+    let ctrl_positions = find_control_text_positions(para);
+    if ctrl_positions.is_empty() {
+        return (logical_offset, false);
+    }
+
+    // 논리적 위치에서 컨트롤 슬롯을 구성
+    // 텍스트 "abc[ctrl]XYZ" → 논리적: a(0) b(1) c(2) [ctrl](3) X(4) Y(5) Z(6)
+    // ctrl_positions = [3] (텍스트 인덱스 3에 컨트롤 삽입)
+    // 정렬된 (텍스트위치, 컨트롤인덱스) 목록
+    let mut sorted_ctrls: Vec<(usize, usize)> = ctrl_positions.iter().enumerate()
+        .map(|(ci, &pos)| (pos, ci))
+        .collect();
+    sorted_ctrls.sort_by_key(|(pos, _)| *pos);
+
+    let text_len = para.text.chars().count();
+    let mut text_idx = 0usize;
+    let mut logical_idx = 0usize;
+    let mut ctrl_cursor = 0usize; // sorted_ctrls 내 현재 위치
+
+    while logical_idx < logical_offset {
+        // 현재 text_idx 위치에 컨트롤이 있는지 확인
+        if ctrl_cursor < sorted_ctrls.len() && sorted_ctrls[ctrl_cursor].0 == text_idx {
+            // 컨트롤 슬롯
+            logical_idx += 1;
+            ctrl_cursor += 1;
+            if logical_idx == logical_offset {
+                return (text_idx, true);
+            }
+        }
+        // 텍스트 문자
+        if text_idx < text_len {
+            text_idx += 1;
+            logical_idx += 1;
+        } else {
+            break;
+        }
+    }
+    (text_idx, false)
+}
+
+/// 텍스트 오프셋 → 논리적 오프셋 변환.
+/// text_offset 위치 앞에 있는 컨트롤 수만큼 논리적 위치가 밀림.
+pub(crate) fn text_to_logical_offset(para: &Paragraph, text_offset: usize) -> usize {
+    let ctrl_positions = find_control_text_positions(para);
+    if ctrl_positions.is_empty() {
+        return text_offset;
+    }
+
+    // text_offset 이전(미만)에 있는 컨트롤 수를 더함
+    // pos < text_offset: 해당 컨트롤은 text_offset 앞에 위치
+    // pos == text_offset: 컨트롤과 텍스트가 같은 위치 → 컨트롤이 먼저
+    let before_count = ctrl_positions.iter().filter(|&&pos| pos < text_offset).count();
+    text_offset + before_count
+}
+
+/// 논리적 문단 길이 (텍스트 문자 + 텍스트 흐름에 위치하는 컨트롤 수).
+/// find_control_text_positions에 의해 텍스트 위치가 결정되는 컨트롤만 포함.
+pub(crate) fn logical_paragraph_length(para: &Paragraph) -> usize {
+    let ctrl_positions = find_control_text_positions(para);
+    para.text.chars().count() + ctrl_positions.len()
+}
+
 /// 반환: positions[i] = para.controls[i]가 삽입되어야 할 텍스트 문자 인덱스
 pub(crate) fn find_control_text_positions(para: &Paragraph) -> Vec<usize> {
     let offsets = &para.char_offsets;

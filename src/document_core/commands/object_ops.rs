@@ -1019,9 +1019,12 @@ impl DocumentCore {
         self.event_log.push(DocumentEvent::TableRowInserted {
             section: section_idx, para: para_idx, ctrl: ctrl_idx,
         });
+        // 표 바로 뒤의 논리적 오프셋 계산
+        let logical_after = super::super::helpers::text_to_logical_offset(
+            &self.document.sections[section_idx].paragraphs[para_idx], char_offset) + 1;
         Ok(super::super::helpers::json_ok_with(&format!(
-            "\"paraIdx\":{},\"controlIdx\":{}",
-            para_idx, ctrl_idx
+            "\"paraIdx\":{},\"controlIdx\":{},\"logicalOffset\":{}",
+            para_idx, ctrl_idx, logical_after
         )))
     }
 

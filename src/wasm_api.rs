@@ -318,6 +318,72 @@ impl HwpDocument {
             .map_err(|e| e.into())
     }
 
+    /// 논리적 오프셋으로 텍스트를 삽입한다.
+    ///
+    /// logical_offset: 텍스트 문자 + 인라인 컨트롤을 각각 1로 세는 위치.
+    /// 예: "abc[표]XYZ" → a(0) b(1) c(2) [표](3) X(4) Y(5) Z(6)
+    /// logical_offset=4이면 표 뒤의 X 앞에 삽입.
+    /// 반환값: JSON `{"ok":true,"logicalOffset":<new_logical_offset>}`
+    #[wasm_bindgen(js_name = insertTextLogical)]
+    pub fn insert_text_logical(
+        &mut self,
+        section_idx: u32,
+        para_idx: u32,
+        logical_offset: u32,
+        text: &str,
+    ) -> Result<String, JsValue> {
+        let sec = section_idx as usize;
+        let pi = para_idx as usize;
+        if sec >= self.document.sections.len() || pi >= self.document.sections[sec].paragraphs.len() {
+            return Err(JsValue::from_str("인덱스 범위 초과"));
+        }
+        let (text_offset, _) = crate::document_core::helpers::logical_to_text_offset(
+            &self.document.sections[sec].paragraphs[pi], logical_offset as usize);
+        let result = self.insert_text_native(sec, pi, text_offset, text)?;
+        // 삽입 후 논리적 오프셋 반환
+        let new_text_offset = text_offset + text.chars().count();
+        let new_logical = crate::document_core::helpers::text_to_logical_offset(
+            &self.document.sections[sec].paragraphs[pi], new_text_offset);
+        Ok(format!("{{\"ok\":true,\"logicalOffset\":{}}}", new_logical))
+    }
+
+    /// 문단의 논리적 길이를 반환한다 (텍스트 문자 + 인라인 컨트롤 수).
+    #[wasm_bindgen(js_name = getLogicalLength)]
+    pub fn get_logical_length(&self, section_idx: u32, para_idx: u32) -> Result<u32, JsValue> {
+        let sec = section_idx as usize;
+        let pi = para_idx as usize;
+        if sec >= self.document.sections.len() || pi >= self.document.sections[sec].paragraphs.len() {
+            return Err(JsValue::from_str("인덱스 범위 초과"));
+        }
+        Ok(crate::document_core::helpers::logical_paragraph_length(
+            &self.document.sections[sec].paragraphs[pi]) as u32)
+    }
+
+    /// 논리적 오프셋 → 텍스트 오프셋 변환.
+    #[wasm_bindgen(js_name = logicalToTextOffset)]
+    pub fn logical_to_text_offset(&self, section_idx: u32, para_idx: u32, logical_offset: u32) -> Result<u32, JsValue> {
+        let sec = section_idx as usize;
+        let pi = para_idx as usize;
+        if sec >= self.document.sections.len() || pi >= self.document.sections[sec].paragraphs.len() {
+            return Err(JsValue::from_str("인덱스 범위 초과"));
+        }
+        let (text_offset, _) = crate::document_core::helpers::logical_to_text_offset(
+            &self.document.sections[sec].paragraphs[pi], logical_offset as usize);
+        Ok(text_offset as u32)
+    }
+
+    /// 텍스트 오프셋 → 논리적 오프셋 변환.
+    #[wasm_bindgen(js_name = textToLogicalOffset)]
+    pub fn text_to_logical_offset(&self, section_idx: u32, para_idx: u32, text_offset: u32) -> Result<u32, JsValue> {
+        let sec = section_idx as usize;
+        let pi = para_idx as usize;
+        if sec >= self.document.sections.len() || pi >= self.document.sections[sec].paragraphs.len() {
+            return Err(JsValue::from_str("인덱스 범위 초과"));
+        }
+        Ok(crate::document_core::helpers::text_to_logical_offset(
+            &self.document.sections[sec].paragraphs[pi], text_offset as usize) as u32)
+    }
+
     /// 문단에서 텍스트를 삭제한다.
     ///
     /// 삭제 후 구역을 재구성하고 재페이지네이션한다.
