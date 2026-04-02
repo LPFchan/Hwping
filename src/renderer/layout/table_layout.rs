@@ -789,8 +789,14 @@ impl LayoutEngine {
         paper_width: Option<f64>,
     ) -> f64 {
         if let Some(ix) = inline_x_override {
-            let h_offset = hwpunit_to_px(table.common.horizontal_offset as i32, self.dpi);
-            ix + h_offset
+            // inline_x_override: 外部(テキストフロー)で既に正しい位置が計算済み
+            // TAC表のh_offsetはテキストフロー位置には不要 (非TAC表のみ加算)
+            if table.common.treat_as_char {
+                ix
+            } else {
+                let h_offset = hwpunit_to_px(table.common.horizontal_offset as i32, self.dpi);
+                ix + h_offset
+            }
         } else if depth == 0 && table.common.treat_as_char {
             // 글자처럼 취급(treat_as_char)
             // TAC 표의 위치는 텍스트 플로우에 의해 결정되므로 h_offset 미적용

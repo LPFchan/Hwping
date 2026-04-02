@@ -116,6 +116,7 @@ pub fn compose_paragraph(para: &Paragraph) -> ComposedParagraph {
 
     // treat_as_char 컨트롤의 텍스트 위치와 HWPUNIT 너비 수집
     let tac_positions = find_control_text_positions(para);
+    let seg_width = para.line_segs.first().map(|s| s.segment_width).unwrap_or(0);
     let tac_controls: Vec<(usize, i32, usize)> = para.controls.iter().enumerate()
         .filter_map(|(i, ctrl)| {
             let pos = *tac_positions.get(i)?;
@@ -131,6 +132,11 @@ pub fn compose_paragraph(para: &Paragraph) -> ComposedParagraph {
                 }
                 Control::Form(f) => {
                     Some((pos, f.width as i32, i))
+                }
+                Control::Table(t) if t.common.treat_as_char
+                    && super::height_measurer::is_tac_table_inline(t, seg_width, &para.text, &para.controls) => {
+                    let table_width: u32 = t.get_column_widths().iter().sum();
+                    Some((pos, table_width as i32, i))
                 }
                 _ => None,
             }

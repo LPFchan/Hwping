@@ -1855,7 +1855,15 @@ impl LayoutEngine {
                     .unwrap_or(0.0);
                 let table_y_before = y_offset;
                 let tbl_is_square = matches!(t.common.text_wrap, crate::model::shape::TextWrap::Square);
-                let tbl_inline_x = if !is_tac && tbl_is_square {
+                // インラインTAC表: paragraph_layoutで計算された位置を使用
+                let inline_pos = if is_tac {
+                    tree.get_inline_shape_position(page_content.section_index, para_index, control_index)
+                } else {
+                    None
+                };
+                let tbl_inline_x = if let Some((ix, _)) = inline_pos {
+                    Some(ix)
+                } else if !is_tac && tbl_is_square {
                     Some(col_area.x)
                 } else {
                     None
@@ -1893,10 +1901,11 @@ impl LayoutEngine {
                         paper_images.push(child);
                     }
                 } else {
+                    let table_y_start = if let Some((_, iy)) = inline_pos { iy } else { y_offset };
                     y_offset = self.layout_table(
                         tree, col_node, t,
                         page_content.section_index, styles, col_area,
-                        y_offset, bin_data_content, mt, 0,
+                        table_y_start, bin_data_content, mt, 0,
                         Some((para_index, control_index)),
                         alignment, None, effective_margin, margin_right,
                         tbl_inline_x, None, Some(para_y_for_table),
@@ -2012,12 +2021,20 @@ impl LayoutEngine {
                                 .map(|c| styles.para_styles.get(c.para_style_id as usize)
                                     .map(|s| s.alignment).unwrap_or(Alignment::Left))
                                 .unwrap_or(Alignment::Left);
+                            // paragraph_layout에서 계산된 인라인 좌표 사용
+                            let inline_pos = tree.get_inline_shape_position(
+                                page_content.section_index, para_index, ci);
+                            let (inline_x, inline_y) = if let Some((ix, iy)) = inline_pos {
+                                (Some(ix), iy)
+                            } else {
+                                (None, para_y_for_table)
+                            };
                             let tac_new_y = self.layout_table(
                                 tree, col_node, inline_t,
-                                page_content.section_index, styles, col_area, para_y_for_table,
+                                page_content.section_index, styles, col_area, inline_y,
                                 bin_data_content, mt, 0,
                                 Some((para_index, ci)),
-                                alignment, None, 0.0, 0.0, None, None, None,
+                                alignment, None, 0.0, 0.0, inline_x, None, None,
                             );
                             y_offset = y_offset.max(tac_new_y);
                         }

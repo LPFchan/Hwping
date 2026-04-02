@@ -1471,6 +1471,25 @@ impl LayoutEngine {
                                 tree.set_inline_shape_position(section_index, para_index, tac_ci, x, eq_y);
                             }
                         }
+                        // 인라인 TAC 표: 텍스트 흐름 위치에 직접 렌더링
+                        if let (Some(p), Some(bdc)) = (para, bin_data_content) {
+                            if let Some(Control::Table(t)) = p.controls.get(tac_ci) {
+                                if t.common.treat_as_char {
+                                    let table_h = hwpunit_to_px(t.common.height as i32, self.dpi);
+                                    let table_y = (y + line_height - table_h).max(y);
+                                    self.layout_table(
+                                        tree, col_node, t,
+                                        section_index, styles, col_area,
+                                        table_y, bdc, None, 0,
+                                        Some((para_index, tac_ci)),
+                                        alignment, None, 0.0, 0.0,
+                                        Some(x), None, None,
+                                    );
+                                    // 스킵 마커 등록 (별도 Table PageItem에서 중복 렌더 방지)
+                                    tree.set_inline_shape_position(section_index, para_index, tac_ci, x, table_y);
+                                }
+                            }
+                        }
                         // 인라인 양식 개체 렌더링
                         if let Some(p) = para {
                             if let Some(Control::Form(f)) = p.controls.get(tac_ci) {
