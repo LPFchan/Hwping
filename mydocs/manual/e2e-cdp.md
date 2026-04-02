@@ -29,7 +29,7 @@ networkingMode=mirrored
 memory=20GB
 processors=8
 swap=4GB
-dnsTunneling=false
+dnsTunneling=true
 ```
 
 > `networkingMode=mirrored`는 WSL 2.0.0 이상 + Windows 11 22H2 이상에서 지원된다.
@@ -40,31 +40,6 @@ dnsTunneling=false
 ```powershell
 wsl --shutdown
 ```
-
-### 1.3 포트 프록시 설정
-
-mirrored 모드에서도 WSL2 → Windows 호스트의 Chrome CDP 접속을 위해 포트 프록시가 필요하다.
-
-Windows **관리자 권한** PowerShell에서 실행:
-
-```powershell
-# WSL2 IP 확인
-wsl hostname -I
-# 예: 172.21.192.102
-
-# 포트 프록시 추가
-netsh interface portproxy add v4tov4 listenport=19222 listenaddress=0.0.0.0 connectport=19222 connectaddress=(wsl hostname -I)
-
-# 확인
-netsh interface portproxy show v4tov4
-```
-
-> **참고**: WSL2 IP가 변경된 경우(재부팅 등) 포트 프록시를 재설정해야 한다:
->
-> ```powershell
-> netsh interface portproxy delete v4tov4 listenport=19222 listenaddress=0.0.0.0
-> netsh interface portproxy add v4tov4 listenport=19222 listenaddress=0.0.0.0 connectport=19222 connectaddress=(wsl hostname -I)
-> ```
 
 ### 1.4 Chrome 디버깅 모드 시작 (Windows 호스트)
 

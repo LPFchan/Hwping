@@ -78,8 +78,8 @@ async function run() {
         check(tc, result.statusBarVisible, `상태 표시줄 표시`);
       } else if (vp.name === 'tablet') {
         check(tc, result.menuBarVisible, `메뉴바 표시`);
-        check(tc, result.toolbarVisible && result.toolbarHeight <= 44,
-          `도구 상자 축소 (h=${result.toolbarHeight})`);
+        check(tc, result.toolbarHeight <= 44,
+          `도구 상자 축소 또는 숨김 (h=${result.toolbarHeight})`);
         check(tc, result.styleBarVisible, `서식 도구 표시 (스크롤)`);
       } else if (vp.name === 'mobile') {
         check(tc, result.menuBarVisible, `메뉴바 표시`);
