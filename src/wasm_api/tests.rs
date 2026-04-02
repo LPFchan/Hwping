@@ -15195,3 +15195,32 @@
         }
     }
 
+    /// 문단 분할 후 페이지 수가 과도하게 증가하지 않는지 검증
+    /// (measure_section_selective의 off-by-one 인덱싱 버그 회귀 방지)
+    #[test]
+    fn test_split_paragraph_page_count_stability() {
+        let bytes = std::fs::read("samples/kps-ai.hwp").expect("kps-ai.hwp 읽기 실패");
+        let mut doc = HwpDocument::from_bytes(&bytes).unwrap();
+        doc.convert_to_editable_native().unwrap();
+        doc.paginate();
+
+        let pages_before = doc.pagination.iter().map(|r| r.pages.len()).sum::<usize>();
+        eprintln!("  pages_before = {}", pages_before);
+
+        // pi=199 앞에서 엔터 (offset=0으로 분할)
+        let result = doc.split_paragraph_native(0, 199, 0).unwrap();
+        assert!(result.contains("\"ok\":true"), "split failed: {}", result);
+
+        let pages_after = doc.pagination.iter().map(|r| r.pages.len()).sum::<usize>();
+        eprintln!("  pages_after = {}", pages_after);
+
+        // 한 줄 추가이므로 페이지 수 증가는 최대 2 이내여야 함
+        let delta = pages_after as i64 - pages_before as i64;
+        eprintln!("  delta = {}", delta);
+        assert!(
+            delta <= 2,
+            "문단 분할 후 페이지 수가 {}에서 {}로 {}만큼 증가 (최대 2 예상)",
+            pages_before, pages_after, delta
+        );
+    }
+

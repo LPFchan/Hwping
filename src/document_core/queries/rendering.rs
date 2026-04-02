@@ -605,11 +605,9 @@ impl DocumentCore {
         let composed = compose_paragraph(para);
         self.composed[section_idx].insert(para_idx, composed);
         self.mark_section_dirty(section_idx);
-        // dirty 비트맵에 새 항목 삽입
+        // 문단 삽입 시 prev_measured 인덱스와 불일치하므로 전체 재측정 강제
         if section_idx < self.dirty_paragraphs.len() {
-            if let Some(bits) = &mut self.dirty_paragraphs[section_idx] {
-                bits.insert(para_idx, true);
-            }
+            self.dirty_paragraphs[section_idx] = None;
         }
     }
 
@@ -620,13 +618,9 @@ impl DocumentCore {
             self.composed[section_idx].remove(para_idx);
         }
         self.mark_section_dirty(section_idx);
-        // dirty 비트맵에서 항목 제거
+        // 문단 제거 시 prev_measured 인덱스와 불일치하므로 전체 재측정 강제
         if section_idx < self.dirty_paragraphs.len() {
-            if let Some(bits) = &mut self.dirty_paragraphs[section_idx] {
-                if para_idx < bits.len() {
-                    bits.remove(para_idx);
-                }
-            }
+            self.dirty_paragraphs[section_idx] = None;
         }
     }
 
