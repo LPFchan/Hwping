@@ -15195,6 +15195,133 @@
         }
     }
 
+    /// 12페이지 각 문단에서 엔터 후 13페이지 표 배치 검증
+    #[test]
+    fn test_page12_enter_table_placement_scan() {
+        use crate::renderer::pagination::PageItem;
+
+        // 12페이지의 각 문단 끝에서 엔터를 입력하는 시나리오
+        for split_pi in [194, 196] {
+            let bytes = std::fs::read("samples/kps-ai.hwp").expect("kps-ai.hwp 읽기 실패");
+            let mut doc = HwpDocument::from_bytes(&bytes).unwrap();
+            doc.convert_to_editable_native().unwrap();
+            doc.paginate();
+
+            let text_len = doc.document.sections[0].paragraphs[split_pi].text.chars().count();
+            let offset = text_len; // 문단 끝에서 분할
+
+            eprintln!("\n=== split pi={} offset={} ===", split_pi, offset);
+
+            // 분할 전 page 13 (idx=12) 확인
+            let table_pi_before = 198; // 원래 pi=198의 표
+            let p13_before = &doc.pagination[0].pages[12];
+            let has_table_before = p13_before.column_contents[0].items.iter()
+                .any(|it| matches!(it, PageItem::Table { para_index, .. } if *para_index == table_pi_before));
+            eprintln!("  before: pi={} table on page 13: {}", table_pi_before, has_table_before);
+
+            let result = doc.split_paragraph_native(0, split_pi, offset).unwrap();
+            assert!(result.contains("\"ok\":true"), "split failed at pi={}: {}", split_pi, result);
+
+            let pages_after = doc.pagination[0].pages.len();
+            let table_pi_after = if split_pi < table_pi_before { table_pi_before + 1 } else { table_pi_before };
+
+            // 분할 후: 표가 어느 페이지에 있는지 탐색
+            let mut table_page = None;
+            for (pidx, page) in doc.pagination[0].pages.iter().enumerate() {
+                for item in &page.column_contents[0].items {
+                    if matches!(item, PageItem::Table { para_index, .. } if *para_index == table_pi_after) {
+                        table_page = Some(pidx);
+                    }
+                }
+            }
+            eprintln!("  after: pi={} table on page {} (total {})",
+                table_pi_after, table_page.map(|p| p + 1).unwrap_or(0), pages_after);
+
+            // 페이지 12-15 내용 출력
+            for pidx in 11..15.min(pages_after) {
+                let p = &doc.pagination[0].pages[pidx];
+                eprintln!("  page {} items:", pidx + 1);
+                for item in &p.column_contents[0].items {
+                    match item {
+                        PageItem::Table { para_index, control_index } => {
+                            let text = &doc.document.sections[0].paragraphs[*para_index].text;
+                            eprintln!("    Table pi={} ci={} text='{}'", para_index, control_index,
+                                &text[..text.len().min(30)]);
+                        }
+                        PageItem::FullParagraph { para_index } => {
+                            let text = &doc.document.sections[0].paragraphs[*para_index].text;
+                            let display: String = if text.is_empty() { "(빈)".to_string() } else { text.chars().take(40).collect() };
+                            eprintln!("    FullPara pi={} '{}'", para_index, display);
+                        }
+                        _ => eprintln!("    {:?}", item),
+                    }
+                }
+            }
+        }
+    }
+
+    /// 12페이지 엔터 후 13페이지의 표 배치 검증
+    #[test]
+    fn test_page12_enter_table_placement() {
+        use crate::renderer::pagination::PageItem;
+
+        let bytes = std::fs::read("samples/kps-ai.hwp").expect("kps-ai.hwp 읽기 실패");
+        let mut doc = HwpDocument::from_bytes(&bytes).unwrap();
+        doc.convert_to_editable_native().unwrap();
+        doc.paginate();
+
+        let pages_before = doc.pagination[0].pages.len();
+        eprintln!("  pages_before = {}", pages_before);
+
+        // page 12 (idx=11) 내용 확인
+        let p12 = &doc.pagination[0].pages[11];
+        eprintln!("  page 12 items:");
+        for item in &p12.column_contents[0].items {
+            eprintln!("    {:?}", item);
+        }
+
+        // page 13 (idx=12): pi=197(text), pi=198(table), pi=199(text)
+        let p13_before = &doc.pagination[0].pages[12];
+        eprintln!("  page 13 items (before):");
+        for item in &p13_before.column_contents[0].items {
+            eprintln!("    {:?}", item);
+        }
+        // pi=198 표가 page 13에 있는지 확인
+        let has_table_198_on_p13 = p13_before.column_contents[0].items.iter()
+            .any(|it| matches!(it, PageItem::Table { para_index: 198, .. }));
+        assert!(has_table_198_on_p13, "수정 전: pi=198 표가 page 13에 있어야 함");
+
+        // pi=199 앞에서 엔터 (pi=199를 분할하여 빈 문단 삽입)
+        let result = doc.split_paragraph_native(0, 199, 0).unwrap();
+        assert!(result.contains("\"ok\":true"), "split failed: {}", result);
+
+        let pages_after = doc.pagination[0].pages.len();
+        eprintln!("  pages_after = {}", pages_after);
+
+        // page 13 (idx=12): pi=198 표가 여전히 page 13에 있어야 함
+        if doc.pagination[0].pages.len() > 12 {
+            let p13_after = &doc.pagination[0].pages[12];
+            eprintln!("  page 13 items (after):");
+            for item in &p13_after.column_contents[0].items {
+                eprintln!("    {:?}", item);
+            }
+            let has_table_198_after = p13_after.column_contents[0].items.iter()
+                .any(|it| matches!(it, PageItem::Table { para_index: 198, .. }));
+
+            // page 14도 확인
+            if doc.pagination[0].pages.len() > 13 {
+                let p14_after = &doc.pagination[0].pages[13];
+                eprintln!("  page 14 items (after):");
+                for item in &p14_after.column_contents[0].items {
+                    eprintln!("    {:?}", item);
+                }
+            }
+
+            assert!(has_table_198_after,
+                "pi=198 표가 page 13에 있어야 하지만 다음 페이지로 밀려남");
+        }
+    }
+
     /// 문단 분할 후 페이지 수가 과도하게 증가하지 않는지 검증
     /// (measure_section_selective의 off-by-one 인덱싱 버그 회귀 방지)
     #[test]

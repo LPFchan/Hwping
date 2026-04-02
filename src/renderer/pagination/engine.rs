@@ -193,7 +193,7 @@ impl Paginator {
             let tac_table_count_for_flush = para.controls.iter()
                 .filter(|c| matches!(c, Control::Table(t) if t.common.treat_as_char))
                 .count();
-            if st.current_height + para_height_for_fit > available_height
+            if st.current_height + para_height_for_fit > available_height + 0.5
                 && !st.current_items.is_empty()
                 && has_table
                 && tac_table_count_for_flush <= 1
@@ -1011,7 +1011,8 @@ impl Paginator {
 
         // 페이지 하단/중앙 고정 표: 본문 높이에 영향 없음
         // 표가 현재 페이지에 전체 들어가는지 확인
-        if st.current_height + table_total_height <= table_available_height {
+        // 텍스트 문단과 동일한 0.5px 부동소수점 톨러런스 적용
+        if st.current_height + table_total_height <= table_available_height + 0.5 {
             self.place_table_fits(st, para_idx, ctrl_idx, para, measured, table,
                 table_total_height, para_height, para_height_for_fit, is_tac_table);
         } else if is_tac_table {
