@@ -172,6 +172,49 @@ export async function typeText(page, text) {
   await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
 }
 
+/** 커서를 문서 위치로 이동한다 */
+export async function moveCursorTo(page, sectionIndex, paragraphIndex, charOffset) {
+  await page.evaluate((sec, para, offset) => {
+    const handler = window.__inputHandler;
+    if (handler?.cursor) {
+      handler.cursor.moveTo({
+        sectionIndex: sec,
+        paragraphIndex: para,
+        charOffset: offset,
+      });
+    }
+  }, sectionIndex, paragraphIndex, charOffset);
+  await page.evaluate(() => new Promise(r => setTimeout(r, 100)));
+}
+
+/** 커서를 문서 시작으로 이동한다 */
+export async function moveCursorToStart(page) {
+  await page.evaluate(() => {
+    window.__inputHandler?.cursor?.moveToDocumentStart?.();
+  });
+  await page.evaluate(() => new Promise(r => setTimeout(r, 100)));
+}
+
+/** 커서를 문서 끝으로 이동한다 */
+export async function moveCursorToEnd(page) {
+  await page.evaluate(() => {
+    window.__inputHandler?.cursor?.moveToDocumentEnd?.();
+  });
+  await page.evaluate(() => new Promise(r => setTimeout(r, 100)));
+}
+
+/** 현재 커서 위치를 반환한다 */
+export async function getCursorPosition(page) {
+  return await page.evaluate(() => {
+    const pos = window.__inputHandler?.cursor?.getPosition?.();
+    return pos ? {
+      sectionIndex: pos.sectionIndex,
+      paragraphIndex: pos.paragraphIndex,
+      charOffset: pos.charOffset,
+    } : null;
+  });
+}
+
 // ─── 스크린샷/조회/검증 ──────────────────────────────────
 
 /** 스크린샷을 파일로 저장 (리포터에 자동 연결) */

@@ -8,7 +8,7 @@
  */
 import {
   runTest, createNewDocument, clickEditArea, screenshot, assert,
-  getPageCount,
+  getPageCount, moveCursorTo, getCursorPosition,
 } from './helpers.mjs';
 
 /** 렌더링 갱신 + 대기: document-changed 이벤트로 캔버스 재렌더링 */
@@ -29,27 +29,24 @@ runTest('인라인 TAC 표 — 빈 문서에서 직접 생성', async ({ page })
   await screenshot(page, 'tac-build-00-blank');
   console.log('  Step 0: 빈 문서');
 
-  // ── Step 1: 제목 입력 ──
-  await page.evaluate(() => {
-    window.__wasm.doc.insertText(0, 0, 0, 'TC #20');
-  });
-  await refresh(page);
+  // ── Step 1: 제목 입력 (키보드) ──
+  await moveCursorTo(page, 0, 0, 0);
+  await page.keyboard.type('TC #20', { delay: 50 });
+  await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
   await screenshot(page, 'tac-build-01-title');
   console.log('  Step 1: 제목 "TC #20" 입력');
 
   // ── Step 2: Enter → 새 문단 ──
-  await page.evaluate(() => {
-    window.__wasm.doc.splitParagraph(0, 0, 6);
-  });
-  await refresh(page);
+  await page.keyboard.press('Enter');
+  await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
   await screenshot(page, 'tac-build-02-enter');
   console.log('  Step 2: Enter (pi=1 생성)');
 
-  // ── Step 3: 표 앞 텍스트 입력 ──
-  await page.evaluate(() => {
-    window.__wasm.doc.insertText(0, 1, 0, 'tacglkj 표 3 배치 시작');
-  });
-  await refresh(page);
+  // ── Step 3: 표 앞 텍스트 입력 (키보드) ──
+  await page.keyboard.type('tacglkj ', { delay: 50 });
+  await page.evaluate(() => new Promise(r => setTimeout(r, 200)));
+  await page.keyboard.type('표 3 배치 시작', { delay: 80 });
+  await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
   await screenshot(page, 'tac-build-03-before-text');
   console.log('  Step 3: 표 앞 텍스트 "tacglkj 표 3 배치 시작"');
 
@@ -81,31 +78,31 @@ runTest('인라인 TAC 표 — 빈 문서에서 직접 생성', async ({ page })
   await screenshot(page, 'tac-build-05-cell-text');
   console.log('  Step 5: 셀 텍스트 입력 (1, 2, 3 tacglkj, 4 tacglkj)');
 
-  // ── Step 6: 표 뒤 텍스트 입력 ──
-  await page.evaluate(() => {
-    const w = window.__wasm;
-    const len = w.doc.getParagraphLength(0, 1);
-    w.doc.insertText(0, 1, len, '4 tacglkj 표 다음');
-  });
-  await refresh(page);
+  // ── Step 6: 표 뒤 텍스트 입력 (커서 이동 + 키보드) ──
+  {
+    const pi1Len = await page.evaluate(() => window.__wasm.doc.getParagraphLength(0, 1));
+    await moveCursorTo(page, 0, 1, pi1Len);
+    const pos = await getCursorPosition(page);
+    console.log(`  커서 위치: pi=${pos?.paragraphIndex} offset=${pos?.charOffset}`);
+  }
+  await page.keyboard.type('4 tacglkj ', { delay: 50 });
+  await page.evaluate(() => new Promise(r => setTimeout(r, 200)));
+  await page.keyboard.type('표 다음', { delay: 80 });
+  await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
   await screenshot(page, 'tac-build-06-after-text');
   console.log('  Step 6: 표 뒤 텍스트 "4 tacglkj 표 다음"');
 
   // ── Step 7: Enter → pi=2 ──
-  await page.evaluate(() => {
-    const w = window.__wasm;
-    const len = w.doc.getParagraphLength(0, 1);
-    w.doc.splitParagraph(0, 1, len);
-  });
-  await refresh(page);
+  await page.keyboard.press('Enter');
+  await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
   await screenshot(page, 'tac-build-07-enter2');
   console.log('  Step 7: Enter (pi=2 생성)');
 
-  // ── Step 8: 마지막 줄 텍스트 ──
-  await page.evaluate(() => {
-    window.__wasm.doc.insertText(0, 2, 0, 'tacglkj 가나 옮');
-  });
-  await refresh(page);
+  // ── Step 8: 마지막 줄 텍스트 (키보드) ──
+  await page.keyboard.type('tacglkj ', { delay: 50 });
+  await page.evaluate(() => new Promise(r => setTimeout(r, 200)));
+  await page.keyboard.type('가나 옮', { delay: 80 });
+  await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
   await screenshot(page, 'tac-build-08-final-text');
   console.log('  Step 8: 마지막 줄 "tacglkj 가나 옮"');
 
