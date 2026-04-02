@@ -748,14 +748,31 @@ impl LayoutEngine {
                             }
                         }
                     } else if !para.text.is_empty() {
-                        // 컨트롤 없는 텍스트 문단
+                        // 컨트롤 없는 텍스트 문단: vpos 기반 y 위치 사용
                         let mut comp = compose_paragraph(para);
                         self.substitute_hf_field_markers(&mut comp, page_number);
+                        // 바탕쪽 탭은 레이아웃 위치 지정용이므로 탭 리더를 그리지 않음
+                        comp.tab_extended.clear();
+                        // LINE_SEG vpos로 문단 시작 y 결정 (빈 문단 건너뜀 보상)
+                        if let Some(first_ls) = para.line_segs.first() {
+                            let vpos_y = paper_area.y + hwpunit_to_px(first_ls.vertical_pos, self.dpi);
+                            if vpos_y > mp_y_offset {
+                                mp_y_offset = vpos_y;
+                            }
+                        }
                         mp_y_offset = self.layout_paragraph(
                             tree, &mut mp_node, para, Some(&comp), styles,
                             &paper_area, mp_y_offset,
                             0, usize::MAX - pi, None, None,
                         );
+                    } else {
+                        // 빈 문단: LINE_SEG vpos로 y 위치 갱신
+                        if let Some(first_ls) = para.line_segs.first() {
+                            let vpos_y = paper_area.y + hwpunit_to_px(first_ls.vertical_pos, self.dpi);
+                            let lh = hwpunit_to_px(first_ls.line_height, self.dpi);
+                            let ls = hwpunit_to_px(first_ls.line_spacing, self.dpi);
+                            mp_y_offset = (vpos_y + lh + ls).max(mp_y_offset);
+                        }
                     }
                 }
                 tree.root.children.push(mp_node);
