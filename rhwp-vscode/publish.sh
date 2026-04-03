@@ -23,8 +23,8 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 
-VSCE_PAT=$(grep '^VSCE_PAT=' "$ENV_FILE" | cut -d= -f2-)
-OVSX_PAT=$(grep '^OVSX_PAT=' "$ENV_FILE" | cut -d= -f2-)
+VSCE_PAT=$(grep '^VSCE_PAT=' "$ENV_FILE" | cut -d= -f2- | tr -d '\r')
+OVSX_PAT=$(grep '^OVSX_PAT=' "$ENV_FILE" | cut -d= -f2- | tr -d '\r')
 
 if [ -z "$VSCE_PAT" ]; then
   echo "❌ VSCE_PAT가 .env에 설정되지 않았습니다"
