@@ -208,6 +208,49 @@ impl LayoutEngine {
             baseline_dist * 1.5
         };
 
+        // LINE_SEG 기반 줄 나눔 위치 결정:
+        // ls[1].text_start가 있으면 해당 UTF-16 위치에서 줄 나눔 (한컴 저장값 존재)
+        // ls[1]이 없으면 자체 right_margin 기반 줄 나눔 (동적 reflow)
+        let line_break_char_idx: Option<usize> = if para.line_segs.len() > 1 {
+            let ts = para.line_segs[1].text_start as u32;
+            // UTF-16 text_start를 char index로 변환 (제어문자 갭 보정)
+            // text_start는 제어문자 8 code unit 포함한 절대 UTF-16 위치
+            let mut utf16_pos = 0u32;
+            let mut ctrl_gap = 0u32;
+            // char_offsets에서 제어문자 갭 계산
+            if !para.char_offsets.is_empty() {
+                let first_offset = para.char_offsets[0];
+                ctrl_gap += first_offset; // 선행 컨트롤
+                for i in 1..para.char_offsets.len() {
+                    let prev_len = if text_chars[i-1] >= '\u{10000}' { 2u32 } else { 1 };
+                    let gap = para.char_offsets[i] - para.char_offsets[i-1];
+                    if gap > prev_len + 4 {
+                        ctrl_gap += gap - prev_len; // 중간 컨트롤 갭
+                    }
+                }
+            }
+            // text_start에서 ctrl_gap을 빼서 순수 텍스트 char index 추정
+            let text_only_ts = ts.saturating_sub(ctrl_gap);
+            // UTF-16 → char index 변환
+            let mut char_idx = 0usize;
+            let mut u16_accum = 0u32;
+            for (i, ch) in text_chars.iter().enumerate() {
+                if u16_accum >= text_only_ts {
+                    char_idx = i;
+                    break;
+                }
+                u16_accum += if *ch >= '\u{10000}' { 2 } else { 1 };
+                char_idx = i + 1;
+            }
+            if char_idx > 0 && char_idx <= text_chars.len() {
+                Some(char_idx)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
         let mut inline_x = start_x;
         let mut current_y = y;
         let mut table_idx = 0;
@@ -304,7 +347,12 @@ impl LayoutEngine {
                         let ch_w = estimate_text_width(&ch.to_string(), &ts);
 
                         // char_shape 변경 또는 줄바꿈 시 누적된 run을 출력
-                        let need_wrap = inline_x + ch_w > right_margin + 0.5 && inline_x > line_start_x + 1.0;
+                        // LINE_SEG 기반 줄 나눔: text_start 위치에서 강제 개행
+                        let need_wrap = if let Some(break_idx) = line_break_char_idx {
+                            ch_idx >= break_idx && !wrapped_below_table
+                        } else {
+                            inline_x + ch_w > right_margin + 0.5 && inline_x > line_start_x + 1.0
+                        };
                         let cs_changed = cs_id != current_cs_id;
 
                         // 줄바꿈된 텍스트의 BoundingBox 높이: 표 줄 vs 텍스트 줄
