@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.5.2] - 2026-04-03
+
+### 수정
+
+- 문단 삽입/삭제 후 페이지 수 과도 증가 (#30)
+  - measure_section 캐시 인덱스 조정, 증분 측정 최적화
+- 인라인 TAC 표 텍스트 흐름 배치 (#31)
+  - 표 하단 = 베이스라인 + outer_margin_bottom 세로 정렬
+- 인라인 TAC 표 텍스트 reflow 개행 시점 (#34)
+  - LINE_SEG text_start 기반 줄 나눔
+- 다중 TAC 표 페이지네이션 간격 과대 (#35)
+  - 캡션 이중 계산 제거, common.height 클램프, trailing ls 제거
+- TAC 표 pre-flush/fit 체크 0.5px 톨러런스 적용
+
+### 추가
+
+- createTableEx API — 인라인 TAC 표 생성 (#32)
+- 논리적 오프셋 체계 (insertTextLogical, getLogicalLength)
+- getPageRenderTree API — 렌더 트리 JSON 직렬화
+- E2E 조판 자동 검증 체계 (scenario-runner) (#33)
+
 ## [0.5.1] - 2026-04-02
 
 ### 수정
