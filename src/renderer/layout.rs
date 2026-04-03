@@ -474,6 +474,7 @@ impl LayoutEngine {
             // 테이블 컨트롤이 있으면 테이블 렌더링
             let has_table = para.controls.iter().any(|c| matches!(c, Control::Table(_)));
             let has_shape = para.controls.iter().any(|c| matches!(c, Control::Shape(_)));
+            let has_picture = para.controls.iter().any(|c| matches!(c, Control::Picture(_)));
             if has_table {
                 for (ci, ctrl) in para.controls.iter().enumerate() {
                     if let Control::Table(t) = ctrl {
@@ -490,6 +491,35 @@ impl LayoutEngine {
                         );
                     }
                 }
+            } else if has_picture {
+                // Picture 컨트롤이 있는 문단
+                let mut comp = compose_paragraph(para);
+                self.substitute_hf_field_markers(&mut comp, page_number);
+                if comp.tac_controls.is_empty() {
+                    // 머리말/꼬리말 내 Picture: header/footer area 기준 배치
+                    for (_ci, ctrl) in para.controls.iter().enumerate() {
+                        if let Control::Picture(pic) = ctrl {
+                            let pic_container = LayoutRect {
+                                x: area.x,
+                                y: y_offset,
+                                width: area.width,
+                                height: area.height - (y_offset - area.y),
+                            };
+                            self.layout_picture(
+                                tree, area_node, pic, &pic_container,
+                                bin_data_content, Alignment::Left, None, None, None,
+                            );
+                            let pic_h = hwpunit_to_px(pic.common.height as i32, self.dpi);
+                            y_offset += pic_h;
+                        }
+                    }
+                } else {
+                    // TAC Picture: layout_paragraph에서 인라인 배치
+                    y_offset = self.layout_paragraph(
+                        tree, area_node, para, Some(&comp), styles, area, y_offset,
+                        0, usize::MAX - i, None, Some(bin_data_content),
+                    );
+                }
             } else if has_shape {
                 // Shape 컨트롤 렌더링 (머리말/꼬리말 내 글상자 등)
                 for (ci, ctrl) in para.controls.iter().enumerate() {
@@ -500,7 +530,7 @@ impl LayoutEngine {
                             0, // section_index
                             styles, area, area, area,
                             y_offset, Alignment::Left,
-                            &[], &std::collections::HashMap::new(),
+                            bin_data_content, &std::collections::HashMap::new(),
                         );
                     }
                 }

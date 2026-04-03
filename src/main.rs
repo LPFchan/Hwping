@@ -1182,6 +1182,12 @@ fn dump_controls(args: &[String]) {
                                             }
                                             desc
                                         }
+                                        Control::Picture(pic) => format!("그림: bin_id={}, w={} h={} ({:.1}×{:.1}mm), tac={}, wrap={:?}, vert={:?}(off={}), horz={:?}(off={})",
+                                            pic.image_attr.bin_data_id, pic.common.width, pic.common.height,
+                                            pic.common.width as f64 / 7200.0 * 25.4, pic.common.height as f64 / 7200.0 * 25.4,
+                                            pic.common.treat_as_char, pic.common.text_wrap,
+                                            pic.common.vert_rel_to, pic.common.vertical_offset,
+                                            pic.common.horz_rel_to, pic.common.horizontal_offset),
                                         _ => format!("{:?}", std::mem::discriminant(hc)),
                                     };
                                     println!("{}  hp[{}] ctrl[{}]: {}", prefix, hpi, hci, cn);
@@ -1196,6 +1202,22 @@ fn dump_controls(args: &[String]) {
                             .collect::<Vec<_>>()
                             .join(" ");
                         println!("{}꼬리말({:?}): paras={} \"{}\"", prefix, f.apply_to, f.paragraphs.len(), text);
+                        for (fpi, fp) in f.paragraphs.iter().enumerate() {
+                            if !fp.controls.is_empty() {
+                                for (fci, fc) in fp.controls.iter().enumerate() {
+                                    let cn = match fc {
+                                        Control::Picture(pic) => format!("그림: bin_id={}, w={} h={} ({:.1}×{:.1}mm), tac={}, wrap={:?}, vert={:?}(off={}), horz={:?}(off={})",
+                                            pic.image_attr.bin_data_id, pic.common.width, pic.common.height,
+                                            pic.common.width as f64 / 7200.0 * 25.4, pic.common.height as f64 / 7200.0 * 25.4,
+                                            pic.common.treat_as_char, pic.common.text_wrap,
+                                            pic.common.vert_rel_to, pic.common.vertical_offset,
+                                            pic.common.horz_rel_to, pic.common.horizontal_offset),
+                                        _ => format!("{:?}", std::mem::discriminant(fc)),
+                                    };
+                                    println!("{}  fp[{}] ctrl[{}]: {}", prefix, fpi, fci, cn);
+                                }
+                            }
+                        }
                     }
                     Control::Footnote(fn_) => {
                         println!("{}각주: paragraphs={}", prefix, fn_.paragraphs.len());
