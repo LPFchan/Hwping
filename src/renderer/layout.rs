@@ -1924,10 +1924,13 @@ impl LayoutEngine {
                         .count();
                     if tac_idx_current < tac_count_total {
                         // 다음 TAC가 있으면: vpos 차이분만 추가 (= line_spacing)
+                        // 이후 tac_seg_applied 경로의 line_spacing 추가를 스킵하기 위해
+                        // 여기서 직접 return (spacing_after/line_spacing 이중 적용 방지)
                         if let (Some(seg), Some(next_seg)) = (para.line_segs.get(seg_idx), para.line_segs.get(seg_idx + 1)) {
                             let gap = next_seg.vertical_pos - (seg.vertical_pos + seg.line_height);
                             y_offset += hwpunit_to_px(gap, self.dpi);
                         }
+                        return (y_offset, true);
                     } else {
                         // 마지막 TAC: line_end 보정 (vpos 기반)
                         // 표 실제 하단을 상한으로 clamp (ls는 이후 TAC seg handling에서 추가)
