@@ -19,6 +19,10 @@
   <a href="https://webassembly.org/"><img src="https://img.shields.io/badge/WebAssembly-Ready-blue.svg" alt="WASM" /></a>
 </p>
 
+<p align="center">
+  <strong>한국어</strong> | <a href="README_EN.md">English</a>
+</p>
+
 ---
 
 HWP 파일을 **어디서든** 열어보세요. 무료, 설치 없이.
