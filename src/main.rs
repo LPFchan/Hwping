@@ -1697,7 +1697,7 @@ fn gen_table(args: &[String]) {
 }
 
 fn test_field_roundtrip(args: &[String]) {
-    let input = args.get(0).map(|s| s.as_str()).unwrap_or("hwp_webctl/bsbc01_10_000.hwp");
+    let input = args.first().map(|s| s.as_str()).unwrap_or("hwp_webctl/bsbc01_10_000.hwp");
     let output = args.get(1).map(|s| s.as_str()).unwrap_or("output/field_test.hwp");
     
     let data = std::fs::read(input).expect("파일 읽기 실패");
