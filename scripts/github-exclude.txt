@@ -2,8 +2,6 @@
 target/
 pkg/
 output/
-rhwp-studio/dist/
-rhwp-studio/node_modules/
 node_modules/
 *.swp
 *.swo
@@ -46,10 +44,6 @@ samples/hwpspec-w.hwp
 samples/table-ipc.hwp
 samples/1-3.hwp
 samples/hwpx/
-rhwp-studio/public/samples/kps-ai.hwp
-rhwp-studio/public/samples/bsbc01_10_000.hwp
-rhwp-studio/public/samples/biz_plan.hwp
-rhwp-studio/public/samples/BlogForm_BookReview.hwp
 
 # ─── Git 내부 ───
 .git/

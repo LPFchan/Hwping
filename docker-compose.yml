@@ -19,18 +19,6 @@ services:
     working_dir: /app
     command: cargo test
 
-  wasm:
-    build: .
-    env_file: .env.docker
-    volumes:
-      - .:/app
-      - cargo-cache:/usr/local/cargo/registry
-      - cargo-bin:/usr/local/cargo/bin
-      - wasm-pack-cache:/root/.cache/.wasm-pack
-    working_dir: /app
-    command: wasm-pack build --target web
-
 volumes:
   cargo-cache:
   cargo-bin:
-  wasm-pack-cache:

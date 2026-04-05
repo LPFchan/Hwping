@@ -35,12 +35,6 @@ Thumbs.db
 .env
 .env.docker
 
-# E2E 스크린샷
-rhwp-studio/e2e/screenshots/
-
-# 비공개 테스트
-rhwp-studio/e2e/kps-ai*.test.mjs
-
 # 공개 리포 원본 파일 (prepare-github.sh용)
 CLAUDE.public.md
 README.public.md
@@ -48,6 +42,3 @@ README.public.md
 # 한컴 도움말 (저작권 보호)
 mydocs/manual/hwp/Help/
 
-# rhwp-vscode 빌드 산출물
-rhwp-vscode/media/rhwp.js
-rhwp-vscode/media/rhwp_bg.wasm

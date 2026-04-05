@@ -29,13 +29,6 @@ while IFS= read -r line; do
     fi
     FILE_LINES_JSON+="{\"file\":\"$file\",\"lines\":$lines}"
 done < <(find "$PROJECT_DIR/src" -name "*.rs" -exec wc -l {} \; | sort -rn)
-
-# TS/CSS 파일 포함
-while IFS= read -r line; do
-    lines=$(echo "$line" | awk '{print $1}')
-    file=$(echo "$line" | awk '{print $2}' | sed "s|$PROJECT_DIR/||")
-    FILE_LINES_JSON+=",{\"file\":\"$file\",\"lines\":$lines}"
-done < <(find "$PROJECT_DIR/rhwp-studio/src" \( -name "*.ts" -o -name "*.css" \) -exec wc -l {} \; | sort -rn)
 FILE_LINES_JSON+="]"
 
 # ── 2. Clippy 경고 수 ──

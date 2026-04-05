@@ -1,9 +1,7 @@
 FROM rust:latest
 
-# wasm 타겟 및 wasm-pack 설치
-RUN rustup target add wasm32-unknown-unknown \
-    && rustup component add clippy \
-    && cargo install wasm-pack
+# 기본 개발 도구 설치
+RUN rustup component add clippy
 
 WORKDIR /app
 

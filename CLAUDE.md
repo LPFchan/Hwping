@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-**목표**: Rust 언어로 HWP 파일 뷰어/에디터 개발
-- Rust로 HWP 파일 파서 및 렌더러 구현
-- WebAssembly(WASM)로 빌드하여 웹브라우저에서 HWP 문서를 볼 수 있도록 함
-- 한컴 웹기안기의 오픈소스 대안
+**목표**: Hwping용 HWP 엔진과 downstream 제품 계층 유지
+- upstream `rhwp`와 sync 가능한 Rust 기반 HWP/HWPX 파서 및 렌더러 유지
+- Hwping에 필요한 macOS 제품 계층을 downstream으로 분리
+- Hwping에 직접 필요하지 않은 web, npm, VS Code 표면은 기본 트리에서 제거
 
 ## 문서 생성 규칙
 
@@ -35,15 +35,6 @@ cargo build --release          # 릴리즈 빌드
 ```
 
 네이티브 빌드·테스트·SVG 내보내기는 **항상 로컬 cargo**를 사용한다.
-
-### Docker 빌드 (WASM 전용)
-
-```bash
-cp .env.docker.example .env.docker   # 최초 1회: 환경변수 설정
-docker compose --env-file .env.docker run --rm wasm    # WASM 빌드 (→ pkg/)
-```
-
-Docker는 **WASM 빌드 전용**으로만 사용한다. 네이티브 빌드/테스트에는 사용하지 않는다.
 
 ### SVG 내보내기
 
@@ -145,75 +136,12 @@ HWPX↔HWP 불일치 디버깅 시 추가 단계:
 - `output/` - 렌더링 결과물 (SVG, HTML 등) 기본 출력 폴더
 - `.gitignore`에 등록되어 있으므로 Git에 포함되지 않음
 
-### E2E 테스트
+## 제품 경계 규칙
 
-E2E 테스트는 Puppeteer (puppeteer-core) 기반이며, 두 가지 모드로 실행할 수 있다.
-
-#### headless Chrome (자동화용)
-
-```bash
-cd rhwp-studio
-npx vite --host 0.0.0.0 --port 7700 &   # Vite dev server
-node e2e/text-flow.test.mjs              # 텍스트 플로우 테스트
-```
-
-#### 호스트 Chrome CDP (시각 확인용)
-
-1. Chrome 실행 (원격 디버깅 활성화):
-```
-chrome --remote-debugging-port=9222 --remote-debugging-address=0.0.0.0 --remote-allow-origins=*
-```
-
-2. 테스트 실행:
-```bash
-cd rhwp-studio
-npx vite --host 0.0.0.0 --port 7700 &
-node e2e/text-flow.test.mjs --mode=host
-```
-
-## rhwp-studio UI 명칭 규약
-
-코드와 대화에서 혼동을 방지하기 위해, 아래 명칭을 통일하여 사용한다.
-
-```
-┌─────────────────────────────────────────────────┐
-│  메뉴바 (#menu-bar)                              │
-│  파일 | 편집 | 보기 | 입력 | 서식 | 쪽 | 표      │
-├─────────────────────────────────────────────────┤
-│  도구 상자 (#icon-toolbar)                        │
-│  [오려두기][복사][붙이기] | [글자모양][문단모양] | … │
-├─────────────────────────────────────────────────┤
-│  서식 도구 모음 (#style-bar)                      │
-│  [스타일▼][글꼴▼][크기] | 가가간가 | ◀ ≡ ▶ ≡≡ | ⇕  │
-├─────────────────────────────────────────────────┤
-│                                                 │
-│  편집 영역 (#scroll-container)                    │
-│                                                 │
-├─────────────────────────────────────────────────┤
-│  상태 표시줄 (#status-bar)                        │
-│  1/1쪽 | 구역:1/1 | 삽입 |           100% [−][+] │
-└─────────────────────────────────────────────────┘
-```
-
-| 한국어 명칭 | HTML id/class | 설명 |
-|------------|---------------|------|
-| 메뉴바 | `#menu-bar` | 최상단 드롭다운 메뉴 (파일/편집/보기/입력/서식/쪽/표) |
-| 도구 상자 | `#icon-toolbar` | 아이콘+라벨 버튼 모음 (tb-btn, tb-group) |
-| 서식 도구 모음 | `#style-bar` | 스타일/글꼴/크기/서식 버튼 (sb-btn, sb-combo) |
-| 편집 영역 | `#scroll-container` | 문서 페이지 렌더링 + 스크롤 영역 |
-| 상태 표시줄 | `#status-bar` | 하단 쪽/구역/모드/줌 표시 |
-
-### CSS 접두어 규칙
-
-| 접두어 | 대상 |
-|--------|------|
-| `tb-` | 도구 상자 (#icon-toolbar) 요소 |
-| `sb-` | 서식 도구 모음 (#style-bar) 요소 |
-| `stb-` | 상태 표시줄 (#status-bar) 요소 |
-| `md-` | 메뉴바 드롭다운 (#menu-bar) 요소 |
-| `dialog-` | 대화상자 공통 |
-| `cs-` | 글자모양 대화상자 (char-shape) |
-| `ps-` | 문단모양 대화상자 (para-shape) |
+- 엔진 core 변경은 먼저 upstreamable인지 판단한다.
+- macOS 앱, Quick Look, Finder 연동 같은 Hwping 전용 기능은 downstream 계층에 둔다.
+- web 데모, npm 배포, VS Code 확장 같은 제거된 표면을 기본 트리에 다시 추가하지 않는다.
+- upstream에 이미 존재하는 표면의 이력은 upstream이 보존하므로, 이 포크에서는 sync 비용을 줄이는 쪽을 우선한다.
 
 ## 워크플로우
 
