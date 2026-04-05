@@ -1,5 +1,16 @@
 # Hwping Repository Structure and Upstream Sync Plan
 
+## Status
+
+As of 2026-04-05, M0 boundary setup is substantially in place.
+
+- the repository root is a Cargo workspace
+- the upstream-aligned engine lives in `crates/rhwp`
+- placeholder `crates/hwping-core` and `crates/hwping-ffi` crates exist
+- placeholder `apps/hwping-macos` and Quick Look extension directories exist
+
+The facade API, FFI design, and real app or extension targets described below are still future work.
+
 ## Purpose
 
 This document explains how to turn the current `rhwp`-based repository into a Hwping product repository without losing the ability to sync cleanly with upstream `rhwp`.
@@ -14,7 +25,7 @@ The answer is to define clear boundaries, adopt a disciplined repository layout,
 
 That boundary is not only about where new code goes. It is also about what does not remain in the Hwping repository. If a surface does not help build, test, package, or ship Hwping, it should not stay a first-class part of the main tree.
 
-## Current State
+## Previous State
 
 The repository already serves several roles at once.
 
@@ -243,6 +254,10 @@ Success criteria:
 - `cargo build`
 - `cargo test`
 - the `rhwp` CLI still works
+
+Current status:
+
+- completed on 2026-04-05
 
 ### Step 2. Split Out the Facade Crate
 

@@ -8,6 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 OUTPUT_DIR="$PROJECT_DIR/output"
+ENGINE_DIR="$PROJECT_DIR/crates/rhwp"
 
 mkdir -p "$OUTPUT_DIR"
 
@@ -28,7 +29,7 @@ while IFS= read -r line; do
         FILE_LINES_JSON+=","
     fi
     FILE_LINES_JSON+="{\"file\":\"$file\",\"lines\":$lines}"
-done < <(find "$PROJECT_DIR/src" -name "*.rs" -exec wc -l {} \; | sort -rn)
+done < <(find "$ENGINE_DIR/src" -name "*.rs" -exec wc -l {} \; | sort -rn)
 FILE_LINES_JSON+="]"
 
 # ── 2. Clippy 경고 수 ──
@@ -42,7 +43,7 @@ CLIPPY_AUTOFIX=${CLIPPY_AUTOFIX:-0}
 # ── 3. Cognitive Complexity (Clippy 기반) ──
 echo "[3/5] Cognitive Complexity 측정..."
 # clippy.toml에 낮은 임계값을 임시 설정하여 상위 함수들도 수집
-CLIPPY_TOML="$PROJECT_DIR/clippy.toml"
+CLIPPY_TOML="$ENGINE_DIR/clippy.toml"
 CLIPPY_BACKUP=""
 if [ -f "$CLIPPY_TOML" ]; then
     CLIPPY_BACKUP=$(cat "$CLIPPY_TOML")

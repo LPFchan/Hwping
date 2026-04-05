@@ -20,11 +20,11 @@ cargo clippy -- -D warnings
 
 ## 기여 원칙
 
-- `src/` 변경은 먼저 upstreamable인지 판단합니다.
+- `crates/rhwp/src/` 변경은 먼저 upstreamable인지 판단합니다.
 - Hwping 전용 코드는 downstream 계층에 두고 엔진 core에 섞지 않습니다.
 - AppKit, SwiftUI, Quick Look, Finder 연동 코드는 엔진 내부에 넣지 않습니다.
 - 웹 데모, npm 배포, VS Code 확장 같은 제거된 표면을 Hwping 기본 트리에 다시 추가하지 않습니다.
-- 모든 문서는 한국어로 작성합니다.
+- 새로 추가하거나 전면 개정하는 저장소 문서는 영어를 기준 문서로 작성합니다.
 
 ## 변경 분류
 
@@ -96,13 +96,18 @@ cargo run --bin rhwp -- dump sample.hwp -s 0 -p 45
 ## 프로젝트 구조
 
 ```
-src/
+crates/rhwp/src/
 ├── model/          ← 순수 데이터 구조
 ├── parser/         ← HWP/HWPX 파일 → 모델 변환
 ├── document_core/  ← 편집 명령 + 조회
 ├── renderer/       ← 레이아웃, 페이지네이션, SVG/PDF 출력
 ├── serializer/     ← 모델 → HWP 파일 저장
 └── wasm_api.rs     ← 엔진 바인딩 레이어
+
+crates/hwping-core/ ← app-facing facade 경계
+crates/hwping-ffi/  ← Swift FFI 경계
+apps/               ← macOS 앱 타깃
+extensions/         ← Quick Look 확장 타깃
 
 samples/            ← 회귀 검증용 문서 샘플
 mydocs/             ← 계획, 보고, 기술 문서

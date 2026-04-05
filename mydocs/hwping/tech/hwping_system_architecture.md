@@ -1,5 +1,15 @@
 # Hwping System Architecture
 
+## Status
+
+This document describes the intended target architecture for Hwping.
+
+As of 2026-04-05, M0 boundary setup is in place: the repository root is a Cargo workspace, the upstream-aligned engine lives in `crates/rhwp`, placeholder `crates/hwping-core` and `crates/hwping-ffi` crates exist, and placeholder app and Quick Look extension directories are present.
+
+The macOS app target, Quick Look extension targets, and product-facing APIs described below do not exist yet.
+
+Read this document as architectural direction and boundary guidance, not as a description of the repository's current implementation state.
+
 ## Purpose
 
 This document outlines the architecture for Hwping, a native macOS HWP reader built on top of the `rhwp` engine.

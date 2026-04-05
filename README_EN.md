@@ -75,7 +75,7 @@ When layout or spacing diverges, inspect in this order before changing code.
 ## Repository Layout
 
 ```text
-src/
+crates/rhwp/src/
   parser/            HWP/HWPX parser
   model/             document model
   document_core/     edit commands and queries
@@ -83,12 +83,17 @@ src/
   serializer/        HWP writer
   wasm_api.rs        engine binding layer
 
+crates/hwping-core/  app-facing facade boundary
+crates/hwping-ffi/   Swift-facing FFI boundary
+apps/hwping-macos/   placeholder for the future macOS app target
+extensions/          placeholder Quick Look extension targets
+
 samples/             regression documents
 mydocs/              plans, reports, and technical notes
 scripts/             quality and sync helper scripts
 ```
 
-The root crate is still named `rhwp`. That name remains for now to preserve technical continuity with upstream.
+The root workspace now hosts multiple crates. The upstream-aligned engine crate remains named `rhwp` and lives under `crates/rhwp` to preserve technical continuity with upstream.
 
 ## Contribution Rules
 

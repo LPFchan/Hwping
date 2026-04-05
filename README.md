@@ -75,7 +75,7 @@ cargo run --bin rhwp -- dump samples/biz_plan.hwp -s 0 -p 45
 ## 프로젝트 구조
 
 ```text
-src/
+crates/rhwp/src/
   parser/            HWP/HWPX 파서
   model/             문서 모델
   document_core/     편집 명령 + 조회
@@ -83,12 +83,17 @@ src/
   serializer/        HWP 저장
   wasm_api.rs        엔진 바인딩 레이어
 
+crates/hwping-core/  app-facing facade 경계
+crates/hwping-ffi/   Swift-facing FFI 경계
+apps/hwping-macos/   macOS 앱 타깃 자리 표시자
+extensions/          Quick Look 확장 타깃 자리 표시자
+
 samples/             회귀 검증용 문서 샘플
 mydocs/              계획, 보고, 기술 문서
 scripts/             품질/동기화 보조 스크립트
 ```
 
-현재 루트 크레이트 이름은 여전히 `rhwp`입니다. 이 이름은 upstream과의 기술적 연속성을 위해 당분간 유지합니다.
+이제 루트는 Cargo workspace이며, upstream-aligned engine 크레이트 `rhwp`는 `crates/rhwp` 아래에 있습니다. 이름 자체는 upstream과의 기술적 연속성을 위해 유지합니다.
 
 ## 기여 원칙
 

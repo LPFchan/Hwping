@@ -1,0 +1,9 @@
+[package]
+name = "hwping-ffi"
+version = "0.1.0"
+edition = "2021"
+description = "Swift-facing FFI boundary for Hwping"
+license = "MIT"
+
+[dependencies]
+hwping-core = { path = "../hwping-core" }

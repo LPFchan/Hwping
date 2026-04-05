@@ -1,0 +1,9 @@
+[package]
+name = "hwping-core"
+version = "0.1.0"
+edition = "2021"
+description = "App-facing Rust facade for Hwping"
+license = "MIT"
+
+[dependencies]
+rhwp = { path = "../rhwp" }

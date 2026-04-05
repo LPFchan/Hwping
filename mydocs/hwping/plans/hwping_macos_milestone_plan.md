@@ -1,5 +1,13 @@
 # Hwping macOS Reader Milestone Plan
 
+## Status
+
+This document is an active target-state milestone plan.
+
+As of 2026-04-05, M0 boundary setup is complete: the repository root is a Cargo workspace, the engine lives in `crates/rhwp`, placeholder `crates/hwping-core` and `crates/hwping-ffi` crates exist, and placeholder app and Quick Look extension directories are present.
+
+Read the milestones below as forward-looking execution stages rather than as completed or partially implemented deliverables unless another document explicitly records that progress.
+
 ## Product Goal
 
 Hwping is meant to be a native macOS reader for `.hwp` documents: open a file from Finder, browse it naturally, preview it through Quick Look, automate common tasks through Shortcuts, and have the whole experience feel at home on macOS.
