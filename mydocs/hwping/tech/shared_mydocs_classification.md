@@ -27,91 +27,50 @@ The lowest-value material is:
 
 ## Folder Policy
 
+The shared documentation tree is now intentionally reduced to three shared roots plus the Hwping-specific area.
+
 ### `mydocs/tech/`
 
-Keep this folder as a shared engine knowledge base.
+Keep this folder as the shared engine knowledge base.
 
 Default policy:
 
 - keep engine, format, layout, save, font, and rendering notes
-- rewrite mixed documents if they contain both durable engine knowledge and stale product assumptions
-- remove abandoned POC, competitor-analysis, or removed-surface documents
+- organize documents by technical domain rather than by task history
+- remove product strategy, browser UI, TypeScript bridge, and removed-surface documents
 
 ### `mydocs/troubleshootings/`
 
-Keep this folder broadly intact.
+Keep this folder as the durable bug-diagnosis corpus.
 
 Default policy:
 
 - preserve concrete root-cause analysis
 - preserve regression notes that help future debugging
-- only remove entries that are tightly bound to deleted surfaces and have no engine value
+- group notes by parser, layout, rendering, and save behavior
+- remove entries that are tightly bound to deleted browser-only surfaces
 
 ### `mydocs/manual/`
 
-Keep only durable operational guides.
+Keep only durable operational guides and stable references.
 
 Default policy:
 
 - keep CLI debugging manuals
 - keep onboarding and development environment guides only if they reflect the current Hwping repository
-- remove or rewrite any manual that assumes WASM-first, `rhwp-studio`, Node.js dev servers, or browser-only workflows
+- keep reference assets such as OWPML schema material
+- remove process ideology and manuals tied to removed web or browser workflows
 
-### `mydocs/feedback/`
+### Removed Shared Roots
 
-Keep selectively.
+The following top-level folders are intentionally removed and should not be rebuilt as permanent documentation areas.
 
-Default policy:
-
-- keep engine structure, rendering, font, or parser feedback that still informs current work
-- remove feedback that only applied to removed browser or editor surfaces
-
-### `mydocs/report/`
-
-Keep selectively.
-
-Default policy:
-
-- keep architecture reviews, research notes, and durable strategy documents
-- remove one-off completion reports once their lasting knowledge has been extracted elsewhere
-
-### `mydocs/orders/`
-
-Treat this as disposable operational history, not as core product documentation.
-
-Default policy:
-
-- remove aggressively when repository size and clarity matter
-- do not rebuild this folder as a long-term knowledge store
-
-### `mydocs/plans/`
-
-Treat this as a temporary working area, not as a durable archive.
-
-Default policy:
-
-- keep only currently active or still-relevant plans
-- remove plans that depend on deleted surfaces
-- remove large historical archives that no longer justify their maintenance cost
-
-### `mydocs/working/`
-
-Treat this similarly to `mydocs/plans/`.
-
-Default policy:
-
-- keep only active execution notes or documents with still-useful measurements
-- remove historical stage reports after durable knowledge has been extracted
-
-### `mydocs/eng/`
-
-Do not treat the full English mirror as a permanent requirement.
-
-Default policy:
-
-- keep only the English documents that still earn their space
-- prefer a smaller English core over full-tree duplication
-- shrink mirrored `orders`, `plans`, and `working` first
+- `mydocs/eng/`
+- `mydocs/feedback/`
+- `mydocs/report/`
+- `mydocs/plans/`
+- `mydocs/working/`
+- `mydocs/orders/`
 
 ## Current Classification
 
@@ -123,22 +82,20 @@ Default policy:
 
 ### B. Keep Selectively
 
-- `mydocs/feedback/`
-- `mydocs/report/`
 - shared manuals that still need periodic updating
-- the small active subset of `mydocs/plans/` and `mydocs/working/`
+- extracted research or troubleshooting notes that were promoted out of temporary task folders
 
 ### C. Shrink Aggressively
 
-- historical `orders`
-- most plan archives
-- most working-stage reports
+- mixed `tech/` documents that still carry upstream product baggage
+- any new documentation that starts drifting back into task logs or mirror trees
 
 ### D. Remove By Default
 
 - removed-surface documents
 - abandoned POC documents with no current engine value
-- full-tree mirror content that does not justify the maintenance and sync cost
+- mirror content that duplicates a canonical English source
+- temporary reports, plans, and working logs once their durable knowledge has been extracted
 
 ## Executed Reduction
 
@@ -147,11 +104,12 @@ The current prune pass applied this policy in the shared documentation tree.
 Executed changes:
 
 - removed `mydocs/orders/`
-- removed `mydocs/eng/orders/`
-- removed archive subtrees under `mydocs/plans/`, `mydocs/eng/plans/`, `mydocs/working/`, and `mydocs/eng/working/`
-- reduced `mydocs/plans/` and `mydocs/eng/plans/` to a narrow active subset
-- reduced `mydocs/working/` and `mydocs/eng/working/` to a narrow active subset
-- removed duplicated English mirror copies of the onboarding and development environment guides after the shared manuals were rewritten in English
+- removed the full `mydocs/eng/` mirror tree
+- removed top-level `mydocs/feedback/`, `mydocs/report/`, `mydocs/plans/`, and `mydocs/working/`
+- removed archive leftovers that only existed as planning residue
+- extracted a small durable subset of research and troubleshooting notes before deleting the temporary roots
+- removed process and browser-product manuals that no longer belong in Hwping
+- reorganized surviving shared docs into `manual/`, `tech/`, and `troubleshootings/` domain subfolders
 
 ## Ongoing Rule
 
@@ -160,5 +118,5 @@ When a task finishes, do not leave behind large planning or reporting residue by
 Instead:
 
 1. extract durable technical knowledge into `tech`, `troubleshootings`, or `manual`
-2. remove or heavily reduce the temporary planning and working artifacts
+2. remove the temporary planning and working artifacts instead of preserving them as standing folders
 3. keep the repository smaller and easier to sync with upstream
