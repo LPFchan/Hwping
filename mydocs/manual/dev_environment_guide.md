@@ -1,160 +1,116 @@
-# 개발 환경 가이드: 사무실 PC vs 홈 PC
+# Hwping Development Environment Guide
 
-## 1. 환경 비교
+## Scope
 
-| 항목 | 사무실 PC | 홈 PC |
-|------|-----------|-------|
-| **OS** | Linux (Ubuntu native) | Windows 11 + WSL2 |
-| **WSL 호스트명** | - | yarehang |
-| **사용자** | app | app |
-| **Rust** | 1.93.0 | 1.93.1 |
-| **Node.js** | nvm (v24+) | nvm v24.11.0 |
-| **Docker** | 네이티브 Docker | Docker Desktop (Windows) |
-| **wasm-pack** | 1.93.0 기준 빌드 | 0.14.0 |
-| **Git 기본 브랜치** | `devel` / `local/taskXXX` | `home` |
-| **GitLab** | gitlab.opxhome.com | gitlab.opxhome.com (동일) |
-| **원격 서버 접근** | 192.168.2.154, 192.168.2.19 | 동일 (같은 네트워크) |
+This guide describes the normal local development environment for Hwping.
 
----
+It intentionally avoids old assumptions about office versus home machines, private network layouts, WSL-only setups, browser demo infrastructure, or `rhwp-studio` development servers. If a setup step is specific to one person's machine, it does not belong here unless it is broadly reusable.
 
-## 2. 네트워크 서버 구성
+## Required Tools
 
-두 PC 모두 아래 서버에 접근 가능하다.
+Install these tools on your machine:
 
-| 서버 | IP | 호스트명 | 용도 |
-|------|-----|---------|------|
-| 원격 도커 서버 | 192.168.2.154 | d7910 | Rust 빌드 보조, Docker |
-| GPU 서버 | 192.168.2.19 | ollama | AI/ML (RTX 3090 × 2) |
+- Rust toolchain
+- Git
 
-### SSH 접속
+Recommended additions:
+
+- `clippy`
+- a diff tool for comparing generated SVG output
+
+Example setup on macOS with Homebrew and rustup:
 
 ```bash
-# 원격 도커 서버
-ssh -i ~/.ssh/gpu_key app@192.168.2.154
-
-# GPU 서버
-ssh -i ~/.ssh/gpu_key app@192.168.2.19
+brew install rustup-init
+rustup-init -y
+rustup component add clippy
 ```
 
-SSH 키 위치: `~/.ssh/gpu_key` (양쪽 PC 동일)
-
----
-
-## 3. Git 브랜치 전략
-
-### 사무실 PC
-
-```
-main ← devel ← local/taskXXX
-```
-
-- 타스크 작업: `devel`에서 `local/taskXXX` 브랜치 생성
-- 타스크 완료: `local/taskXXX` → `devel` merge
-- `main` merge: 작업지시자 요청 시만 수행
-
-### 홈 PC
-
-- **`home` 브랜치**를 기준으로 운영
-- 사무실에서 작업한 코드를 이어서 작업할 경우:
+If Rust is already installed, only verify the toolchain:
 
 ```bash
-# GitLab에서 최신 코드 가져오기
-git fetch origin
-git merge origin/devel   # 또는 origin/main
+cargo --version
+rustc --version
 ```
 
-- 홈에서 완료한 작업을 사무실에 반영할 경우:
+## Repository Setup
+
+Clone the Hwping fork and verify the remote layout if you need upstream sync work:
 
 ```bash
-# home 브랜치 push 후 GitLab에서 devel로 merge
-git push origin home
+git clone <hwping-fork-url>
+cd Hwping
+git remote -v
 ```
 
----
+Typical remote roles are:
 
-## 4. 빌드 명령
+- `origin` — the Hwping fork
+- `upstream` — the original `rhwp` repository
 
-사무실/홈 모두 **동일한 명령**을 사용한다.
+Normal product work should happen on local task branches, not directly on upstream-tracking branches.
 
-### 네이티브 빌드/테스트 (로컬 cargo)
+## Standard Validation Commands
+
+Use Cargo directly from the repository root:
 
 ```bash
-cargo build          # 빌드
-cargo test           # 테스트 (615개)
+cargo build
+cargo test
+cargo clippy -- -D warnings
 cargo build --release
 ```
 
-### WASM 빌드 (Docker)
+These commands are the primary health check for the repository.
+
+## Useful Debug Commands
+
+The CLI is the main debugging surface for engine work.
 
 ```bash
-docker compose --env-file .env.docker run --rm wasm
-# 출력: pkg/rhwp_bg.wasm, pkg/rhwp.js
+cargo run --bin rhwp -- export-svg samples/biz_plan.hwp
+cargo run --bin rhwp -- export-svg samples/biz_plan.hwp --debug-overlay
+cargo run --bin rhwp -- dump-pages samples/biz_plan.hwp -p 0
+cargo run --bin rhwp -- dump samples/biz_plan.hwp -s 0 -p 45
+cargo run --bin rhwp -- ir-diff sample.hwpx sample.hwp
 ```
 
-### rhwp-studio 개발 서버
+Use `samples/` for regression inputs and `output/` for generated local artifacts.
 
-```bash
-cd rhwp-studio
-npx vite
-# http://localhost:7700
-```
+## Environment Principles
 
----
+Keep the environment simple:
 
-## 5. 홈 PC 주의사항
+- prefer local Rust tooling over container-only workflows
+- add extra tools only when they solve a real recurring problem
+- do not document removed web, npm, or VS Code extension workflows as current development requirements
+- keep machine-specific secrets, IP addresses, and private infrastructure details out of shared docs
 
-### Docker Desktop 특이점
+## When Docker Is Useful
 
-- WSL2 환경에서 Docker Desktop을 사용하므로, Docker 명령은 Windows Docker Desktop이 실행 중이어야 동작한다.
-- Docker Desktop이 꺼져 있으면 `docker: Cannot connect to the Docker daemon` 오류 발생 → Windows 트레이에서 Docker Desktop 실행 후 재시도.
+Docker is optional. Use it only when you need an isolated environment for reproducibility or packaging work. It is not the default path for normal day-to-day engine development.
 
-### PATH 설정
+If you use Docker, make sure the container workflow still supports the standard Cargo validation commands.
 
-홈 PC의 `~/.bashrc` 말미에 다음이 등록되어 있다:
+## Documentation Placement
 
-```bash
-export PATH=/home/app/vips/bin:$PATH
-export LD_LIBRARY_PATH=/home/app/vips/lib/x86_64-linux-gnu
-export GEMINI_API_KEY="..."
-export GOOGLE_API_KEY="..."
-export NVM_DIR="$HOME/.nvm"
-. "$HOME/.cargo/env"
-```
+When you discover durable environment or debugging knowledge, record it in the right place:
 
-새 터미널을 열면 자동 적용된다.
+- `mydocs/manual/` for reusable setup and operation instructions
+- `mydocs/troubleshootings/` for root-cause analysis and regressions
+- `mydocs/hwping/tech/` for Hwping-specific architectural decisions
+- `mydocs/tech/` for engine knowledge that may still matter outside Hwping
 
-### 필수 파일 (gitignore 대상)
+Avoid turning this guide into a personal workstation diary.
 
-아래 파일들은 git에 포함되지 않으므로 클론 후 별도로 준비해야 한다.
+## Minimal Bring-Up Checklist
 
-| 파일/폴더 | 설명 | 준비 방법 |
-|-----------|------|-----------|
-| `saved/blank2010.hwp` | 새 문서 생성용 템플릿 | 별도 복사 |
-| `pkg/` | WASM 빌드 결과물 | `docker compose ... run --rm wasm` |
-| `rhwp-studio/node_modules/` | npm 패키지 | `npm install` (또는 `npx vite`가 자동 처리) |
-| `~/.ssh/gpu_key` | 원격 서버 SSH 키 | `.env` 파일의 키를 복사 후 `chmod 600` |
+Use this checklist on a fresh machine:
 
----
-
-## 6. 사무실 → 홈 작업 전환 체크리스트
-
-```
-□ GitLab에 사무실 작업 push 완료
-□ 홈 PC에서 git fetch && git merge
-□ saved/blank2010.hwp 존재 확인
-□ WASM 빌드 실행 (소스 변경 시)
-□ cargo test 통과 확인
-□ Docker Desktop 실행 중 확인
-```
-
-## 7. 홈 → 사무실 작업 전환 체크리스트
-
-```
-□ 홈 PC에서 작업 커밋 & push (origin/home)
-□ 사무실 PC에서 git fetch
-□ home 브랜치 내용을 devel에 반영
-```
-
----
-
-*최초 작성: 2026-02-28*
+1. Install Rust.
+2. Install or verify Git.
+3. Clone the repository.
+4. Run `cargo build`.
+5. Run `cargo test`.
+6. Run `cargo clippy -- -D warnings`.
+7. Run one CLI command against a sample file to confirm end-to-end behavior.
