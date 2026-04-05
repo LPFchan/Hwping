@@ -26,7 +26,7 @@ The most impressive aspect is the **dedicated protocol for human-AI agent collab
 
 ### 2.3 Quality Management and Environment (`mydocs/manual/`)
 
-- Code quality visualization through `dashboard.md` (Clippy, CC, 1200-line rule) and workflow enforcement maximizes maintainability.
+- Code quality visualization (Clippy, CC, 1200-line rule) and workflow enforcement maximize maintainability.
 
 ## 3. Suggestions for GitHub Open-Source Publication
 

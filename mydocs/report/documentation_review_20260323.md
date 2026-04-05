@@ -23,7 +23,7 @@
 - `hwp_spec_errata.md`, `hancom_font_system_analysis.md`, `equation_support_status.md` 등은 한컴 공식 문서의 빈틈을 메워주는 이 프로젝트만의 **독보적인 코어 자산**입니다.
 
 ### 2.3 품질 관리 및 환경 (`mydocs/manual/`)
-- `dashboard.md`를 통해 코드 품질(Clippy, CC, 1200줄 룰)을 시각화하고, 워크플로우를 강제하는 부분은 유지보수성을 극대화합니다.
+- 코드 품질(Clippy, CC, 1200줄 룰)을 시각화하고, 워크플로우를 강제하는 부분은 유지보수성을 극대화합니다.
 
 ## 3. 깃허브 오픈소스 공유를 위한 제안 사항 (Suggestions)
 
