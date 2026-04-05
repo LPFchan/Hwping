@@ -4,9 +4,9 @@
 
 This document describes the intended target architecture for Hwping.
 
-As of 2026-04-05, M0 boundary setup is in place: the repository root is a Cargo workspace, the upstream-aligned engine lives in `crates/rhwp`, placeholder `crates/hwping-core` and `crates/hwping-ffi` crates exist, and placeholder app and Quick Look extension directories are present.
+As of 2026-04-05, M0 and M1 are in place: the repository root is a Cargo workspace, the upstream-aligned engine lives in `crates/rhwp`, `crates/hwping-core` exposes a typed Rust embedding facade, `crates/hwping-ffi` exposes a Swift-oriented C ABI, and `apps/hwping-macos/ffi-smoke` proves that Swift can open `.hwp` documents, read first-page metadata, and generate preview PDF output through that boundary.
 
-The macOS app target, Quick Look extension targets, and product-facing APIs described below do not exist yet.
+The full macOS app target and Quick Look extension targets described below do not exist yet.
 
 Read this document as architectural direction and boundary guidance, not as a description of the repository's current implementation state.
 

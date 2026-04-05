@@ -4,7 +4,7 @@
 
 This document is an active target-state milestone plan.
 
-As of 2026-04-05, M0 boundary setup is complete: the repository root is a Cargo workspace, the engine lives in `crates/rhwp`, placeholder `crates/hwping-core` and `crates/hwping-ffi` crates exist, and placeholder app and Quick Look extension directories are present.
+As of 2026-04-05, M0 and M1 are complete: the repository root is a Cargo workspace, the engine lives in `crates/rhwp`, `crates/hwping-core` exposes a typed document facade, `crates/hwping-ffi` exposes a C ABI for Swift, and `apps/hwping-macos/ffi-smoke` validates document open, first-page metadata, and preview PDF generation from Swift.
 
 Read the milestones below as forward-looking execution stages rather than as completed or partially implemented deliverables unless another document explicitly records that progress.
 

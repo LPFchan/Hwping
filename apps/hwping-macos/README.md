@@ -1,5 +1,5 @@
 # hwping-macos
 
-Placeholder directory for the future NSDocument-based macOS app target.
+This directory remains the future home of the NSDocument-based macOS app target.
 
-M0 establishes the repository boundary only. App target implementation begins in later milestones.
+M1 adds `ffi-smoke/`, a Swift executable sample that links against `crates/hwping-ffi` and proves the Rust embedding boundary can open documents, read first-page info, and generate preview PDF output.

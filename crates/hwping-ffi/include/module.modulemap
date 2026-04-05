@@ -1,0 +1,4 @@
+module CHwpingFFI {
+    header "hwping_ffi.h"
+    export *
+}
