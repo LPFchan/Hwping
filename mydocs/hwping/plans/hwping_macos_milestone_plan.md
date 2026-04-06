@@ -88,11 +88,22 @@ The following are explicitly out of scope for v1.
 
 - deliver the baseline document-app experience users expect from apps like Preview and TextEdit
 
+### Menu Bar Baseline
+
+Treat [TextEdit menu bar reference](../tech/textedit_menubar_reference.md) as the canonical baseline for the first complete Hwping menu bar.
+
+Record Hwping-specific structure and every intentional deviation in [Hwping macOS menu bar specification](../tech/hwping_macos_menu_bar_spec.md).
+
+- match the standard macOS top-level order: App Name, File, Edit, View, Window, Help
+- use the reference document to define separators, submenu depth, and shortcut conventions before adding Hwping-specific commands
+- keep system-provided items system-provided rather than re-implementing them manually
+- document every intentional deviation from the TextEdit baseline in [Hwping macOS menu bar specification](../tech/hwping_macos_menu_bar_spec.md), especially omissions driven by Hwping's read-only v1 scope
+
 ### Work
 
 - create an `NSDocument`-based app
 - define document opening, recent documents, multiple windows, and tab behavior
-- establish the base menu structure
+- establish the base menu structure from [TextEdit menu bar reference](../tech/textedit_menubar_reference.md), maintain the concrete Hwping plan in [Hwping macOS menu bar specification](../tech/hwping_macos_menu_bar_spec.md), implement the standard App Name, File, Edit, View, Window, and Help menus before considering any extra top-level menus, and record omitted or changed TextEdit commands as explicit Hwping reader decisions
 - add the toolbar and search field
 - define commands for zooming, page movement, and sidebar toggling
 
@@ -100,6 +111,8 @@ The following are explicitly out of scope for v1.
 
 - Finder double-click opens the app
 - documents can be opened and navigated inside the app
+- the shipped menu bar has been reviewed against [TextEdit menu bar reference](../tech/textedit_menubar_reference.md), and every intentional deviation is documented in [Hwping macOS menu bar specification](../tech/hwping_macos_menu_bar_spec.md)
+- top-level menu order, standard shortcuts, recent documents, and Help behavior match normal macOS document-app expectations
 - base keyboard shortcuts work
 
 ## M3. Viewing Quality
@@ -211,8 +224,9 @@ These tracks continue alongside every milestone.
 
 ### C. macOS UX
 
-- keep menu naming aligned with macOS conventions
+- keep menu naming aligned with macOS conventions and review it against [TextEdit menu bar reference](../tech/textedit_menubar_reference.md)
 - maintain shortcut consistency
+- record any deliberate menu or shortcut deviations from the TextEdit baseline in [Hwping macOS menu bar specification](../tech/hwping_macos_menu_bar_spec.md) as product decisions, not accidental drift
 - continuously review Finder and Quick Look experience quality
 
 ## Priority Order
