@@ -304,7 +304,8 @@ Recommended sequence:
 4. resolve `crates/rhwp` conflicts first
 5. review facade and FFI impact
 6. run regression tests
-7. document the result and integrate
+7. record the decision in [upstream-intake/](upstream-intake/README.md)
+8. integrate the approved result
 
 ## Principles for Keeping Sync Cheap
 
@@ -377,7 +378,7 @@ Recommended locations:
 
 - structural and architecture docs under `mydocs/tech/`
 - phase and execution plans under `mydocs/plans/`
-- sync result reports under `mydocs/report/` when needed
+- upstream intake records and operator briefs under `mydocs/hwping/plans/upstream-intake/reports/`
 
 ## Things Not to Do
 
