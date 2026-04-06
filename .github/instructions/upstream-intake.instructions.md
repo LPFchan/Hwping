@@ -8,10 +8,10 @@ Use this instruction when the task is to review, summarize, triage, or merge ups
 
 The canonical upstream-intake package lives here:
 
-- [mydocs/hwping/plans/upstream-intake/README.md](../../mydocs/hwping/plans/upstream-intake/README.md)
-- [mydocs/hwping/plans/upstream-intake/intake-method.md](../../mydocs/hwping/plans/upstream-intake/intake-method.md)
-- [mydocs/hwping/plans/upstream-intake/weekly-upstream-intake-template.md](../../mydocs/hwping/plans/upstream-intake/weekly-upstream-intake-template.md)
-- [mydocs/hwping/plans/upstream-intake/operator-weekly-brief-template.md](../../mydocs/hwping/plans/upstream-intake/operator-weekly-brief-template.md)
+- [upstream-intake/README.md](../../upstream-intake/README.md)
+- [upstream-intake/intake-method.md](../../upstream-intake/intake-method.md)
+- [upstream-intake/weekly-upstream-intake-template.md](../../upstream-intake/weekly-upstream-intake-template.md)
+- [upstream-intake/operator-weekly-brief-template.md](../../upstream-intake/operator-weekly-brief-template.md)
 
 Treat upstream review as a downstream decision workflow, not a changelog summary.
 
@@ -29,9 +29,9 @@ Treat upstream review as a downstream decision workflow, not a changelog summary
 
 1. Define the exact upstream window and local baseline.
 2. Gather evidence from compare logs, commits, code, docs, and external sources when needed.
-3. Follow [mydocs/hwping/plans/upstream-intake/intake-method.md](../../mydocs/hwping/plans/upstream-intake/intake-method.md) to group candidate decisions and remove ambiguity.
-4. Write the full internal record under [mydocs/hwping/plans/upstream-intake/reports/internal-records/README.md](../../mydocs/hwping/plans/upstream-intake/reports/internal-records/README.md).
-5. Write the separate operator brief under [mydocs/hwping/plans/upstream-intake/reports/operator-briefs/README.md](../../mydocs/hwping/plans/upstream-intake/reports/operator-briefs/README.md).
+3. Follow [upstream-intake/intake-method.md](../../upstream-intake/intake-method.md) to group candidate decisions and remove ambiguity.
+4. Write the full internal record under [upstream-intake/reports/internal-records/README.md](../../upstream-intake/reports/internal-records/README.md).
+5. Write the separate operator brief under [upstream-intake/reports/operator-briefs/README.md](../../upstream-intake/reports/operator-briefs/README.md).
 6. Update the carry-forward or local-override registers only when the review establishes durable standing knowledge.
 
 Do not duplicate detailed rules here when the canonical package already covers them.

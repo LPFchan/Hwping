@@ -10,11 +10,11 @@ Use this skill when Hwping needs a repeatable review of upstream `rhwp` work.
 
 ## Canonical Sources
 
-- [mydocs/hwping/plans/upstream-intake/README.md](../../../mydocs/hwping/plans/upstream-intake/README.md)
-- [mydocs/hwping/plans/upstream-intake/intake-method.md](../../../mydocs/hwping/plans/upstream-intake/intake-method.md)
-- [mydocs/hwping/plans/upstream-intake/weekly-upstream-intake-template.md](../../../mydocs/hwping/plans/upstream-intake/weekly-upstream-intake-template.md)
-- [mydocs/hwping/plans/upstream-intake/operator-weekly-brief-template.md](../../../mydocs/hwping/plans/upstream-intake/operator-weekly-brief-template.md)
-- [mydocs/hwping/plans/upstream-intake/compatibility-watchlist.md](../../../mydocs/hwping/plans/upstream-intake/compatibility-watchlist.md)
+- [upstream-intake/README.md](../../../upstream-intake/README.md)
+- [upstream-intake/intake-method.md](../../../upstream-intake/intake-method.md)
+- [upstream-intake/weekly-upstream-intake-template.md](../../../upstream-intake/weekly-upstream-intake-template.md)
+- [upstream-intake/operator-weekly-brief-template.md](../../../upstream-intake/operator-weekly-brief-template.md)
+- [upstream-intake/compatibility-watchlist.md](../../../upstream-intake/compatibility-watchlist.md)
 
 ## Procedure
 
@@ -42,8 +42,8 @@ Use this skill when Hwping needs a repeatable review of upstream `rhwp` work.
    - Hwping-only product surfaces usually preserve the local shape.
 
 6. Write the artifacts.
-   - Store the internal record under [mydocs/hwping/plans/upstream-intake/reports/internal-records/README.md](../../../mydocs/hwping/plans/upstream-intake/reports/internal-records/README.md).
-   - Store the operator brief under [mydocs/hwping/plans/upstream-intake/reports/operator-briefs/README.md](../../../mydocs/hwping/plans/upstream-intake/reports/operator-briefs/README.md).
+   - Store the internal record under [upstream-intake/reports/internal-records/README.md](../../../upstream-intake/reports/internal-records/README.md).
+   - Store the operator brief under [upstream-intake/reports/operator-briefs/README.md](../../../upstream-intake/reports/operator-briefs/README.md).
 
 7. Update standing knowledge only when appropriate.
    - Add entries to the carry-forward or local-override registers only when the review produced durable conclusions.

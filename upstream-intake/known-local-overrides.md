@@ -22,7 +22,7 @@ Only record stable, intentional divergences here. Do not use this file for tempo
 - Why the fork diverged: Hwping is a macOS-focused downstream fork that keeps only the code and docs needed for engine maintenance and the native product surface.
 - Collision rule to apply during intake: decline changes that only restore removed upstream product surfaces; adapt shared engine improvements without reintroducing those surfaces.
 - Revisit trigger: an explicit Hwping product decision to restore a non-macOS product surface
-- Related decision record: [../hwping_repo_sync_plan.md](../hwping_repo_sync_plan.md)
+- Related decision record: [../mydocs/hwping/plans/hwping_repo_sync_plan.md](../mydocs/hwping/plans/hwping_repo_sync_plan.md)
 
 - Area: Engine relocation inside a Cargo workspace
 - Local surface: `crates/rhwp/` as the upstream-aligned engine subtree inside the Hwping workspace

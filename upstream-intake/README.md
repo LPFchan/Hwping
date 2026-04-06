@@ -33,9 +33,9 @@ Use it to review upstream `rhwp` changes as downstream decisions, not as release
 
 The repo-level Copilot entrypoints are intentionally thin. They should never become a second source of truth.
 
-- [.github/instructions/upstream-intake.instructions.md](../../../../.github/instructions/upstream-intake.instructions.md)
-- [.github/skills/weekly-upstream-intake/SKILL.md](../../../../.github/skills/weekly-upstream-intake/SKILL.md)
-- [.github/prompts/weekly-upstream-intake.prompt.md](../../../../.github/prompts/weekly-upstream-intake.prompt.md)
+- [.github/instructions/upstream-intake.instructions.md](../.github/instructions/upstream-intake.instructions.md)
+- [.github/skills/weekly-upstream-intake/SKILL.md](../.github/skills/weekly-upstream-intake/SKILL.md)
+- [.github/prompts/weekly-upstream-intake.prompt.md](../.github/prompts/weekly-upstream-intake.prompt.md)
 
 If those files need behavioral changes, update this package first and keep the `.github` files as wrappers around it.
 
