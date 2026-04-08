@@ -42,8 +42,11 @@ Use the documentation tree intentionally.
 
 Durable documentation belongs in these locations:
 
-- `mydocs/hwping/tech/` — Hwping-specific architecture, product boundaries, macOS integration decisions
-- `mydocs/hwping/plans/` — Hwping product plans, repository operating plans, migration plans
+- `SPEC.md` / `STATUS.md` / `PLANS.md` — canonical project truth, current reality, and accepted future direction
+- `records/decisions/` — durable Hwping-specific architecture, product, and operating decisions
+- `research/` — reusable reference or exploration material
+- `records/agent-worklogs/` — durable execution history when it is worth keeping
+- `upstream-intake/` — recurring upstream-review artifacts
 - `mydocs/tech/` — shared engine knowledge that could still matter to upstream or any downstream product
 - `mydocs/troubleshootings/` — durable bug diagnosis, root-cause analysis, regression notes
 - `mydocs/manual/` — durable CLI/debugging/build guides
@@ -55,7 +58,7 @@ Treat these areas as legacy or temporary unless explicitly asked otherwise:
 - `mydocs/eng/` — legacy mirrored documentation tree
 
 Do not add new material to those legacy folders by default.
-If a task produces durable knowledge, extract that knowledge into `tech/`, `troubleshootings/`, `manual/`, or `mydocs/hwping/` instead of growing the legacy process folders.
+If a task produces durable knowledge, extract that knowledge into the root repo-template surfaces, `tech/`, `troubleshootings/`, or `manual/` instead of growing the legacy process folders.
 
 ## Build and Validation
 
@@ -145,8 +148,8 @@ Do not assume every task needs a full waterfall of plan, stage report, and compl
 Use documentation proportionally:
 
 - small code changes may need no repository document at all
-- risky architectural work may justify a focused plan in `mydocs/hwping/plans/`
-- durable technical decisions belong in `mydocs/hwping/tech/` or `mydocs/tech/`
+- risky architectural work may justify a focused entry in `PLANS.md` or a new `DEC-*`
+- durable technical decisions belong in `records/decisions/` or `mydocs/tech/`
 - bug investigations worth preserving belong in `mydocs/troubleshootings/`
 
 Avoid generating process paperwork just because legacy folders exist.

@@ -98,7 +98,7 @@ When you discover durable environment or debugging knowledge, record it in the r
 
 - `mydocs/manual/` for reusable setup and operation instructions
 - `mydocs/troubleshootings/` for root-cause analysis and regressions
-- `mydocs/hwping/tech/` for Hwping-specific architectural decisions
+- `records/decisions/` for Hwping-specific architectural decisions
 - `mydocs/tech/` for engine knowledge that may still matter outside Hwping
 
 Avoid turning this guide into a personal workstation diary.

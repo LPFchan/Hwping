@@ -6,6 +6,9 @@ This brief should translate the internal reasoning into a shorter summary. Do no
 
 ## Review Metadata
 
+- Review id:
+- Opened: `YYYY-MM-DD HH-mm-ss KST`
+- Recorded by agent:
 - Review date:
 - Upstream window:
 - Baseline reviewed against:

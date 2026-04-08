@@ -1,12 +1,16 @@
-# Upstream Intake: `upstream/main..upstream/local/devel`
+# UPS-20260407-001: `upstream/main..upstream/local/devel`
 
 ## Review Metadata
 
+- Review id: `UPS-20260407-001`
+- Opened: `2026-04-07 00-00-00 KST`
+- Recorded by agent: `github-copilot-20260407-upstream-intake`
 - Review date: 2026-04-07
 - Reviewer: GitHub Copilot
 - Upstream window reviewed: `upstream/main..upstream/local/devel`
 - Upstream refs or PRs reviewed: `9003e0d`, `2b58f5d`
 - Downstream branch or working baseline: `main` at `6e2f2da`
+- Migration note: original seeded example was normalized into `UPS-*` naming on 2026-04-09; the exact original open time was not preserved and is represented here as `00-00-00 KST`
 
 ## Window Summary
 

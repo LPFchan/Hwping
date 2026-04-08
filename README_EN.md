@@ -24,7 +24,7 @@ This repository has two goals.
 
 This fork no longer treats the web demo, npm distribution, or VS Code extension as first-class deliverables. The repository is being narrowed to the engine, CLI tools, regression assets, and the structure needed for the Hwping product layers.
 
-For the current direction, see [mydocs/hwping/plans/hwping_repo_sync_plan.md](mydocs/hwping/plans/hwping_repo_sync_plan.md).
+For the current direction, see [PLANS.md](PLANS.md) and [DEC-20260409-005-hwping-repo-boundary-and-upstream-sync-model.md](records/decisions/DEC-20260409-005-hwping-repo-boundary-and-upstream-sync-model.md).
 
 ## Current Scope
 
@@ -104,9 +104,21 @@ The root workspace now hosts multiple crates. The upstream-aligned engine crate 
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow details.
 
+## Repository Operating Model
+
+Hwping adopts `LPFchan/repo-template` as its canonical repository operating model.
+
+- `SPEC.md`, `STATUS.md`, and `PLANS.md` are the canonical top-level truth, status, and accepted-direction surfaces.
+- `INBOX.md`, `research/`, `records/decisions/`, and `records/agent-worklogs/` are the canonical intake and provenance surfaces.
+- `upstream-intake/` remains the recurring upstream-review module for the downstream fork.
+- `mydocs/` remains the deeper technical, troubleshooting, and manual layer that supports the root truth docs.
+- New commits are expected to carry repo-template provenance trailers.
+
+For the repository-specific rules, see [repo-operating-model.md](repo-operating-model.md), [DEC-20260409-001-repo-template-full-adoption.md](records/decisions/DEC-20260409-001-repo-template-full-adoption.md), and [DEC-20260409-002-retire-mydocs-hwping-namespace.md](records/decisions/DEC-20260409-002-retire-mydocs-hwping-namespace.md).
+
 ## Documentation
 
-`mydocs/` contains plans, stage reports, technical investigations, and troubleshooting notes. Hwping-specific structure and sync documents live under `mydocs/hwping/`.
+The root operating surfaces hold canonical summary truth and provenance for the repository. `mydocs/` now holds only the shared deeper detail: engine knowledge under `mydocs/tech/`, durable investigations under `mydocs/troubleshootings/`, and operational guides under `mydocs/manual/`.
 
 ## Notice
 

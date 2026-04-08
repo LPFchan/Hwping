@@ -33,7 +33,7 @@ Use these names instead of vague phrases such as `local code` or `product layer`
 - `crates/hwping-ffi/` for the Swift-facing C ABI
 - `apps/hwping-macos/` for the document app
 - `extensions/` for Quick Look preview and thumbnail integration
-- `mydocs/hwping/` for Hwping-specific product and operating docs
+- `SPEC.md`, `STATUS.md`, `PLANS.md`, and `records/decisions/` for Hwping-specific product and operating direction
 
 ## Duplicate-Detection Pass
 

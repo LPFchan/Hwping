@@ -13,18 +13,23 @@ If a code path or document exists only for removed web, npm, or VS Code surfaces
 
 ## Repository Shape
 
-The repository is intentionally centered on the Rust engine and durable documentation.
+The repository is intentionally centered on the Rust engine, the repo-template operating surfaces, and durable detailed documentation.
 
 Important areas:
 
-- `src/` — Rust engine, CLI, parser, layout, renderer, and related modules
+- `SPEC.md`, `STATUS.md`, and `PLANS.md` — canonical project truth, current state, and accepted future direction
+- `INBOX.md` — untriaged intake waiting to be routed
+- `research/` — curated reusable exploration
+- `records/decisions/` — durable decision records
+- `records/agent-worklogs/` — execution history
+- `upstream-intake/` — recurring upstream-review package
+- `crates/rhwp/src/` — Rust engine, CLI, parser, layout, renderer, and related modules
 - `samples/` — sample HWP and HWPX files used for debugging and regression work
-- `mydocs/hwping/` — Hwping-specific plans and technical notes
 - `mydocs/tech/` — shared engine knowledge that can still matter across forks
 - `mydocs/troubleshootings/` — durable bug diagnosis and regression notes
 - `mydocs/manual/` — durable operational guides such as this one
 
-Legacy process-heavy folders may still exist temporarily, but they are not the center of normal development.
+The root operating surfaces now hold summary truth and provenance. `mydocs/` holds the deeper architecture, troubleshooting, and manual detail.
 
 ## Baseline Tooling
 
@@ -79,15 +84,40 @@ This keeps investigation grounded in actual document state instead of guesswork.
 
 New or rewritten repository documentation should be written in English.
 
-Use the documentation tree intentionally:
+Use the repo-template surfaces and the documentation tree intentionally:
 
-- `mydocs/hwping/tech/` for Hwping-specific architecture and boundary decisions
-- `mydocs/hwping/plans/` for Hwping product or repository plans
+- `SPEC.md`, `STATUS.md`, and `PLANS.md` for canonical repo truth
+- `INBOX.md` for intake
+- `research/` for reusable exploration
+- `records/decisions/` for durable decisions
+- `records/agent-worklogs/` for execution history
+
+- `SPEC.md`, `STATUS.md`, and `PLANS.md` for top-level Hwping direction
+- `records/decisions/` for durable Hwping-specific decisions
 - `mydocs/tech/` for shared engine knowledge
 - `mydocs/troubleshootings/` for durable bug and regression notes
 - `mydocs/manual/` for durable build, debug, and operation guides
 
-Avoid creating new process logs unless the task clearly needs durable planning or investigation notes.
+Do not let `mydocs/` replace the root truth docs, and do not put raw execution trace into technical notes when it belongs in `records/agent-worklogs/`.
+
+## Provenance Expectations
+
+When durable repo artifacts are created, use stable IDs:
+
+- `IBX-*`
+- `RSH-*`
+- `DEC-*`
+- `LOG-*`
+- `UPS-*`
+
+New commits should also carry provenance trailers:
+
+```text
+project: hwping
+agent: <agent-id>
+role: orchestrator|worker|subagent|operator
+artifacts: <artifact-id>[, <artifact-id>...]
+```
 
 ## Product Boundary Rules
 
@@ -106,7 +136,7 @@ For most work, this is enough:
 2. Inspect engine output with `export-svg`, `dump-pages`, `dump`, or `ir-diff`.
 3. Make the smallest defensible code change.
 4. Re-run `cargo build`, `cargo test`, and `cargo clippy -- -D warnings`.
-5. Update durable documentation only if the change adds lasting knowledge.
+5. Route lasting outputs into the right artifact layers: root truth docs, research, decisions, worklogs, upstream intake, or deeper `mydocs/` notes.
 
 ## Where To Look Next
 

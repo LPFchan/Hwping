@@ -4,6 +4,18 @@ This directory is the canonical source of truth for recurring upstream intake in
 
 Use it to review upstream `rhwp` changes as downstream decisions, not as release-note summaries. Each review window should answer what Hwping should accept, adapt, decline, or defer, while preserving the fork boundary and keeping future sync work cheap.
 
+## Template Sync Policy
+
+Hwping now uses the full repo-template operating model, and `upstream-intake/` is the upstream-review module inside that model.
+
+This directory is still a local, canonical package for Hwping, not a file set that should be overwritten blindly from the template tree.
+
+When the template evolves:
+
+- review the changes manually
+- port the parts that help Hwping
+- keep Hwping-specific rules, examples, and downstream decisions intact
+
 ## What This Package Covers
 
 - recurring review of upstream tags, compare windows, or sync candidates
@@ -53,7 +65,7 @@ If those files need behavioral changes, update this package first and keep the `
 
 This package is seeded with one real review window so future work has a grounded example.
 
-- [reports/internal-records/2026-04-07-upstream-main-to-local-devel.md](reports/internal-records/2026-04-07-upstream-main-to-local-devel.md)
-- [reports/operator-briefs/2026-04-07-upstream-main-to-local-devel-operator-brief.md](reports/operator-briefs/2026-04-07-upstream-main-to-local-devel-operator-brief.md)
+- [reports/internal-records/UPS-20260407-001-upstream-main-to-local-devel.md](reports/internal-records/UPS-20260407-001-upstream-main-to-local-devel.md)
+- [reports/operator-briefs/UPS-20260407-001-upstream-main-to-local-devel-operator-brief.md](reports/operator-briefs/UPS-20260407-001-upstream-main-to-local-devel-operator-brief.md)
 
 That sample reviews `upstream/main..upstream/local/devel` against Hwping `main` and demonstrates both an engine-fix adaptation decision and a repo-boundary decline.

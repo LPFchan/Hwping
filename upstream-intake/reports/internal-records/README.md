@@ -4,8 +4,8 @@ Store the full upstream-intake decision records in this folder.
 
 Recommended naming:
 
-- `YYYY-MM-DD-<scope>.md`
+- `UPS-YYYYMMDD-NNN-<scope>.md`
 
 Example:
 
-- `2026-04-07-upstream-main-to-local-devel.md`
+- `UPS-20260407-001-upstream-main-to-local-devel.md`

@@ -16,8 +16,8 @@ Use separate folders for those artifacts:
 
 Use one paired set of files per review window.
 
-- `internal-records/YYYY-MM-DD-<scope>.md`
-- `operator-briefs/YYYY-MM-DD-<scope>-operator-brief.md`
+- `internal-records/UPS-YYYYMMDD-NNN-<scope>.md`
+- `operator-briefs/UPS-YYYYMMDD-NNN-<scope>-operator-brief.md`
 
 ## Expected Contents
 

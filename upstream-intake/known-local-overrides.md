@@ -22,7 +22,7 @@ Only record stable, intentional divergences here. Do not use this file for tempo
 - Why the fork diverged: Hwping is a macOS-focused downstream fork that keeps only the code and docs needed for engine maintenance and the native product surface.
 - Collision rule to apply during intake: decline changes that only restore removed upstream product surfaces; adapt shared engine improvements without reintroducing those surfaces.
 - Revisit trigger: an explicit Hwping product decision to restore a non-macOS product surface
-- Related decision record: [../mydocs/hwping/plans/hwping_repo_sync_plan.md](../mydocs/hwping/plans/hwping_repo_sync_plan.md)
+- Related decision record: [../records/decisions/DEC-20260409-005-hwping-repo-boundary-and-upstream-sync-model.md](../records/decisions/DEC-20260409-005-hwping-repo-boundary-and-upstream-sync-model.md)
 
 - Area: Engine relocation inside a Cargo workspace
 - Local surface: `crates/rhwp/` as the upstream-aligned engine subtree inside the Hwping workspace
@@ -30,4 +30,4 @@ Only record stable, intentional divergences here. Do not use this file for tempo
 - Why the fork diverged: Hwping moved the engine under `crates/rhwp/` so downstream app code can live outside the shared core and upstream sync remains practical.
 - Collision rule to apply during intake: preserve the upstream behavior when possible, but adapt path-level and workspace-level changes into the relocated crate instead of trying to recreate upstream root layout.
 - Revisit trigger: upstream adopts a comparable workspace split, or Hwping intentionally changes its repository boundary model
-- Related decision record: [reports/internal-records/2026-04-07-upstream-main-to-local-devel.md](reports/internal-records/2026-04-07-upstream-main-to-local-devel.md)
+- Related decision record: [reports/internal-records/UPS-20260407-001-upstream-main-to-local-devel.md](reports/internal-records/UPS-20260407-001-upstream-main-to-local-devel.md)

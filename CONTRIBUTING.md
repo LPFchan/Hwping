@@ -1,16 +1,16 @@
 # Contributing to Hwping
 
-Hwping에 관심을 가져주셔서 감사합니다.
+Thank you for contributing to Hwping.
 
-Hwping은 `rhwp`를 upstream으로 추적하는 macOS 중심 downstream fork입니다. 이 저장소의 기여 기준은 단순합니다. Hwping에 직접 필요한 것만 남기고, upstream sync 비용을 키우는 표면은 줄입니다.
+Hwping is a macOS-focused downstream fork of upstream `rhwp`. The contribution standard is straightforward: keep what Hwping actually needs, preserve cheap upstream sync, and avoid reviving surfaces that no longer belong in the fork.
 
-## 시작하기
+## Getting Started
 
 ```bash
 git clone https://github.com/LPFchan/Hwping.git
 cd Hwping
 
-# upstream remote가 없다면 추가
+# Add the upstream remote if it is missing
 git remote add upstream https://github.com/edwardkim/rhwp.git
 
 cargo build
@@ -18,50 +18,93 @@ cargo test
 cargo clippy -- -D warnings
 ```
 
-## 기여 원칙
+## Repository Operating Model
 
-- `crates/rhwp/src/` 변경은 먼저 upstreamable인지 판단합니다.
-- Hwping 전용 코드는 downstream 계층에 두고 엔진 core에 섞지 않습니다.
-- AppKit, SwiftUI, Quick Look, Finder 연동 코드는 엔진 내부에 넣지 않습니다.
-- 웹 데모, npm 배포, VS Code 확장 같은 제거된 표면을 Hwping 기본 트리에 다시 추가하지 않습니다.
-- 새로 추가하거나 전면 개정하는 저장소 문서는 영어를 기준 문서로 작성합니다.
+Hwping adopts `LPFchan/repo-template` as its canonical repository operating model.
 
-## 변경 분류
+- `SPEC.md`, `STATUS.md`, and `PLANS.md` are the canonical summary surfaces for truth, current state, and accepted future direction.
+- `INBOX.md`, `research/`, `records/decisions/`, and `records/agent-worklogs/` are the canonical intake and provenance surfaces.
+- `upstream-intake/` is the recurring upstream-review module for the downstream fork.
+- `mydocs/` remains the detailed technical, troubleshooting, and manual layer that supports the root truth docs.
+- Stable IDs and commit provenance trailers are now part of the expected workflow.
+
+For the repository-specific rules, see [repo-operating-model.md](repo-operating-model.md), [DEC-20260409-001-repo-template-full-adoption.md](records/decisions/DEC-20260409-001-repo-template-full-adoption.md), and [DEC-20260409-002-retire-mydocs-hwping-namespace.md](records/decisions/DEC-20260409-002-retire-mydocs-hwping-namespace.md).
+
+## Contribution Rules
+
+- Treat changes under `crates/rhwp/src/` as upstreamable by default unless there is a concrete reason they are Hwping-only.
+- Keep Hwping-specific code in downstream layers instead of mixing it into the engine core.
+- Do not put AppKit, SwiftUI, Quick Look, Finder integration, or other Apple-platform code into engine internals.
+- Do not reintroduce removed web demo, npm distribution, VS Code, or browser-only surfaces into the main Hwping tree.
+- Write new or substantially rewritten repository documentation in English.
+
+## Documentation Placement
+
+Use the root operating surfaces and the existing `mydocs/` layout intentionally.
+
+- `SPEC.md`, `STATUS.md`, and `PLANS.md` for top-level truth, current state, and accepted direction
+- `INBOX.md` for untriaged intake
+- `research/` for reusable exploration
+- `records/decisions/` for durable decision records
+- `records/agent-worklogs/` for execution history
+
+- `SPEC.md`, `STATUS.md`, and `PLANS.md` for Hwping-specific truth, current state, and accepted direction
+- `records/decisions/` for Hwping-specific architectural and product decisions
+- `mydocs/tech/` for shared engine and format knowledge
+- `mydocs/troubleshootings/` for durable investigation and regression notes
+- `mydocs/manual/` for durable operational and debugging guides
+
+Do not let `mydocs/` replace the root truth docs, and do not let the root truth docs absorb detailed technical material that belongs in `mydocs/`.
+
+## Change Classification
 
 ### 1. Upstreamable
 
-- 파서 정확도 개선
-- 렌더러 정확도 개선
-- 직렬화 품질 개선
-- 플랫폼 비의존 성능 개선
+- parser accuracy improvements
+- renderer accuracy improvements
+- serializer quality improvements
+- platform-independent performance work
 
-이 범주의 변경은 가능한 한 작고 독립적으로 유지합니다.
+Keep these changes as small and isolated as possible.
 
 ### 2. Local Compatibility
 
-- Hwping 통합에 당장 필요하지만 아직 일반화되지 않은 변경
-- facade 계층으로 옮겨갈 여지가 있는 임시 패치
+- changes required for Hwping integration today that are not yet expressed as a clean generic API
+- narrow temporary patches that may later move into a facade layer or a cleaner upstreamable shape
 
-이 범주의 변경은 범위를 좁게 유지하고, 왜 임시인지 문서화합니다.
+Keep this category tightly scoped and document why the patch is temporary.
 
 ### 3. Product-Only
 
-- macOS 앱 UX
-- Quick Look 확장
-- Finder 연동
-- FFI 경계
+- macOS app UX
+- Quick Look extensions
+- Finder integration
+- FFI boundaries
 
-이 범주의 변경은 upstream-aligned engine 영역에 넣지 않습니다.
+Do not place this category inside the upstream-aligned engine area.
 
-## 작업 흐름
+## Workflow
 
-1. 이슈를 등록하고 범위를 명확히 합니다.
-2. `local/task{issue번호}` 브랜치를 만듭니다.
-3. 계획서를 작성하고 승인받은 뒤 구현합니다.
-4. 구현 후 `cargo test`, `cargo clippy -- -D warnings`로 검증합니다.
-5. `devel` 대상으로 PR을 생성합니다.
+1. Open or reference the relevant issue and confirm the scope.
+2. Create a `local/task{issue-number}` branch.
+3. Route any durable planning, research, decision, or execution outputs into the repo-template surfaces.
+4. Implement the change and validate it locally.
+5. Open a PR against `devel`.
 
-## PR 전 체크리스트
+## Commit Provenance
+
+New commits should carry repo-template trailers:
+
+```text
+project: hwping
+agent: <agent-id>
+role: orchestrator|worker|subagent|operator
+artifacts: <artifact-id>[, <artifact-id>...]
+```
+
+Until dedicated tooling exists, mint a unique run-scoped `agent-id` manually, for example `codex-20260409-example-scope`.
+
+## Validation Checklist
 
 ```bash
 cargo build
@@ -69,62 +112,63 @@ cargo test
 cargo clippy -- -D warnings
 ```
 
-- 변경이 engine인지 product인지 분류가 되어 있어야 합니다.
-- 엔진 public surface를 넓혔다면 이유가 설명되어 있어야 합니다.
-- Hwping과 무관한 product surface를 되살리는 변경은 피합니다.
+- Classify the change clearly as engine, compatibility, or product-only work.
+- Explain any widening of engine-facing public surface area.
+- Avoid changes that revive product surfaces unrelated to Hwping.
+- Use stable artifact IDs when the work produces inbox, research, decision, worklog, or upstream-intake records.
 
-## 디버깅 가이드
+## Debugging Guide
 
-렌더링 문제를 조사할 때는 먼저 CLI 도구를 사용합니다.
+When investigating rendering or layout problems, start with the CLI tools before changing code.
 
 ```bash
-# 1. 문단/표 식별
+# 1. Identify the paragraph or table
 cargo run --bin rhwp -- export-svg sample.hwp --debug-overlay
 
-# 2. 페이지 배치 목록
+# 2. Inspect page placement
 cargo run --bin rhwp -- dump-pages sample.hwp -p 3
 
-# 3. 특정 문단 상세
+# 3. Inspect one paragraph in detail
 cargo run --bin rhwp -- dump sample.hwp -s 0 -p 45
 ```
 
-디버그 오버레이 라벨:
+Debug overlay labels:
 
-- 문단: `s{섹션}:pi={인덱스} y={좌표}`
-- 표: `s{섹션}:pi={인덱스} ci={컨트롤} {행}x{열} y={좌표}`
+- paragraph: `s{section}:pi={index} y={position}`
+- table: `s{section}:pi={index} ci={control} {rows}x{cols} y={position}`
 
-## 프로젝트 구조
+## Repository Layout
 
-```
+```text
 crates/rhwp/src/
-├── model/          ← 순수 데이터 구조
-├── parser/         ← HWP/HWPX 파일 → 모델 변환
-├── document_core/  ← 편집 명령 + 조회
-├── renderer/       ← 레이아웃, 페이지네이션, SVG/PDF 출력
-├── serializer/     ← 모델 → HWP 파일 저장
-└── wasm_api.rs     ← 엔진 바인딩 레이어
+├── model/          pure data structures
+├── parser/         HWP/HWPX file -> model conversion
+├── document_core/  edit commands and queries
+├── renderer/       layout, pagination, SVG/PDF output
+├── serializer/     model -> HWP file serialization
+└── wasm_api.rs     engine binding layer
 
-crates/hwping-core/ ← app-facing facade 경계
-crates/hwping-ffi/  ← Swift FFI 경계
-apps/               ← macOS 앱 타깃
-extensions/         ← Quick Look 확장 타깃
+crates/hwping-core/ downstream app-facing facade boundary
+crates/hwping-ffi/  Swift FFI boundary
+apps/               macOS app targets
+extensions/         Quick Look extension targets
 
-samples/            ← 회귀 검증용 문서 샘플
-mydocs/             ← 계획, 보고, 기술 문서
-scripts/            ← 품질/동기화 보조 스크립트
+samples/            regression documents
+mydocs/             plans, technical notes, troubleshooting, manuals
+scripts/            quality and sync helper scripts
 ```
 
-의존성 방향: `model` ← `parser` ← `document_core` ← `renderer` ← `wasm_api`
+Dependency direction: `model` <- `parser` <- `document_core` <- `renderer` <- `wasm_api`
 
-## HWP 단위 참고
+## HWP Unit Reference
 
 - 1 inch = 7,200 HWPUNIT
-- 1 mm ≈ 283.465 HWPUNIT
+- 1 mm ~= 283.465 HWPUNIT
 
 ## Notice
 
-본 제품은 한글과컴퓨터의 한글 문서 파일(.hwp) 공개 문서를 참고하여 개발하였습니다.
+This product was developed with reference to the HWP (.hwp) file format specification published by Hancom.
 
 ## License
 
-이 프로젝트는 [MIT License](LICENSE)로 배포됩니다. 기여하신 코드도 동일한 라이선스가 적용됩니다.
+This project is distributed under the [MIT License](LICENSE). Contributions are accepted under the same license.

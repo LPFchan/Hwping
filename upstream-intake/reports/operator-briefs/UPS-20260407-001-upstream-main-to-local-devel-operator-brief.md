@@ -1,11 +1,15 @@
-# Operator Brief: `upstream/main..upstream/local/devel`
+# UPS-20260407-001 Operator Brief: `upstream/main..upstream/local/devel`
 
 ## Review Metadata
 
+- Review id: `UPS-20260407-001`
+- Opened: `2026-04-07 00-00-00 KST`
+- Recorded by agent: `github-copilot-20260407-upstream-intake`
 - Review date: 2026-04-07
 - Upstream window: `upstream/main..upstream/local/devel`
 - Baseline reviewed against: Hwping `main` at `6e2f2da`
 - Overall recommendation: adapt one shared-core renderer fix into `crates/rhwp/`; decline one upstream research document that does not fit the Hwping docs boundary
+- Migration note: original seeded example was normalized into `UPS-*` naming on 2026-04-09; the exact original open time was not preserved and is represented here as `00-00-00 KST`
 
 ## This Period At A Glance
 
