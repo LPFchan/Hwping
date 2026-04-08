@@ -1,34 +1,35 @@
-# Agent Instructions
+# Hwping Agent Guide
 
-This repo uses `LPFchan/repo-template`.
+Hwping is a macOS-focused downstream fork of upstream `rhwp`.
 
-Treat `AGENTS.md` as a compatibility entrypoint for tools that auto-discover repo-root agent instructions. The canonical operating rules live in `repo-operating-model.md`.
+Use this file as the repo-root entrypoint for agent behavior. The canonical operating rules still live in `repo-operating-model.md`.
 
 ## Read First
 
-- `repo-operating-model.md`
-- `SPEC.md`
-- `STATUS.md`
-- `PLANS.md`
-- `INBOX.md`
-- `README_EN.md` for the repo overview
-- `skills/README.md` and the relevant `skills/<name>/SKILL.md` when using a reusable workflow
+- `README_EN.md` for the repo's scope and product boundary
+- `repo-operating-model.md` for routing, artifact rules, and commit provenance
+- `SPEC.md`, `STATUS.md`, `PLANS.md`, and `INBOX.md` for current project truth
+- the local `README.md` or template for any surface you are about to edit
 
-When writing into `research/`, `records/`, `upstream-intake/`, or `mydocs/`, read the local `README.md` or explicit template first. If it defines scope, section order, provenance fields, naming, or a canonical example, treat that guide as binding.
+## Hwping Priorities
 
-## Repo-Specific Rules
-
-- Hwping is a downstream fork of upstream `rhwp`. Keep the shared HWP/HWPX engine syncable and keep the repo focused on the macOS product.
+- Keep the shared HWP/HWPX engine syncable with upstream `rhwp`.
+- Keep the repo focused on the macOS product and the layers it actually needs.
 - Treat engine changes as upstreamable unless there is a concrete Hwping-only reason not to.
-- Keep AppKit, SwiftUI, Quick Look, Finder integration, and other Apple-platform behavior out of the shared engine core.
-- Do not reintroduce removed web, npm, VS Code, or browser-only surfaces into the main tree.
-- Use English for all new or rewritten repository documentation.
-- Durable deeper detail belongs in `mydocs/tech/`, `mydocs/troubleshootings/`, and `mydocs/manual/`. Do not recreate `mydocs/hwping/`.
-- If older docs still point at retired surfaces, treat the root repo-template surfaces and `repo-operating-model.md` as authoritative.
+- Keep AppKit, SwiftUI, Quick Look, Finder integration, and other Apple-platform behavior out of shared engine code such as `crates/rhwp/`.
+- Do not reintroduce removed web demo, npm, VS Code, or browser-only surfaces into the main tree.
 
-## Verification And Debugging
+## Documentation Rules
 
-Prefer local Rust tooling for normal validation:
+- Use English for all new or rewritten repository documents.
+- Route truth and provenance through the repo-template surfaces instead of ad hoc notes.
+- Keep deeper shared detail in `mydocs/tech/`, `mydocs/troubleshootings/`, and `mydocs/manual/`.
+- Do not recreate `mydocs/hwping/`.
+- If a local guide defines section order, naming, provenance fields, or a canonical example, follow it.
+
+## Validation And Debugging
+
+Prefer local Rust tooling:
 
 ```bash
 cargo build
@@ -37,7 +38,7 @@ cargo clippy -- -D warnings
 cargo build --release
 ```
 
-When layout, spacing, or pagination diverges, debug in this order before changing code:
+When layout or pagination diverges, inspect before editing code:
 
 1. `cargo run --bin rhwp -- export-svg <sample> --debug-overlay`
 2. `cargo run --bin rhwp -- dump-pages <sample> -p N`
@@ -51,13 +52,9 @@ Reference paths:
 - `mydocs/manual/dump_command.md`
 - `mydocs/manual/ir_diff_command.md`
 
-## Enforcement
+## Commit Discipline
 
-- Keep durable truth in repo files, not only in chat.
-- Use the canonical surface for the job instead of inventing mixed-format notes.
-- Preserve stable IDs, `Opened:`, and `Recorded by agent:` fields where the surface requires them.
-- Keep `SPEC.md`, `STATUS.md`, `PLANS.md`, research, decisions, worklogs, and upstream-intake reports separate.
-- When creating commits tied to durable artifacts, follow the provenance trailer rules in `repo-operating-model.md`.
-- When `.githooks/commit-msg` or `.github/workflows/commit-standards.yml` are in effect, commit messages must satisfy those checks. Do not bypass them with ad hoc formatting or `--no-verify`.
+- New commits should carry the provenance trailers required by `repo-operating-model.md`.
+- Local hook and CI enforcement live in `.githooks/commit-msg` and `.github/workflows/commit-standards.yml`.
+- Do not bypass commit checks with ad hoc formatting or `--no-verify`.
 - Treat bootstrap or migration commits as explicit exceptions only.
-- If repo guidance and a requested output conflict, keep the repo artifact compliant and flag the tension explicitly.
