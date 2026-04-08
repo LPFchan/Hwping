@@ -2,12 +2,12 @@
 
 Hwping is a macOS-focused downstream fork of upstream `rhwp`.
 
-Use this file as the repo-root entrypoint for agent behavior. The canonical operating rules still live in `repo-operating-model.md`.
+Use this file as the repo-root entrypoint for agent behavior. The canonical operating rules live in `REPO.md`.
 
 ## Read First
 
 - `README_EN.md` for the repo's scope and product boundary
-- `repo-operating-model.md` for routing, artifact rules, and commit provenance
+- `REPO.md` for routing, artifact rules, and commit provenance
 - `SPEC.md`, `STATUS.md`, `PLANS.md`, and `INBOX.md` for current project truth
 - the local `README.md` or template for any surface you are about to edit
 
@@ -54,7 +54,7 @@ Reference paths:
 
 ## Commit Discipline
 
-- New commits should carry the provenance trailers required by `repo-operating-model.md`.
+- New commits should carry the provenance trailers required by `REPO.md`.
 - Local hook and CI enforcement live in `.githooks/commit-msg` and `.github/workflows/commit-standards.yml`.
 - Do not bypass commit checks with ad hoc formatting or `--no-verify`.
 - Treat bootstrap or migration commits as explicit exceptions only.

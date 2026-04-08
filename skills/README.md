@@ -12,4 +12,4 @@ What lives here:
   - companion workflow for the canonical upstream-review module
 
 Keep skills procedural.
-Do not duplicate the canonical rules from `repo-operating-model.md` inside them.
+Do not duplicate the canonical rules from `REPO.md` inside them.

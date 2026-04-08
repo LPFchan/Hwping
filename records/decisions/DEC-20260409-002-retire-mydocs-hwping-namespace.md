@@ -71,7 +71,7 @@ It also reduces sync noise by removing a product-specific subtree whose main pur
 
 ## Migration Mapping
 
-- `hwping_repo_template_adoption.md` -> `repo-operating-model.md` and `DEC-20260409-001`
+- `hwping_repo_template_adoption.md` -> `REPO.md` (canonical contract; originally introduced as `repo-operating-model.md`) and `DEC-20260409-001`
 - `hwping_repo_sync_plan.md` -> `DEC-20260409-005`, `SPEC.md`, `PLANS.md`, and contributor guidance
 - `hwping_macos_milestone_plan.md` -> `PLANS.md`
 - `hwping_system_architecture.md` -> `DEC-20260409-003`, `SPEC.md`, and `PLANS.md`

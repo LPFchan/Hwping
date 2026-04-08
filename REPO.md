@@ -1,6 +1,6 @@
-# Hwping Repo Operating Model
+# Hwping REPO Contract
 
-This document is the canonical rules layer for Hwping's adoption of `LPFchan/repo-template`.
+This document is the canonical repo contract for Hwping's adoption of `LPFchan/repo-template`.
 
 ## Purpose
 

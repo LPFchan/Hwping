@@ -10,7 +10,7 @@ Use this skill when Hwping needs a repeatable review of upstream `rhwp` work.
 
 ## Canonical Sources
 
-- [repo-operating-model.md](../../../repo-operating-model.md)
+- [REPO.md](../../../REPO.md)
 - [upstream-intake/README.md](../../../upstream-intake/README.md)
 - [upstream-intake/intake-method.md](../../../upstream-intake/intake-method.md)
 - [upstream-intake/weekly-upstream-intake-template.md](../../../upstream-intake/weekly-upstream-intake-template.md)

@@ -8,7 +8,7 @@ argument-hint: "Upstream release, compare window, or refs to review"
 
 Use this skill with:
 
-- [../../repo-operating-model.md](../../repo-operating-model.md)
+- [../../REPO.md](../../REPO.md)
 - [../../upstream-intake/README.md](../../upstream-intake/README.md)
 - [../../upstream-intake/intake-method.md](../../upstream-intake/intake-method.md)
 - [../../upstream-intake/weekly-upstream-intake-template.md](../../upstream-intake/weekly-upstream-intake-template.md)

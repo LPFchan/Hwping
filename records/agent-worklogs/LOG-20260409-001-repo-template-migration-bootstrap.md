@@ -28,11 +28,11 @@ Implement the full `LPFchan/repo-template` operating model in the Hwping reposit
 - Checks run: repository tree review and scaffold inspection
 - Output: confirmed that `upstream-intake/` was already present but the root truth docs and provenance folders were still missing
 - Blockers: none
-- Next: add `repo-operating-model.md`, the root truth stack, and the provenance directories
+- Next: add the canonical repo contract (`REPO.md`, originally introduced as `repo-operating-model.md`), the root truth stack, and the provenance directories
 
 ## Entry 2026-04-09 05-29-07 KST
 
-- Action: added `repo-operating-model.md`, `SPEC.md`, `STATUS.md`, `PLANS.md`, `INBOX.md`, `research/`, and `records/`
+- Action: added the canonical repo contract (`REPO.md`, originally introduced as `repo-operating-model.md`), `SPEC.md`, `STATUS.md`, `PLANS.md`, `INBOX.md`, `research/`, and `records/`
 - Files touched: new root operating-model and provenance surfaces
 - Checks run: repository tree verification
 - Output: seeded `DEC-20260409-001` and this worklog so the migration itself is recorded inside the new model

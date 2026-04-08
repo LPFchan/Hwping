@@ -28,7 +28,7 @@ Hwping adopts `LPFchan/repo-template` as its canonical repository operating mode
 - `mydocs/` remains the detailed technical, troubleshooting, and manual layer that supports the root truth docs.
 - Stable IDs and commit provenance trailers are now part of the expected workflow.
 
-For the repository-specific rules, see [repo-operating-model.md](repo-operating-model.md), [DEC-20260409-001-repo-template-full-adoption.md](records/decisions/DEC-20260409-001-repo-template-full-adoption.md), and [DEC-20260409-002-retire-mydocs-hwping-namespace.md](records/decisions/DEC-20260409-002-retire-mydocs-hwping-namespace.md).
+For the repository-specific rules, see [REPO.md](REPO.md), [DEC-20260409-001-repo-template-full-adoption.md](records/decisions/DEC-20260409-001-repo-template-full-adoption.md), and [DEC-20260409-002-retire-mydocs-hwping-namespace.md](records/decisions/DEC-20260409-002-retire-mydocs-hwping-namespace.md).
 
 ## Contribution Rules
 

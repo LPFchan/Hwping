@@ -72,7 +72,7 @@ This document contains accepted future direction only.
 
 - Initiative: institutionalize the root truth docs and provenance workflow
   - Why now: the operating model needs to become normal before more migration and product work accumulates
-  - Dependencies: `repo-operating-model.md`, contributor docs, and the seed `DEC-*` and `LOG-*` records
+  - Dependencies: `REPO.md`, contributor docs, and the seed `DEC-*` and `LOG-*` records
   - Related ids: `DEC-20260409-001`, `LOG-20260409-001`
 - Initiative: keep advancing the app-facing facade, FFI, and preview boundaries
   - Why now: Hwping still needs real product surfaces beyond the current smoke path
