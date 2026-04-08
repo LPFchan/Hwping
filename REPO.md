@@ -64,7 +64,7 @@ It may:
 - update `SPEC.md`, `STATUS.md`, and `PLANS.md`
 - create research memos
 - create decision records
-- append or create worklogs
+- append to the current relevant worklog or create a new one when clarity requires it
 - route shared technical, troubleshooting, or manual depth into `mydocs/`
 - maintain recurring upstream-intake artifacts
 - escalate non-obvious product, architecture, workflow, or policy calls
@@ -129,10 +129,27 @@ One task may legitimately touch multiple layers. For example:
 - `INBOX.md` is an aggressive scratch disk. Purge entries once they are reflected elsewhere.
 - `research/` keeps curated findings only.
 - `records/decisions/` is append-only by new file.
-- `records/agent-worklogs/` is append-only by new file or appended entries.
+- `records/agent-worklogs/` is append-only, with append-first reuse of the current relevant `LOG-*`.
 - `upstream-intake/` should preserve its paired internal-record and operator-brief workflow.
 - `mydocs/` should keep durable shared technical, troubleshooting, and manual depth that would make the root truth docs too noisy.
 - When a `mydocs/` note changes current truth, accepted direction, or standing policy, reflect that summary in the root truth docs too.
+
+### Worklog Reuse Policy
+
+Do not create a new `LOG-*` just to satisfy provenance.
+
+Append to the latest relevant `LOG-*` when:
+
+- the same workstream, goal, or blocker is still in scope
+- the same agent run or bounded execution thread is continuing
+- a new timestamped entry preserves clarity
+
+Create a new `LOG-*` only when:
+
+- the work is materially distinct from the current log's scope
+- a separate agent or subagent owns a distinct execution thread
+- reusing the old log would make provenance harder to follow
+- the new execution record would be more useful for future retrieval than another appended entry
 
 ## Local Writing Guides
 
@@ -176,6 +193,14 @@ All new commits should include these trailers:
 - `artifacts: <artifact-id>[, <artifact-id>...]`
 
 Artifact-less commits should be treated as bootstrap or migration exceptions only.
+
+Normal commit provenance should stay useful, not bureaucratic.
+
+- A normal commit should reference at least one relevant artifact, newly created or updated.
+- A commit may reference an existing updated `LOG-*`, `DEC-*`, `RSH-*`, `UPS-*`, or other relevant artifact type.
+- Normal commits do not require a brand-new `LOG-*`.
+- Prefer appending to the current relevant `LOG-*` when the same workstream is continuing.
+- Create a new `LOG-*` only when it materially improves clarity.
 
 Local enforcement lives in:
 

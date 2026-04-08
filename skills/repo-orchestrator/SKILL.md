@@ -66,12 +66,14 @@ Use this skill with:
    - Example: `DEC-*` plus `PLANS.md`
    - Example: `LOG-*` plus `STATUS.md`
    - Example: `RSH-*` plus a deep technical note in `mydocs/`
+   - Prefer appending to the current relevant `LOG-*` before creating a new one.
 
 7. If Git commits are created, add commit trailers.
    - `project: hwping`
    - `agent: <agent-id>`
    - `role: orchestrator|worker|subagent|operator`
    - `artifacts: <artifact-id>[, <artifact-id>...]`
+   - A normal commit may reference an existing updated artifact; it does not require a brand-new `LOG-*`.
 
 8. If the task is recurring upstream maintenance, use `upstream-intake/` instead of inventing a parallel workflow.
 

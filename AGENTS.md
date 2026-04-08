@@ -56,5 +56,7 @@ Reference paths:
 
 - New commits should carry the provenance trailers required by `REPO.md`.
 - Local hook and CI enforcement live in `.githooks/commit-msg` and `.github/workflows/commit-standards.yml`.
+- A normal commit may reference an existing updated artifact; it does not need a brand-new `LOG-*`.
+- Prefer appending to the current relevant `LOG-*` when the same workstream continues.
 - Do not bypass commit checks with ad hoc formatting or `--no-verify`.
 - Treat bootstrap or migration commits as explicit exceptions only.
