@@ -134,6 +134,15 @@ One task may legitimately touch multiple layers. For example:
 - `mydocs/` should keep durable shared technical, troubleshooting, and manual depth that would make the root truth docs too noisy.
 - When a `mydocs/` note changes current truth, accepted direction, or standing policy, reflect that summary in the root truth docs too.
 
+## Local Writing Guides
+
+The repo's local `README.md` files and explicit surface templates are part of the writing contract, not optional style notes.
+
+- Before creating or rewriting a repo document, read the matching local guide first.
+- If a local guide defines scope, section order, provenance fields, naming, or a canonical example, follow it by default.
+- Use repo-specific truth in the artifact, but use the local guide for structure and discipline.
+- Make the smallest justified deviation if an artifact genuinely needs a different shape, and keep the core metadata and surface boundary intact.
+
 ## Stable IDs
 
 Use these stable identifiers:
@@ -167,6 +176,15 @@ All new commits should include these trailers:
 - `artifacts: <artifact-id>[, <artifact-id>...]`
 
 Artifact-less commits should be treated as bootstrap or migration exceptions only.
+
+Local enforcement lives in:
+
+- `.githooks/commit-msg` for local commit-time validation
+- `scripts/check-commit-standards.sh` for single-message validation
+- `scripts/check-commit-range.sh` for pushed or pull-request commit ranges
+- `.github/workflows/commit-standards.yml` for remote CI enforcement
+
+Bootstrap or migration exceptions must be explicit in the commit message. They are exceptions, not the default path.
 
 Example:
 
