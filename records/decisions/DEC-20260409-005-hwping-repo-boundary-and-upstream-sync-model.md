@@ -32,6 +32,18 @@ The following surfaces remain out of scope for the main Hwping tree:
 
 Hwping is a downstream fork of `rhwp`. Without a clear boundary, product code would leak into the engine core, upstream merges would become noisier, and the repo would drift back toward a multi-product tree that Hwping no longer wants to maintain.
 
+## Options Considered
+
+### Keep More Upstream Product Surfaces In The Fork
+
+- Upside: preserves more historical capability inside one tree
+- Downside: increases sync cost and keeps Hwping responsible for surfaces it no longer wants to ship
+
+### Keep A Sharp Shared-Core Versus Product Boundary
+
+- Upside: makes upstream sync cheaper and keeps macOS product work isolated in downstream layers
+- Downside: requires explicit discipline about what belongs in `crates/rhwp/` versus Hwping-owned layers
+
 ## Rationale
 
 - Shared engine fixes should stay upstreamable or at least upstream-shaped whenever possible.

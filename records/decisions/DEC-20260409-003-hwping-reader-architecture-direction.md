@@ -25,6 +25,18 @@ Hwping adopts the following architecture direction for the native macOS reader:
 
 Hwping needs a native macOS reading experience without letting Apple-platform concerns leak into the shared engine core. The architecture must therefore preserve a clean Rust-versus-Swift split while keeping the shared-core behavior close to upstream `rhwp`.
 
+## Options Considered
+
+### Custom Native Renderer First
+
+- Upside: maximum control over native viewing behavior from the start
+- Downside: slower path to a usable reader and more pressure to mix product concerns into shared engine work
+
+### PDF-Backed Reader Shell First
+
+- Upside: reaches a practical macOS reader faster while preserving a clean engine-versus-app boundary
+- Downside: keeps open the possibility of later pressure for a more direct renderer path
+
 ## Rationale
 
 - `NSDocument` aligns naturally with Finder opening, recent documents, window restoration, and the normal behavior users expect from a macOS document app.

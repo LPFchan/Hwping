@@ -26,6 +26,18 @@ The planned top-level order for v1 is therefore:
 
 Hwping needs a menu bar that feels conventional on macOS while reflecting a reader-only v1 scope. TextEdit provides a strong baseline for menu order, separator grouping, shortcut conventions, and the difference between system-provided and app-owned items.
 
+## Options Considered
+
+### Mirror TextEdit More Literally
+
+- Upside: strongest immediate alignment with a familiar macOS document app
+- Downside: carries editing-oriented surfaces that do not match Hwping's read-only v1 scope
+
+### Use TextEdit As A Baseline And Remove Reader-Irrelevant Surfaces
+
+- Upside: keeps the native macOS feel while staying honest about Hwping's product boundary
+- Downside: requires deliberate follow-up decisions for the remaining read-only menu details
+
 ## Rationale
 
 - Matching standard macOS document-app expectations makes Hwping easier to learn.
