@@ -25,56 +25,23 @@ Each memo should begin with:
 - `Opened: YYYY-MM-DD HH-mm-ss KST`
 - `Recorded by agent: <agent-id>`
 
-## Default Shape
+## Minimum Content
 
-- Metadata
-- Research question
-- Why this belongs to this repo
-- Findings
-- Promising directions
-- Dead ends or rejected paths
-- Recommended routing
+A research memo should usually make these things recoverable:
 
-Use that section order by default unless the research genuinely needs a different structure.
+- what question or area was explored
+- the findings worth preserving
+- any important rejected paths, open questions, or follow-up routes
 
-## Canonical Example
+The exact section names and order can vary by project.
 
-```md
-# RSH-20260409-001: TextEdit Menu Bar Reference For Hwping
+## Suggested Shapes
 
-Opened: 2026-04-09 05-29-07 KST
-Recorded by agent: codex-20260409-full-repo-template-migration
+Any of these are acceptable when they fit the repo better:
 
-## Metadata
+- question -> findings -> next steps
+- topic -> evidence -> conclusion
+- exploration notes -> recommendations
+- short memo with lightweight headings
 
-- Status: completed
-- Question: What menu-bar baseline should Hwping use for the first complete macOS reader app?
-- Related ids: DEC-20260409-004
-
-## Research Question
-
-What menu-bar baseline should Hwping use for the first complete macOS reader app?
-
-## Why This Belongs To This Repo
-
-Hwping is building a native macOS document app, so a reusable menu-bar baseline belongs in repo research rather than in transient chat notes.
-
-## Findings
-
-- TextEdit is a useful baseline for standard macOS document-app menu ordering and grouping.
-- Hwping v1 should preserve native document-app expectations while staying read-only.
-
-## Promising Directions
-
-- Use TextEdit as a baseline when evaluating first-pass Hwping menu structure.
-- Capture accepted menu decisions in `records/decisions/` instead of keeping them only in research.
-
-## Dead Ends Or Rejected Paths
-
-- Blind command-for-command copying from TextEdit without checking Hwping's read-only scope.
-
-## Recommended Routing
-
-- Keep this memo as reusable reference material.
-- Move accepted product decisions into `DEC-*` records.
-```
+Keep the memo normalized and readable, but do not force one house style across every repo.

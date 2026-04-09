@@ -65,3 +65,12 @@ Implement the full `LPFchan/repo-template` operating model in the Hwping reposit
 - Output: confirmed that the repo now contains the root truth stack, provenance directories, and canonical upstream-review subsystem expected by the adopted operating model
 - Blockers: none
 - Next: keep routing future durable work through the root surfaces and use commit provenance trailers on artifact-bearing commits
+
+## Entry 2026-04-09 17-48-43 KST
+
+- Action: reconciled over-normalized spec and research surfaces against retired `mydocs/hwping/` sources, current root docs, and current lightweight repo-template guides
+- Files touched: `SPEC.md`, `research/README.md`, `research/RSH-20260409-001-textedit-menubar-reference.md`, this worklog
+- Checks run: `git diff --check`; byte-for-byte comparison of `research/README.md` against repo-template scaffold; candidate doc enumeration; history inspection around `8255216` and `833f402`
+- Output: restored Hwping-native architecture, product-scope, reader-experience, repo-boundary, and TextEdit-reference detail while keeping artifact provenance and canonical root-doc routing
+- Blockers: none
+- Next: commit the reconciliation as a docs/provenance update; leave Rust validation for code-bearing changes
