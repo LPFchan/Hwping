@@ -47,12 +47,15 @@ Use it when a downstream fork needs a repeatable review of upstream changes.
 
 6. Fill the canonical template.
    - Use [../../upstream-intake/weekly-upstream-intake-template.md](../../upstream-intake/weekly-upstream-intake-template.md).
+   - Use [../../upstream-intake/intake-method.md](../../upstream-intake/intake-method.md) to keep the analysis and recommendation shape consistent.
    - Write the full record under `upstream-intake/reports/internal-records/`.
+   - Check the destination directory `README.md` first and mirror its canonical example and level of completeness.
 
 7. Produce the operator brief.
    - Use [../../upstream-intake/operator-weekly-brief-template.md](../../upstream-intake/operator-weekly-brief-template.md).
    - Store it as a separate artifact under `upstream-intake/reports/operator-briefs/`.
    - Keep the full reasoning in the internal record; the operator brief is the shorter human-facing translation.
+   - Check the destination directory `README.md` first so the final artifact reads like a finished brief, not a field dump.
 
 8. If Git commits happen as part of intake or follow-up work, include:
    - `project: hwping`

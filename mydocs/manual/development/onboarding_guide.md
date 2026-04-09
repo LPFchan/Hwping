@@ -18,10 +18,11 @@ The repository is intentionally centered on the Rust engine, the repo-template o
 Important areas:
 
 - `SPEC.md`, `STATUS.md`, and `PLANS.md` — canonical project truth, current state, and accepted future direction
-- `INBOX.md` — untriaged intake waiting to be routed
+- `INBOX.md` — untriaged capture waiting to be routed
 - `research/` — curated reusable exploration
 - `records/decisions/` — durable decision records
 - `records/agent-worklogs/` — execution history
+- `skills/` — repo-native procedures for repeatable agent workflows
 - `upstream-intake/` — recurring upstream-review package
 - `crates/rhwp/src/` — Rust engine, CLI, parser, layout, renderer, and related modules
 - `samples/` — sample HWP and HWPX files used for debugging and regression work

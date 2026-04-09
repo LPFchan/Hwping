@@ -74,3 +74,12 @@ Implement the full `LPFchan/repo-template` operating model in the Hwping reposit
 - Output: restored Hwping-native architecture, product-scope, reader-experience, repo-boundary, and TextEdit-reference detail while keeping artifact provenance and canonical root-doc routing
 - Blockers: none
 - Next: commit the reconciliation as a docs/provenance update; leave Rust validation for code-bearing changes
+
+## Entry 2026-04-09 20-34-12 KST
+
+- Action: adopted repo-template's sparse-promotion, capture-packet, and mandatory skills-layer updates into Hwping's live operating policy
+- Files touched: `REPO.md`, `AGENTS.md`, `INBOX.md`, `PLANS.md`, `CONTRIBUTING.md`, `skills/`, upstream-intake guide text, onboarding text, this worklog
+- Checks run: template block comparison for imported `REPO.md` policy blocks; banned older-vocabulary search; `git diff --check`; `scripts/check-commit-range.sh origin/main HEAD`; `cargo test`
+- Output: kept Hwping-specific routing, `mydocs/`, upstream-intake, Rust validation, and commit-provenance rules while making root `skills/` required and adding `skills/daily-inbox-pressure-review/SKILL.md`
+- Blockers: none
+- Next: validate local skill links, run final policy searches, and commit or hand off the operating-model sync

@@ -23,8 +23,9 @@ cargo clippy -- -D warnings
 Hwping adopts `LPFchan/repo-template` as its canonical repository operating model.
 
 - `SPEC.md`, `STATUS.md`, and `PLANS.md` are the canonical summary surfaces for truth, current state, and accepted future direction.
-- `INBOX.md`, `research/`, `records/decisions/`, and `records/agent-worklogs/` are the canonical intake and provenance surfaces.
+- `INBOX.md`, `research/`, `records/decisions/`, and `records/agent-worklogs/` are the canonical capture and provenance surfaces.
 - `upstream-intake/` is the recurring upstream-review module for the downstream fork.
+- `skills/` is the repo-native procedure layer; read `skills/README.md` and the relevant `skills/<name>/SKILL.md` before running repeatable repo workflows.
 - `mydocs/` remains the detailed technical, troubleshooting, and manual layer that supports the root truth docs.
 - Stable IDs and commit provenance trailers are now part of the expected workflow.
 
@@ -43,7 +44,7 @@ For the repository-specific rules, see [REPO.md](REPO.md), [DEC-20260409-001-rep
 Use the root operating surfaces and the existing `mydocs/` layout intentionally.
 
 - `SPEC.md`, `STATUS.md`, and `PLANS.md` for top-level truth, current state, and accepted direction
-- `INBOX.md` for untriaged intake
+- `INBOX.md` for untriaged capture
 - `research/` for reusable exploration
 - `records/decisions/` for durable decision records
 - `records/agent-worklogs/` for execution history

@@ -24,7 +24,7 @@ This document contains accepted future direction only.
 
 - Outcome: use root truth docs, stable artifact IDs, provenance records, commit trailers, and namespace-free routing as the normal operating model
 - Why this is accepted: Hwping needs durable in-repo truth and provenance as the fork grows
-- Expected value: faster orientation, cleaner routing of work, and less reliance on chat history to understand project state
+- Expected value: faster orientation, cleaner routing of work, and less reliance on external-tool history to understand project state
 - Preconditions: contributor guidance, seed artifacts, and ongoing habit formation
 - Earliest likely start: active now
 - Related ids: `DEC-20260409-001`, `DEC-20260409-002`, `LOG-20260409-001`

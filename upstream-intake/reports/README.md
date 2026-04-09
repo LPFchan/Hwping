@@ -34,4 +34,4 @@ Each review should leave behind:
 
 The child directory `README.md` files and the two templates are part of the writing contract for this subsystem. Read them before drafting or normalizing a report.
 
-Do not store one-off chat summaries here unless they have been normalized into the intake format first.
+Do not store one-off external-tool summaries here unless they have been normalized into the upstream-intake format first.
