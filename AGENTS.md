@@ -27,16 +27,20 @@ Before running a repeatable repo workflow, read the relevant `skills/<name>/SKIL
 - Use English for all new or rewritten repository documents.
 - Route truth and provenance through the repo-template surfaces instead of ad hoc notes.
 - Treat `INBOX.md` as pressure, not a backlog. During inbox review, cluster capture and promote only survived triage.
-- Promote sparsely. Do not mirror one evolving thought into research, decisions, plans, spec, status, upstream records, and worklogs.
+- Promote sparsely. Do not mirror one evolving thought into research, decisions, plans, spec, status, upstream records, and execution records.
 - Keep deeper shared detail in `mydocs/tech/`, `mydocs/troubleshootings/`, and `mydocs/manual/`.
 - Do not recreate `mydocs/hwping/`.
 - If a local guide defines section order, naming, provenance fields, or a canonical example, follow it.
+- Treat each committed change as a canonical execution record through `commit: LOG-*`.
+- Normal commits must use the structured body keys `timestamp:`, `changes:`, `rationale:`, and `checks:` with `notes:` optional.
 
 ## Artifact Enforcement
 
 - Do not promote exploratory debate into `SPEC.md`, `STATUS.md`, `PLANS.md`, or `records/decisions/` until there is a concise accepted outcome for that layer.
 - Do not turn an inbox review into a giant digest of every low-confidence idea. Report counts or clusters when full detail does not protect focus.
 - If an artifact guide is intentionally lightweight, do not over-structure the document just to make it look uniform.
+- Do not put `LOG-*` ids inside `artifacts:`.
+- Do not bypass commit provenance checks by omitting required trailers unless the commit is an explicit bootstrap or migration exception.
 
 ## Skills
 

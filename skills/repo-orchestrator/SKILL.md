@@ -16,7 +16,7 @@ Use this skill with:
 ## What This Skill Produces
 
 - correctly routed repo artifacts
-- clear separation between truth, plans, research, decisions, logs, and detailed `mydocs/` notes
+- clear separation between truth, plans, research, decisions, and commit-backed execution history
 - stable IDs plus lightweight provenance
 - operator escalation only when a real judgment call exists
 
@@ -40,7 +40,7 @@ Use this skill with:
    - `INBOX.md`
    - `research/`
    - `records/decisions/`
-   - `records/agent-worklogs/`
+   - git commit history via `commit: LOG-*`
    - `upstream-intake/`
    - `mydocs/`
 
@@ -60,26 +60,26 @@ Use this skill with:
 
 5. Preserve the separation rules.
    - Do not write speculation straight into `PLANS.md`.
-   - Do not let worklogs masquerade as decisions.
+   - Do not let execution history masquerade as decisions.
    - Do not let inbox entries become long-term truth.
    - Do not treat research memos as raw transcripts.
    - Do not let `mydocs/` replace the root truth docs.
 
 6. If the task crosses layers, create multiple artifacts deliberately.
+   - Example: `RSH-*` plus a committed `LOG-*`
    - Example: `DEC-*` plus `PLANS.md`
-   - Example: `LOG-*` plus `STATUS.md`
-   - Example: `RSH-*` plus a deep technical note in `mydocs/`
+   - Example: committed `LOG-*` plus `STATUS.md`
    - Touch multiple layers only when each touched layer has a distinct job.
    - Do not mirror the same evolving thought into every artifact type.
-   - Prefer appending to the current relevant `LOG-*` before creating a new one.
+   - Prefer referencing and updating an existing relevant `LOG-*` before creating a new one.
 
 7. If Git commits are created, add commit trailers.
    - `project: hwping`
    - `agent: <agent-id>`
    - `role: orchestrator|worker|subagent|operator`
-   - `artifacts: <artifact-id>[, <artifact-id>...]`
+   - `commit: LOG-...[, LOG-...]`
+   - `artifacts:` is optional and must not contain `LOG-*`
    - If commit hooks are enabled, make the commit message pass the local validator before retrying.
-   - Prefer referencing and updating an existing relevant `LOG-*` before creating a new one.
 
 8. If the task is recurring upstream maintenance and the optional module is enabled, use `upstream-intake/` instead of inventing a parallel workflow.
 

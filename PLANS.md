@@ -27,7 +27,7 @@ This document contains accepted future direction only.
 - Expected value: faster orientation, cleaner routing of work, and less reliance on external-tool history to understand project state
 - Preconditions: contributor guidance, seed artifacts, and ongoing habit formation
 - Earliest likely start: active now
-- Related ids: `DEC-20260409-001`, `DEC-20260409-002`, `LOG-20260409-001`
+- Related ids: `DEC-20260409-001`, `DEC-20260409-002`, `LOG-20260410-225424-codex`
 
 ### Repeatable Upstream Sync Cadence
 
@@ -73,7 +73,7 @@ This document contains accepted future direction only.
 - Initiative: institutionalize the root truth docs and provenance workflow
   - Why now: the operating model needs to become normal before more migration and product work accumulates
   - Dependencies: `REPO.md`, contributor docs, and the seed `DEC-*` and `LOG-*` records
-  - Related ids: `DEC-20260409-001`, `LOG-20260409-001`
+- Related ids: `DEC-20260409-001`, `LOG-20260410-225424-codex`
 - Initiative: keep advancing the app-facing facade, FFI, and preview boundaries
   - Why now: Hwping still needs real product surfaces beyond the current smoke path
   - Dependencies: shared-core rendering correctness and disciplined downstream boundaries
@@ -92,7 +92,7 @@ This document contains accepted future direction only.
 - Initiative: strengthen automation or lightweight tooling around agent IDs and commit trailers
   - Why later: the process should first be proven with manual discipline before automation is locked in
   - Dependencies: repeated use of the operating model in real work
-  - Related ids: `LOG-20260409-001`
+- Related ids: `LOG-20260410-225424-codex`
 
 ### Deferred But Accepted
 

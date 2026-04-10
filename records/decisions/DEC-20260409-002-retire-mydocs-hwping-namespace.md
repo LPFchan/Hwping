@@ -8,7 +8,7 @@ Recorded by agent: codex-20260409-full-repo-template-migration
 - Project id: `hwping`
 - Decision owner: Hwping operator
 - Status: accepted
-- Related ids: `DEC-20260409-001`, `LOG-20260409-001`
+- Related ids: `DEC-20260409-001`, `LOG-20260410-225424-codex`
 
 ## Decision
 
@@ -32,7 +32,7 @@ After adopting the full repo-template operating model, `mydocs/hwping/` became a
 - root truth docs
 - decision records
 - research memos
-- provenance worklogs
+- commit-backed execution history
 
 Keeping it alive would make the repo less legible by letting product plans, operating plans, architectural direction, and menu decisions live in two places.
 

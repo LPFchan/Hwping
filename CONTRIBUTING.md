@@ -23,11 +23,12 @@ cargo clippy -- -D warnings
 Hwping adopts `LPFchan/repo-template` as its canonical repository operating model.
 
 - `SPEC.md`, `STATUS.md`, and `PLANS.md` are the canonical summary surfaces for truth, current state, and accepted future direction.
-- `INBOX.md`, `research/`, `records/decisions/`, and `records/agent-worklogs/` are the canonical capture and provenance surfaces.
+- `INBOX.md`, `research/`, and `records/decisions/` are the canonical capture and provenance surfaces.
+- git commit history via commit: LOG-* is the canonical execution-history surface.
 - `upstream-intake/` is the recurring upstream-review module for the downstream fork.
 - `skills/` is the repo-native procedure layer; read `skills/README.md` and the relevant `skills/<name>/SKILL.md` before running repeatable repo workflows.
 - `mydocs/` remains the detailed technical, troubleshooting, and manual layer that supports the root truth docs.
-- Stable IDs and commit provenance trailers are now part of the expected workflow.
+- Stable IDs and commit-backed execution records are now part of the expected workflow.
 
 For the repository-specific rules, see [REPO.md](REPO.md), [DEC-20260409-001-repo-template-full-adoption.md](records/decisions/DEC-20260409-001-repo-template-full-adoption.md), and [DEC-20260409-002-retire-mydocs-hwping-namespace.md](records/decisions/DEC-20260409-002-retire-mydocs-hwping-namespace.md).
 
@@ -47,7 +48,7 @@ Use the root operating surfaces and the existing `mydocs/` layout intentionally.
 - `INBOX.md` for untriaged capture
 - `research/` for reusable exploration
 - `records/decisions/` for durable decision records
-- `records/agent-worklogs/` for execution history
+- git commit history via commit: LOG-* for execution history
 
 - `SPEC.md`, `STATUS.md`, and `PLANS.md` for Hwping-specific truth, current state, and accepted direction
 - `records/decisions/` for Hwping-specific architectural and product decisions
@@ -94,13 +95,23 @@ Do not place this category inside the upstream-aligned engine area.
 
 ## Commit Provenance
 
-New commits should carry repo-template trailers:
+New commits should carry repo-template trailers and the structured body keys:
 
 ```text
 project: hwping
 agent: <agent-id>
 role: orchestrator|worker|subagent|operator
+commit: LOG-...
 artifacts: <artifact-id>[, <artifact-id>...]
+timestamp: YYYY-MM-DD HH-mm-ss KST
+changes:
+- ...
+rationale:
+- ...
+checks:
+- ...
+notes:
+- ... (optional)
 ```
 
 Until dedicated tooling exists, mint a unique run-scoped `agent-id` manually, for example `codex-20260409-example-scope`.
@@ -116,7 +127,7 @@ cargo clippy -- -D warnings
 - Classify the change clearly as engine, compatibility, or product-only work.
 - Explain any widening of engine-facing public surface area.
 - Avoid changes that revive product surfaces unrelated to Hwping.
-- Use stable artifact IDs when the work produces inbox, research, decision, worklog, or upstream-intake records.
+- Use stable artifact IDs when the work produces inbox, research, decision, or upstream-intake records, and use commit-backed `LOG-*` ids when the work produces execution history.
 
 ## Debugging Guide
 

@@ -10,7 +10,7 @@ It is not the implementation-status report or milestone tracker. Current state l
 - Canonical repo: `https://github.com/LPFchan/Hwping`
 - Project id: `hwping`
 - Operator: `LPFchan`
-- Last updated: `2026-04-09`
+- Last updated: `2026-04-10`
 - Key decisions: `DEC-20260409-001`, `DEC-20260409-002`, `DEC-20260409-003`, `DEC-20260409-004`, `DEC-20260409-005`
 
 ## What Hwping Is
@@ -145,7 +145,7 @@ Hwping uses the repo-template model, with Hwping-specific rules in `REPO.md`.
 
 - `SPEC.md`, `STATUS.md`, and `PLANS.md` hold canonical truth, current state, and accepted future direction.
 - `records/decisions/` holds durable decisions.
-- `records/agent-worklogs/` holds useful execution history.
+- git commit history via `commit: LOG-*` holds useful execution history.
 - `research/` holds reusable exploration.
 - `upstream-intake/` holds recurring upstream-review artifacts.
 - `mydocs/tech/`, `mydocs/troubleshootings/`, and `mydocs/manual/` hold deeper shared technical, investigation, and manual material.

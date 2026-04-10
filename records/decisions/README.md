@@ -45,7 +45,7 @@ Recorded by agent: codex-20260409-full-repo-template-migration
 
 - Status: accepted
 - Decision owner: Hwping operator
-- Related ids: LOG-20260409-001
+- Related ids: LOG-20260410-225424-codex
 
 ## Decision
 
@@ -74,6 +74,6 @@ Full adoption was chosen because Hwping is a downstream fork with both upstream-
 ## Consequences
 
 - Root truth now lives in `SPEC.md`, `STATUS.md`, and `PLANS.md`.
-- Decisions, research, worklogs, and upstream-intake reviews use stable artifact IDs.
+- Decisions, research, execution history, and upstream-intake reviews use stable artifact IDs.
 - `mydocs/` remains the deeper shared technical and manual layer instead of the truth layer.
 ```

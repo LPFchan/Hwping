@@ -61,7 +61,8 @@ Use it when a downstream fork needs a repeatable review of upstream changes.
    - `project: hwping`
    - `agent: <agent-id>`
    - `role: orchestrator|worker|subagent|operator`
-   - `artifacts: UPS-..., LOG-..., DEC-...`
+   - `commit: LOG-...`
+   - optional `artifacts: UPS-..., DEC-...`
 
 ## Escalation Triggers
 

@@ -109,10 +109,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow details.
 Hwping adopts `LPFchan/repo-template` as its canonical repository operating model.
 
 - `SPEC.md`, `STATUS.md`, and `PLANS.md` are the canonical top-level truth, status, and accepted-direction surfaces.
-- `INBOX.md`, `research/`, `records/decisions/`, and `records/agent-worklogs/` are the canonical intake and provenance surfaces.
+- `INBOX.md`, `research/`, and `records/decisions/` are the canonical intake and provenance surfaces.
+- git commit history via commit: LOG-* is the canonical execution-history surface.
 - `upstream-intake/` remains the recurring upstream-review module for the downstream fork.
 - `mydocs/` remains the deeper technical, troubleshooting, and manual layer that supports the root truth docs.
-- New commits are expected to carry repo-template provenance trailers.
+- New commits are expected to carry commit-backed provenance trailers and a `commit: LOG-*` id.
 
 For the repository-specific rules, see [REPO.md](REPO.md), [DEC-20260409-001-repo-template-full-adoption.md](records/decisions/DEC-20260409-001-repo-template-full-adoption.md), and [DEC-20260409-002-retire-mydocs-hwping-namespace.md](records/decisions/DEC-20260409-002-retire-mydocs-hwping-namespace.md).
 

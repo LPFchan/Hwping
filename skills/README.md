@@ -7,14 +7,18 @@ Agents should read the relevant workflow even when their runtime does not auto-l
 
 Each reusable workflow should live at `skills/<name>/SKILL.md`.
 
-What lives here:
+Required baseline skills:
 
 - `repo-orchestrator/`
-  - routing workflow for truth, status, plans, research, decisions, worklogs, inbox capture, and deeper `mydocs/` notes
+  - Generic routing workflow for truth, status, plans, research, decisions, commit-backed execution history, and inbox capture.
 - `daily-inbox-pressure-review/`
   - Focus-protecting daily triage for `IBX-*` capture and capture packets.
+
+Conditional skills:
+
 - `upstream-intake/`
-  - companion workflow for the canonical upstream-review module
+  - Companion workflow for the optional upstream-review module.
+  - Include it when the adopted repo enables `upstream-intake/`; omit it when the repo does not track an upstream.
 
 Keep skills procedural.
 Do not duplicate the canonical rules from `REPO.md` inside them.

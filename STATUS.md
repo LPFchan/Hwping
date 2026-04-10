@@ -4,7 +4,7 @@ This document tracks current operational truth.
 
 ## Snapshot
 
-- Last updated: `2026-04-09`
+- Last updated: `2026-04-10`
 - Overall posture: `active`
 - Current focus: institutionalize the root repo-template layers while continuing the macOS reader boundary build
 - Highest-priority blocker: the full macOS app target and Quick Look extension targets are still planned surfaces rather than finished product targets
@@ -13,7 +13,7 @@ This document tracks current operational truth.
 
 ## Current State Summary
 
-Hwping has completed the Cargo workspace split and the initial typed facade and FFI boundary work, but the main app and Quick Look targets remain future implementation work. As of 2026-04-09, the repository also adopts the full repo-template operating model, including root truth docs, provenance directories, and stable artifact conventions.
+Hwping has completed the Cargo workspace split and the initial typed facade and FFI boundary work, but the main app and Quick Look targets remain future implementation work. As of 2026-04-10, the repository also adopts the full repo-template operating model, including root truth docs, provenance records, commit-backed execution history, and stable artifact conventions.
 
 ## Active Phases Or Tracks
 
@@ -22,11 +22,11 @@ Hwping has completed the Cargo workspace split and the initial typed facade and 
 - Goal: make repo-template the canonical operating model for Hwping
 - Status: `in progress`
 - Why this matters now: the fork needs durable truth, provenance, and recurring upstream-review discipline before more product work piles up
-- Current work: root truth docs are installed, initial `DEC-*` and `LOG-*` artifacts are seeded, the upstream-intake sample has been normalized to `UPS-*` naming, and the old Hwping-specific docs namespace has been retired into root docs, `DEC-*`, and `RSH-*` artifacts
-- Exit criteria: new durable work routes through the correct artifact layers and new commits carry provenance trailers by default
+- Current work: root truth docs are installed, initial `DEC-*` records are seeded, the legacy markdown execution history has been backfilled into commit-backed `LOG-*` records, the upstream-intake sample has been normalized to `UPS-*` naming, and the old Hwping-specific docs namespace and markdown execution-history surface have been retired into root docs, `DEC-*`, and `RSH-*` artifacts
+- Exit criteria: new durable work routes through the correct artifact layers and new commits carry commit-backed provenance trailers by default
 - Dependencies: contributor discipline and future tooling support
 - Risks: partial adoption would leave competing documentation habits in place
-- Related ids: `DEC-20260409-001`, `LOG-20260409-001`
+- Related ids: `DEC-20260409-001`, `LOG-20260410-225424-codex`
 
 ### macOS Reader Boundary Build
 
@@ -48,7 +48,7 @@ Hwping has completed the Cargo workspace split and the initial typed facade and 
 - Exit criteria: each future review window produces paired `UPS-*` internal and operator-brief artifacts plus updated carry-forward knowledge when needed
 - Dependencies: maintainer cadence and disciplined artifact naming
 - Risks: accumulated upstream drift if review windows stop being recorded
-- Related ids: `LOG-20260409-001`
+  - Related ids: `LOG-20260410-225424-codex`
 
 ## Recent Changes To Project Reality
 
@@ -62,8 +62,8 @@ Hwping has completed the Cargo workspace split and the initial typed facade and 
   - Related ids: `DEC-20260409-003`
 - Date: `2026-04-09`
   - Change: the full repo-template operating model was adopted with root truth docs, provenance records, stable artifact rules, and the retirement of `mydocs/hwping/` into those layers
-  - Why it matters: the repository now has a canonical home for truth, plans, decisions, worklogs, and upstream intake
-  - Related ids: `DEC-20260409-001`, `DEC-20260409-002`, `LOG-20260409-001`
+- Why it matters: the repository now has a canonical home for truth, plans, decisions, commit-backed execution history, and upstream intake
+- Related ids: `DEC-20260409-001`, `DEC-20260409-002`, `LOG-20260410-225424-codex`
 
 ## Active Blockers And Risks
 
@@ -76,15 +76,15 @@ Hwping has completed the Cargo workspace split and the initial typed facade and 
   - Effect: commits or artifacts may drift back into ad hoc patterns if contributors do not use stable IDs and trailers consistently
   - Owner: Hwping maintainer and collaborating agents
   - Mitigation: keep contributor guidance current and prefer artifact-backed work for durable outcomes
-  - Related ids: `LOG-20260409-001`
+  - Related ids: `LOG-20260410-225424-codex`
 
 ## Immediate Next Steps
 
-- Next: start routing new durable work through `INBOX.md`, `research/`, `records/decisions/`, and `records/agent-worklogs/` instead of relying only on `mydocs/`
+- Next: start routing new durable work through `INBOX.md`, `research/`, `records/decisions/`, and git commit history via `commit: LOG-*` instead of relying only on `mydocs/`
   - Owner: maintainers and orchestrator agents
   - Trigger: the next task that produces durable planning, research, decision, or execution history
   - Related ids: `DEC-20260409-001`
 - Next: keep future upstream reviews in `UPS-*` format and update carry-forward notes when a review establishes standing knowledge
   - Owner: maintainers and upstream-intake agents
   - Trigger: the next upstream compare window or sync candidate
-  - Related ids: `LOG-20260409-001`
+  - Related ids: `LOG-20260410-225424-codex`

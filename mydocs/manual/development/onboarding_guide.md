@@ -21,7 +21,7 @@ Important areas:
 - `INBOX.md` — untriaged capture waiting to be routed
 - `research/` — curated reusable exploration
 - `records/decisions/` — durable decision records
-- `records/agent-worklogs/` — execution history
+- git commit history via commit: LOG-* — execution history
 - `skills/` — repo-native procedures for repeatable agent workflows
 - `upstream-intake/` — recurring upstream-review package
 - `crates/rhwp/src/` — Rust engine, CLI, parser, layout, renderer, and related modules
@@ -91,7 +91,7 @@ Use the repo-template surfaces and the documentation tree intentionally:
 - `INBOX.md` for intake
 - `research/` for reusable exploration
 - `records/decisions/` for durable decisions
-- `records/agent-worklogs/` for execution history
+- git commit history via commit: LOG-* for execution history
 
 - `SPEC.md`, `STATUS.md`, and `PLANS.md` for top-level Hwping direction
 - `records/decisions/` for durable Hwping-specific decisions
@@ -99,7 +99,7 @@ Use the repo-template surfaces and the documentation tree intentionally:
 - `mydocs/troubleshootings/` for durable bug and regression notes
 - `mydocs/manual/` for durable build, debug, and operation guides
 
-Do not let `mydocs/` replace the root truth docs, and do not put raw execution trace into technical notes when it belongs in `records/agent-worklogs/`.
+Do not let `mydocs/` replace the root truth docs, and do not put raw execution trace into technical notes when it belongs in git commit history via commit: LOG-*.
 
 ## Provenance Expectations
 
@@ -111,13 +111,23 @@ When durable repo artifacts are created, use stable IDs:
 - `LOG-*`
 - `UPS-*`
 
-New commits should also carry provenance trailers:
+New commits should also carry provenance trailers and the structured body keys:
 
 ```text
 project: hwping
 agent: <agent-id>
 role: orchestrator|worker|subagent|operator
+commit: LOG-...
 artifacts: <artifact-id>[, <artifact-id>...]
+timestamp: YYYY-MM-DD HH-mm-ss KST
+changes:
+- ...
+rationale:
+- ...
+checks:
+- ...
+notes:
+- ... (optional)
 ```
 
 ## Product Boundary Rules
@@ -137,7 +147,7 @@ For most work, this is enough:
 2. Inspect engine output with `export-svg`, `dump-pages`, `dump`, or `ir-diff`.
 3. Make the smallest defensible code change.
 4. Re-run `cargo build`, `cargo test`, and `cargo clippy -- -D warnings`.
-5. Route lasting outputs into the right artifact layers: root truth docs, research, decisions, worklogs, upstream intake, or deeper `mydocs/` notes.
+5. Route lasting outputs into the right artifact layers: root truth docs, research, decisions, commit-backed execution history, upstream intake, or deeper `mydocs/` notes.
 
 ## Where To Look Next
 
