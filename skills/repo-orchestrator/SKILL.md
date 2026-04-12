@@ -1,6 +1,6 @@
 ---
 name: repo-orchestrator
-description: "Route work into the correct artifact layer in the Hwping repo-template operating model."
+description: "Route work into the correct artifact layer in a repo that uses repo-template."
 argument-hint: "Task, capture item, or maintenance request"
 ---
 
@@ -9,14 +9,11 @@ argument-hint: "Task, capture item, or maintenance request"
 Use this skill with:
 
 - [../../REPO.md](../../REPO.md)
-- [../../SPEC.md](../../SPEC.md)
-- [../../STATUS.md](../../STATUS.md)
-- [../../PLANS.md](../../PLANS.md)
 
 ## What This Skill Produces
 
 - correctly routed repo artifacts
-- clear separation between truth, plans, research, decisions, and commit-backed execution history
+- clear separation between truth, plans, research, decisions, and commit-backed execution
 - stable IDs plus lightweight provenance
 - operator escalation only when a real judgment call exists
 
@@ -31,7 +28,6 @@ Use this skill with:
    - Is this reusable research?
    - Is this a durable decision?
    - Is this execution history?
-   - Is this deeper technical, troubleshooting, or manual detail?
 
 2. Route it to the correct artifact layer.
    - `SPEC.md`
@@ -42,7 +38,6 @@ Use this skill with:
    - `records/decisions/`
    - git commit history via `commit: LOG-*`
    - `upstream-intake/`
-   - `mydocs/`
 
 3. Assign stable IDs when needed.
    - `IBX-*`
@@ -50,36 +45,35 @@ Use this skill with:
    - `DEC-*`
    - `LOG-*`
    - `UPS-*`
-   - Use the least available `NNN` for that date and artifact type.
+   - Use the least available `NNN` for file-backed artifact types.
+   - For `LOG-*`, derive the suffix from `agent:`, start from the current KST second, and bump forward until unique on the current branch plus default branch.
 
 4. Write the artifact with provenance.
-   - Include `Opened: YYYY-MM-DD HH-mm-ss KST`
-   - Include `Recorded by agent: <agent-id>`
+   - For file-backed artifacts, include `Opened: YYYY-MM-DD HH-mm-ss KST` and `Recorded by agent: <agent-id>`.
    - Before drafting, read the destination directory's `README.md` and any explicit template.
    - Match the local guide when it is prescriptive, and stay lightweight when the guide is intentionally minimal.
 
 5. Preserve the separation rules.
    - Do not write speculation straight into `PLANS.md`.
-   - Do not let execution history masquerade as decisions.
+   - Do not let execution records masquerade as decisions.
    - Do not let inbox entries become long-term truth.
    - Do not treat research memos as raw transcripts.
-   - Do not let `mydocs/` replace the root truth docs.
 
 6. If the task crosses layers, create multiple artifacts deliberately.
    - Example: `RSH-*` plus a committed `LOG-*`
    - Example: `DEC-*` plus `PLANS.md`
-   - Example: committed `LOG-*` plus `STATUS.md`
+   - Example: a committed `LOG-*` plus `STATUS.md`
    - Touch multiple layers only when each touched layer has a distinct job.
    - Do not mirror the same evolving thought into every artifact type.
-   - Prefer referencing and updating an existing relevant `LOG-*` before creating a new one.
 
 7. If Git commits are created, add commit trailers.
-   - `project: hwping`
+   - `project: <project-id>`
    - `agent: <agent-id>`
    - `role: orchestrator|worker|subagent|operator`
    - `commit: LOG-...[, LOG-...]`
    - `artifacts:` is optional and must not contain `LOG-*`
-   - If commit hooks are enabled, make the commit message pass the local validator before retrying.
+   - Make the commit message pass the required local validator before retrying.
+   - Use the structured body keys `timestamp:`, `changes:`, `rationale:`, and `checks:` with `notes:` optional.
 
 8. If the task is recurring upstream maintenance and the optional module is enabled, use `upstream-intake/` instead of inventing a parallel workflow.
 
@@ -105,3 +99,7 @@ Escalate instead of guessing when the work:
 - clear provenance
 - clean separation of layers
 - reusable artifacts instead of external-tool-only outcomes
+## Local Divergence
+
+- Hwping additionally routes durable technical, troubleshooting, and manual depth into `mydocs/`.
+- Hwping keeps the downstream fork-specific product boundary guidance in its repo docs.

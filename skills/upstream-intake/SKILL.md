@@ -1,6 +1,6 @@
 ---
 name: weekly-upstream-intake
-description: "Run recurring upstream intake review inside Hwping's full repo-template operating model."
+description: "Run recurring upstream intake review inside the repo-template scaffold."
 argument-hint: "Upstream release, compare window, or refs to review"
 ---
 
@@ -8,7 +8,6 @@ argument-hint: "Upstream release, compare window, or refs to review"
 
 Use this skill with:
 
-- [../../REPO.md](../../REPO.md)
 - [../../upstream-intake/README.md](../../upstream-intake/README.md)
 - [../../upstream-intake/intake-method.md](../../upstream-intake/intake-method.md)
 - [../../upstream-intake/weekly-upstream-intake-template.md](../../upstream-intake/weekly-upstream-intake-template.md)
@@ -18,7 +17,7 @@ Use it when a downstream fork needs a repeatable review of upstream changes.
 
 ## What This Skill Produces
 
-- a structured `UPS-*` decision record for important upstream changes or grouped change sets
+- a structured decision record for important upstream changes or grouped change sets
 - a separate operator-facing brief that explains what matters and why
 - explicit escalation packets for product, compatibility, or policy decisions that cannot be made autonomously
 
@@ -29,8 +28,8 @@ Use it when a downstream fork needs a repeatable review of upstream changes.
    - Record the current downstream branch or baseline.
 
 2. Gather upstream evidence.
-   - Start with release notes or compare logs.
-   - Read underlying commits, PRs, docs, or code when the practical impact is not obvious.
+   - Start with release notes.
+   - Read underlying commits, PRs, docs, or code when the release notes do not explain the practical impact.
 
 3. Group changes into candidate decisions.
    - Combine near-duplicate commits into one decision when they solve the same problem.
@@ -43,22 +42,22 @@ Use it when a downstream fork needs a repeatable review of upstream changes.
 
 5. Decide `accept`, `adapt`, `decline`, or `defer pending operator decision`.
    - Use repo policy, not personal preference.
-   - If the change is blocked on product direction, public contract risk, or security-versus-compatibility tradeoffs, escalate.
+   - If the change is blocked on product direction, public contract risk, or security-vs-compatibility tradeoffs, escalate.
 
 6. Fill the canonical template.
    - Use [../../upstream-intake/weekly-upstream-intake-template.md](../../upstream-intake/weekly-upstream-intake-template.md).
    - Use [../../upstream-intake/intake-method.md](../../upstream-intake/intake-method.md) to keep the analysis and recommendation shape consistent.
-   - Write the full record under `upstream-intake/reports/internal-records/`.
+   - Write the full record under [../../upstream-intake/reports/internal-records/README.md](../../upstream-intake/reports/internal-records/README.md).
    - Check the destination directory `README.md` first and mirror its canonical example and level of completeness.
 
 7. Produce the operator brief.
-   - Use [../../upstream-intake/operator-weekly-brief-template.md](../../upstream-intake/operator-weekly-brief-template.md).
-   - Store it as a separate artifact under `upstream-intake/reports/operator-briefs/`.
+   - Use [../../upstream-intake/operator-weekly-brief-template.md](../../upstream-intake/operator-weekly-brief-template.md) for the lighter summary.
+   - Store it as a separate artifact under [../../upstream-intake/reports/operator-briefs/README.md](../../upstream-intake/reports/operator-briefs/README.md).
    - Keep the full reasoning in the internal record; the operator brief is the shorter human-facing translation.
    - Check the destination directory `README.md` first so the final artifact reads like a finished brief, not a field dump.
 
-8. If Git commits happen as part of intake or follow-up work, include:
-   - `project: hwping`
+8. If Git commits happen as part of the intake or merge follow-up, include:
+   - `project: <project-id>`
    - `agent: <agent-id>`
    - `role: orchestrator|worker|subagent|operator`
    - `commit: LOG-...`
@@ -79,5 +78,5 @@ Escalate instead of guessing when the change:
 - plain-language explanations, not release-note paraphrases
 - explicit tradeoffs
 - explicit compatibility details
-- clear autonomous-versus-operator split
+- clear autonomous-vs-operator split
 - recommendations grounded in current fork policy and architecture

@@ -1,6 +1,6 @@
 # Skills
 
-This directory is part of Hwping's repo-template operating model.
+This directory is part of the repo-template scaffold.
 
 Use it as repo-native procedural documentation.
 Agents should read the relevant workflow even when their runtime does not auto-load skills.
@@ -10,7 +10,7 @@ Each reusable workflow should live at `skills/<name>/SKILL.md`.
 Required baseline skills:
 
 - `repo-orchestrator/`
-  - Generic routing workflow for truth, status, plans, research, decisions, commit-backed execution history, and inbox capture.
+  - Generic routing workflow for truth, status, plans, research, decisions, commit-backed execution, and inbox capture.
 - `daily-inbox-pressure-review/`
   - Focus-protecting daily triage for `IBX-*` capture and capture packets.
 

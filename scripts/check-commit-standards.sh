@@ -34,7 +34,7 @@ fail() {
   echo "commit standards check failed: $1" >&2
   echo >&2
   echo "Expected required trailers:" >&2
-  echo "  project: hwping" >&2
+  echo "  project: <project-id>" >&2
   echo "  agent: <agent-id>" >&2
   echo "  role: orchestrator|worker|subagent|operator" >&2
   echo "  commit: LOG-YYYYMMDD-HHMMSS-<agent-suffix>[, LOG-...]" >&2
@@ -275,8 +275,10 @@ commit_value=$(trailer_value "commit")
 artifacts_value=$(trailer_value "artifacts" || true)
 
 [ -n "$project" ] || fail "project trailer is empty"
-[ "$project" = "hwping" ] || fail "invalid project trailer: $project"
 [ -n "$agent" ] || fail "agent trailer is empty"
+
+# Local Divergence: Hwping pins the project trailer to its repo id.
+[ "$project" = "hwping" ] || fail "invalid project trailer: $project"
 
 case "$role" in
   orchestrator|worker|subagent|operator) ;;

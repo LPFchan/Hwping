@@ -1,27 +1,35 @@
-# Hwping REPO Contract
+# Repo Operating Model
 
-This document is the canonical repo contract for Hwping's adoption of `LPFchan/repo-template`.
+This document is the canonical repo contract for repo-template-style repos.
 
 ## Purpose
 
-Hwping uses the repo-template model to keep project truth, current reality, accepted future direction, capture, research, decisions, commit-backed execution history, and recurring upstream review legible inside the repository itself.
+Use this model when a repo is managed by one operator plus many agents and you want the repo itself to remain legible over time.
 
-The goal is to preserve a syncable downstream fork while making the repository understandable to future maintainers and agents without reconstructing context from external-tool history.
+The goal is simple:
+
+- keep canonical truth in-repo
+- keep noisy activity out of truth docs
+- keep provenance explicit
+- let the orchestrator route work without inventing new storage rules each time
+
+This file is part of the ready-to-copy scaffold for adopted repos.
 
 ## Core Surfaces
 
+Every repo using this system should separate these surfaces:
+
 | Surface | Role | Mutability |
 | --- | --- | --- |
-| `SPEC.md` | Durable statement of what Hwping is supposed to be. | rewritten |
-| `STATUS.md` | Current accepted operational reality. | rewritten |
+| `SPEC.md` | Durable statement of what the project is supposed to be. | rewritten |
+| `STATUS.md` | What is true right now operationally. | rewritten |
 | `PLANS.md` | Accepted future direction that is not current truth yet. | rewritten |
 | `INBOX.md` | Ephemeral capture waiting for triage. | append then purge |
-| `research/` | Curated reusable exploration. | append by new file |
+| `research/` | Curated research memos worth keeping. | append by new file |
 | `records/decisions/` | Durable decision records with rationale. | append-only by new file |
 | `git commit history` | Canonical execution history through structured commit-backed `LOG-*` records. | append-only by new commit |
 | `skills/` | Required procedural workflows for repeatable agent tasks. | edit by skill |
-| `upstream-intake/` | Recurring upstream-review subsystem for the downstream fork. | append by cadence |
-| `mydocs/` | Detailed shared technical, troubleshooting, and manual material that supports the root truth docs. | append or rewrite by document type |
+| `upstream-intake/` | Optional upstream review subsystem for repos that track an upstream. | append by cadence |
 
 ## Agent Compatibility Files
 
@@ -48,6 +56,27 @@ Recommended split:
 - `skills/<name>/SKILL.md`
   - procedure for one repeatable workflow
 
+## Artifact Writing Discipline
+
+Macro structure is not enough on its own. Agents should not improvise document shape when the repo already defines one.
+
+When writing repo files or commit-backed execution records:
+
+- read the nearest canonical surface, directory `README.md`, and any explicit template before drafting
+- if the local `README.md` includes a default shape or canonical example, follow it by default
+- use the established section order only when the surface actually defines one and it helps the repo stay legible
+- write normalized repo records, not external transcripts or stream-of-consciousness notes
+- keep facts, decisions, open questions, and next steps clearly separated
+- summarize evidence and outcomes instead of pasting raw command output unless the literal output is the artifact
+- prefer short declarative bullets or paragraphs over vague filler
+
+When a directory exists to store a durable artifact type, it should ideally include:
+
+- a `README.md` that explains what belongs there
+- a default shape or canonical example inside that same `README.md` when that artifact type benefits from it
+
+That single guide helps future agents copy a house style instead of inventing one.
+
 ## Separation Rules
 
 These boundaries are mandatory:
@@ -57,22 +86,17 @@ These boundaries are mandatory:
 - `PLANS.md` is not a brainstorm dump.
 - `INBOX.md` is not durable truth.
 - `research/` is not raw execution history.
-- `git commit history via commit: LOG-*` is not the same as `records/decisions/`.
-- `mydocs/` is not a substitute for the root truth docs.
-- Do not recreate a dedicated Hwping-only subtree under `mydocs/`.
-- Root truth docs should summarize and point to deeper material in `mydocs/` when detail matters.
+- `records/decisions/` is not the same as commit-backed execution history.
+- Off-Git memory is not a substitute for repo-local canonical docs.
 
-That separation answers distinct questions quickly:
+That separation gives future operators and future agents fast answers to different questions:
 
-- What is Hwping supposed to be? -> `SPEC.md`
+- What is the project? -> `SPEC.md`
 - What is true right now? -> `STATUS.md`
-- What future direction is actually accepted? -> `PLANS.md`
-- What new capture still needs routing? -> `INBOX.md`
-- What reusable exploration did we learn? -> `research/`
+- What future work is actually accepted? -> `PLANS.md`
+- What did we learn from exploration? -> `research/`
 - What did we decide and why? -> `records/decisions/`
-- What actually happened during execution? -> git commit history via commit: LOG-*
-- What is the standing upstream-review context? -> `upstream-intake/`
-- Where is the deeper shared technical or troubleshooting detail? -> `mydocs/`
+- What actually happened during execution? -> git commit history via `commit: LOG-*`
 
 ## Roles
 
@@ -88,13 +112,12 @@ It may:
 
 - triage inbox items
 - run daily inbox pressure reviews
+- classify work into the right artifact layer
 - update `SPEC.md`, `STATUS.md`, and `PLANS.md`
 - create research memos
 - create decision records
 - create compliant commit-backed execution records
 - translate external capture into repo artifacts
-- route shared technical, troubleshooting, or manual depth into `mydocs/`
-- maintain recurring upstream-intake artifacts
 - escalate non-obvious product, architecture, workflow, or policy calls
 
 ### Worker Agents
@@ -103,7 +126,8 @@ Worker agents execute bounded tasks.
 
 They may:
 
-- create evidence, summaries, and compliant commit-backed execution records
+- produce evidence, summaries, and implementation outputs
+- create compliant commit-backed execution records when granted commit authority
 - propose truth changes through the orchestrator
 
 They should not update `SPEC.md`, `STATUS.md`, or `PLANS.md` directly unless the operator explicitly allows that flow.
@@ -186,8 +210,8 @@ Use each layer for its distinct job:
   - current operational reality
 - `upstream-intake/`
   - upstream review, upstream conflict, carry-forward, and operator escalation for upstream-related choices
-- `git commit history`
-  - commit-backed execution history, not truth, decision, plan, or research mirrors
+- git commit history via `commit: LOG-*`
+  - canonical execution history, not truth, decision, plan, or research mirrors
 
 A research memo may remain research forever.
 A decision record should exist only when a real product, architecture, workflow, trust, upstream, or repo-operating choice has been made.
@@ -195,28 +219,26 @@ A decision record should exist only when a real product, architecture, workflow,
 
 One task may touch multiple layers, but each touched layer must have its own distinct job.
 
-## Routing Ladder
+## Orchestrator Routing Ladder
 
-When new work arrives, classify it in this order:
+When new work arrives, the orchestrator should classify it in this order:
 
 1. Is this untriaged capture?
    - Route to `INBOX.md`.
 2. Is this recurring upstream review?
    - Route to `upstream-intake/`.
-3. Is this durable project or product truth?
+3. Is this durable truth about what the project is?
    - Route to `SPEC.md`.
 4. Is this current operational reality?
    - Route to `STATUS.md`.
 5. Is this accepted future direction?
    - Route to `PLANS.md`.
-6. Is this reusable exploration or horizon expansion?
+6. Is this reusable exploration or horizon-expansion work?
    - Route to `research/`.
-7. Is this a durable decision with rationale?
+7. Is this a meaningful decision with rationale?
    - Route to `records/decisions/`.
 8. Is this implementation or execution that should land in git history?
    - Route to a compliant commit-backed `LOG-*` record.
-9. Is this detailed shared technical, troubleshooting, or manual material?
-   - Route to `mydocs/`.
 
 One task may legitimately touch multiple layers. For example:
 
@@ -225,7 +247,7 @@ One task may legitimately touch multiple layers. For example:
 - implementation progress can create a committed `LOG-*` and update `STATUS.md`
 
 Touch multiple layers only when each layer receives distinct information.
-Do not copy the same evolving thought into research, decision, plan, spec, status, upstream, and log surfaces.
+Do not copy the same evolving thought into research, decision, plan, spec, status, upstream, and execution surfaces.
 
 ## Write Rules
 
@@ -233,45 +255,48 @@ Do not copy the same evolving thought into research, decision, plan, spec, statu
 - `INBOX.md` is an aggressive scratch disk. Purge entries once they are reflected elsewhere or explicitly discarded.
 - Daily inbox review should reduce pressure by clustering, routing, holding, or purging capture; it should not generate a larger digest by default.
 - `research/` keeps curated findings only.
-- `records/decisions/` is append-only by new file.
+- `records/decisions/` is append-only by new decision file.
 - Routine execution history lives in git commit history through commit-backed `LOG-*` records.
 - Do not invent a parallel execution-history file layer.
 - If work produces no durable repo change, route only the durable outcome that belongs elsewhere or keep the raw trace Off-Git.
-- `upstream-intake/` should preserve its paired internal-record and operator-brief workflow.
-- `mydocs/` should keep durable shared technical, troubleshooting, and manual depth that would make the root truth docs too noisy.
-- When a `mydocs/` note changes current truth, accepted direction, or standing policy, reflect that summary in the root truth docs too.
-
-## Local Writing Guides
-
-The repo's local `README.md` files and explicit surface templates are part of the writing contract, not optional style notes.
-
-- Before creating or rewriting a repo document, read the matching local guide first.
-- If a local guide defines scope, section order, provenance fields, naming, or a canonical example, follow it by default.
-- Use repo-specific truth in the artifact, but use the local guide for structure and discipline.
-- Make the smallest justified deviation if an artifact genuinely needs a different shape, and keep the core metadata and surface boundary intact.
+- `upstream-intake/` should preserve its own paired internal-record and operator-brief workflow.
+- Truth docs should reflect the latest accepted state, not every intermediate thought.
 
 ## Stable IDs
 
-Use these stable identifiers:
+This model assumes:
 
-- project id: `hwping`
-- `IBX-YYYYMMDD-NNN` for inbox items
-- `RSH-YYYYMMDD-NNN` for research memos
-- `DEC-YYYYMMDD-NNN` for decision records
-- `LOG-YYYYMMDD-HHMMSS-<agent-suffix>` for commit-backed execution records
-- `UPS-YYYYMMDD-NNN` for upstream-intake review windows
+- `project-id` identifies the repo or workspace
+- `agent-id` identifies the conversation or actor lineage that originated the artifact or commit
+- subagents receive their own `agent-id`
+- Off-Git systems resolve runs, child lineage, messages, events, and commit history from `agent-id`
 
-Numbering is per day and per artifact type. Any agent may claim the least available `NNN` for that date and prefix.
+Recommended prefixes:
 
-Until dedicated runtime tooling is in place, agents should mint a unique run-scoped `agent-id` manually. Recommended format:
+- `IBX-YYYYMMDD-NNN`
+- `RSH-YYYYMMDD-NNN`
+- `DEC-YYYYMMDD-NNN`
+- `LOG-YYYYMMDD-HHMMSS-<agent-suffix>`
+- `UPS-YYYYMMDD-NNN`
 
-- `codex-YYYYMMDD-short-scope`
-- `github-copilot-YYYYMMDD-short-scope`
+File-backed artifact numbering is per day and per artifact type. Any agent may claim the next file-backed `NNN` by checking the least available value.
 
-Every stable-ID-bearing artifact should open with:
+File-backed stable-ID-bearing artifacts should open with:
 
 - `Opened: YYYY-MM-DD HH-mm-ss KST`
 - `Recorded by agent: <agent-id>`
+
+Commit-backed `LOG-*` ids use this format:
+
+- `LOG-YYYYMMDD-HHMMSS-<agent-suffix>`
+- `<agent-suffix>` is the last up to 6 lowercase alphanumeric characters of the normalized `agent:` value
+- normalize `agent:` by lowercasing it and removing non-alphanumeric characters
+
+When claiming a new `LOG-*` id:
+
+- start from the current KST timestamp plus the derived agent suffix
+- scan the current branch and the default branch for existing `commit:` values
+- if the candidate id already exists, bump the timestamp forward by one second until it is unique
 
 ## Commit-Backed Execution Records
 
@@ -335,9 +360,9 @@ Body rules:
 
 ## Commit-Time Enforcement
 
-If the repo enables commit hooks, every attempted commit should be checked against these provenance rules.
+Repos using this system must enforce these provenance rules both locally and remotely.
 
-Recommended minimum enforcement:
+Required minimum enforcement:
 
 - reject commits that do not include `project:`, `agent:`, `role:`, and `commit:`
 - reject roles outside `orchestrator|worker|subagent|operator`
@@ -350,7 +375,7 @@ Recommended minimum enforcement:
 
 The goal is not perfect policy automation. The goal is to stop obviously non-compliant commits before they land.
 
-Best practice is to use both:
+Required enforcement layers:
 
 - local git hooks for fast feedback before the commit is created
 - CI for remote re-validation on push or pull request
@@ -376,3 +401,19 @@ The Off-Git runtime should answer:
 - whether the agent was top-level or a subagent
 - which source events produced the artifact
 - how execution lineage maps across rebases, cherry-picks, merges, and absorbed `LOG-*` ids
+
+## Scaffold Rule
+
+`scaffold/` is a ready-to-copy repo skeleton, not a loose library of files to cherry-pick casually.
+
+Use it when you want a managed repo to share one canonical layout so humans and agents know exactly where work belongs.
+
+In this template, scaffold files live under `scaffold/`.
+After adoption, the scaffold contents belong at the target repo root.
+For example, `scaffold/skills/repo-orchestrator/SKILL.md` becomes `skills/repo-orchestrator/SKILL.md` in the adopted repo.
+## Local Divergence
+
+- Hwping is a macOS-focused downstream fork of upstream `rhwp`.
+- Hwping keeps detailed shared technical, troubleshooting, and manual material in `mydocs/`.
+- Hwping keeps the recurring upstream-review workflow enabled at `upstream-intake/`.
+- Hwping pins the `project:` trailer to `hwping` in local commit validation.
