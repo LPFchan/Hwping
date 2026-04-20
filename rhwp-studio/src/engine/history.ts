@@ -96,6 +96,7 @@ export class CommandHistory {
 
   canUndo(): boolean { return this.undoStack.length > 0; }
   canRedo(): boolean { return this.redoStack.length > 0; }
+  getUndoDepth(): number { return this.undoStack.length; }
 
   /** 히스토리 초기화 (문서 로드 시). wasm이 있으면 스냅샷 리소스도 해제. */
   clear(wasm?: WasmBridge): void {

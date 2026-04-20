@@ -298,7 +298,7 @@ ${svgPages.map(svg => `<div class="page">${svg}</div>`).join('\n')}
   },
   {
     id: 'file:about',
-    label: '제품 정보',
+    label: 'About Hwping',
     icon: 'icon-help',
     execute() {
       new AboutDialog().show();

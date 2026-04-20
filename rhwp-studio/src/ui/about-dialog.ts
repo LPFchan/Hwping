@@ -1,8 +1,8 @@
 /**
- * 제품 정보 / 라이센스 다이얼로그
+ * About / license dialog.
  *
- * HWP 공개 스펙(hwp_spec_5.0) 저작권 조항에 따른 필수 고지 문구를 포함한다.
- * 사용된 외부 크레이트의 오픈소스 라이선스 목록도 표시한다.
+ * Includes the required notice for the public HWP specification documents
+ * and lists the open-source licenses of the external crates used here.
  */
 import { ModalDialog } from './dialog';
 
@@ -20,48 +20,48 @@ const THIRD_PARTY_LICENSES = [
 
 export class AboutDialog extends ModalDialog {
   constructor() {
-    super('제품 정보', 460);
+    super('About Hwping', 460);
   }
 
   protected createBody(): HTMLElement {
     const body = document.createElement('div');
     body.className = 'about-body';
 
-    // 제품 영문명
+    // Product name
     const titleEn = document.createElement('div');
     titleEn.className = 'about-product-name';
-    titleEn.textContent = 'HWP 5.0 Compatible Module for Rust';
+    titleEn.textContent = 'Hwping';
     body.appendChild(titleEn);
 
-    // 제품 한글명
+    // Short description
     const titleKo = document.createElement('div');
     titleKo.className = 'about-product-name-ko';
-    titleKo.textContent = 'HWP 오픈소스 편집';
+    titleKo.textContent = 'Open-source HWP editor';
     body.appendChild(titleKo);
 
-    // 버전
+    // Version
     const version = document.createElement('div');
     version.className = 'about-version';
     version.textContent = `Version ${__APP_VERSION__}`;
     body.appendChild(version);
 
-    // 기술 스택
+    // Tech stack
     const tech = document.createElement('div');
     tech.className = 'about-tech';
-    tech.textContent = 'Rust + WebAssembly + TypeScript';
+    tech.textContent = 'Built with Rust, WebAssembly, and TypeScript';
     body.appendChild(tech);
 
-    // HWP 스펙 고지 문구 (필수)
+    // Required HWP spec notice
     const notice = document.createElement('div');
     notice.className = 'about-notice';
     notice.textContent =
-      '본 제품은 한글과컴퓨터의 한글 문서 파일(.hwp) 공개 문서를 참고하여 개발하였습니다.';
+      'This product was developed with reference to Hancom\'s public HWP specification documents (.hwp).';
     body.appendChild(notice);
 
-    // 오픈소스 라이선스
+    // Open source licenses
     const licenseTitle = document.createElement('div');
     licenseTitle.className = 'about-license-title';
-    licenseTitle.textContent = '오픈소스 라이선스';
+    licenseTitle.textContent = 'Open Source Licenses';
     body.appendChild(licenseTitle);
 
     const licenseTable = document.createElement('table');
@@ -78,7 +78,7 @@ export class AboutDialog extends ModalDialog {
     }
     body.appendChild(licenseTable);
 
-    // 저작권
+    // Copyright
     const copyright = document.createElement('div');
     copyright.className = 'about-copyright';
     copyright.textContent = '\u00A9 2026 rhwp: Edward Kim';
@@ -99,7 +99,7 @@ export class AboutDialog extends ModalDialog {
       footer.innerHTML = '';
       const closeBtn = document.createElement('button');
       closeBtn.className = 'dialog-btn dialog-btn-primary';
-      closeBtn.textContent = '닫기';
+      closeBtn.textContent = 'Close';
       closeBtn.addEventListener('click', () => this.hide());
       footer.appendChild(closeBtn);
     }

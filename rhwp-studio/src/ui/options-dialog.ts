@@ -1,7 +1,7 @@
 /**
- * 환경 설정 대화상자 (도구 > 환경 설정)
+ * Preferences dialog.
  *
- * 탭 구조: [글꼴] (향후 [편집], [보기] 등 탭 추가 가능)
+ * Tab structure: [Fonts] (future tabs like [Edit], [View], etc. can be added later)
  */
 import { ModalDialog } from './dialog';
 import { userSettings, type ThemeMode } from '@/core/user-settings';
@@ -15,32 +15,32 @@ export class OptionsDialog extends ModalDialog {
   private recentCountInput!: HTMLInputElement;
 
   constructor() {
-    super('환경 설정', 480);
+    super('Preferences', 480);
   }
 
   protected createBody(): HTMLElement {
     const body = document.createElement('div');
     body.className = 'opt-body';
 
-    // 탭 헤더
+    // Tab header
     const tabs = document.createElement('div');
     tabs.className = 'dialog-tabs';
 
     const fontTab = document.createElement('button');
     fontTab.className = 'dialog-tab active';
-    fontTab.textContent = '글꼴';
+    fontTab.textContent = 'Fonts';
     fontTab.dataset.tab = 'font';
     tabs.appendChild(fontTab);
 
     body.appendChild(tabs);
 
-    // 글꼴 탭 패널
+    // Fonts tab panel
     const fontPanel = this.createFontPanel();
     fontPanel.className = 'dialog-tab-panel opt-tab-panel active';
     fontPanel.dataset.tab = 'font';
     body.appendChild(fontPanel);
 
-    // 탭 클릭 이벤트 (향후 탭 추가 대비)
+    // Tab click handling (future-proof for more tabs)
     tabs.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest('.dialog-tab') as HTMLElement | null;
       if (!btn) return;
@@ -60,13 +60,13 @@ export class OptionsDialog extends ModalDialog {
     const fs = userSettings.getFontSettings();
     const appearance = userSettings.getAppearanceSettings();
 
-    // ── 화면 모양 섹션 ──
+    // ── Appearance section ──
     const appearanceSection = document.createElement('div');
     appearanceSection.className = 'dialog-section';
 
     const appearanceTitle = document.createElement('div');
     appearanceTitle.className = 'dialog-section-title';
-    appearanceTitle.textContent = '화면 모양';
+    appearanceTitle.textContent = 'Appearance';
     appearanceSection.appendChild(appearanceTitle);
 
     const appearanceRow = document.createElement('div');
@@ -75,16 +75,16 @@ export class OptionsDialog extends ModalDialog {
     const appearanceLabel = document.createElement('label');
     appearanceLabel.className = 'dialog-label opt-inline-label';
     appearanceLabel.htmlFor = 'opt-theme-mode';
-    appearanceLabel.textContent = '테마';
+    appearanceLabel.textContent = 'Theme';
 
     this.themeModeSelect = document.createElement('select');
     this.themeModeSelect.id = 'opt-theme-mode';
     this.themeModeSelect.className = 'dialog-select opt-theme-select';
 
     const themeOptions: Array<[value: string, label: string]> = [
-      ['system', '시스템 설정 따르기'],
-      ['light', '라이트'],
-      ['dark', '다크'],
+      ['system', 'Use system setting'],
+      ['light', 'Light'],
+      ['dark', 'Dark'],
     ];
     for (const [value, label] of themeOptions) {
       const option = document.createElement('option');
@@ -100,16 +100,16 @@ export class OptionsDialog extends ModalDialog {
 
     panel.appendChild(appearanceSection);
 
-    // ── 글꼴 보기 섹션 ──
+    // ── Font display section ──
     const viewSection = document.createElement('div');
     viewSection.className = 'dialog-section';
 
     const viewTitle = document.createElement('div');
     viewTitle.className = 'dialog-section-title';
-    viewTitle.textContent = '글꼴 보기';
+    viewTitle.textContent = 'Font display';
     viewSection.appendChild(viewTitle);
 
-    // 최근 사용 글꼴 보이기
+    // Show recent fonts
     const recentRow = document.createElement('div');
     recentRow.className = 'dialog-row opt-row';
 
@@ -120,7 +120,7 @@ export class OptionsDialog extends ModalDialog {
 
     const recentLabel = document.createElement('label');
     recentLabel.htmlFor = 'opt-show-recent';
-    recentLabel.textContent = '최근에 사용한 글꼴 보이기';
+    recentLabel.textContent = 'Show recently used fonts';
 
     this.recentCountInput = document.createElement('input');
     this.recentCountInput.type = 'number';
@@ -131,7 +131,7 @@ export class OptionsDialog extends ModalDialog {
 
     const countLabel = document.createElement('span');
     countLabel.className = 'opt-count-label';
-    countLabel.textContent = '개';
+    countLabel.textContent = 'fonts';
 
     recentRow.appendChild(this.showRecentCheck);
     recentRow.appendChild(recentLabel);
@@ -141,23 +141,23 @@ export class OptionsDialog extends ModalDialog {
 
     panel.appendChild(viewSection);
 
-    // ── 대표 글꼴 등록 섹션 ──
+    // ── Representative font set section ──
     const fontSetSection = document.createElement('div');
     fontSetSection.className = 'dialog-section';
 
     const fontSetTitle = document.createElement('div');
     fontSetTitle.className = 'dialog-section-title';
-    fontSetTitle.textContent = '대표 글꼴 등록';
+    fontSetTitle.textContent = 'Representative font sets';
     fontSetSection.appendChild(fontSetTitle);
 
     const fontSetDesc = document.createElement('p');
     fontSetDesc.className = 'opt-desc';
-    fontSetDesc.textContent = '대표 글꼴은 각 언어별 글꼴을 짝지어 한 번에 적용하는 글꼴 세트입니다.';
+    fontSetDesc.textContent = 'Representative font sets pair fonts by language so you can apply them in one step.';
     fontSetSection.appendChild(fontSetDesc);
 
     const fontSetBtn = document.createElement('button');
     fontSetBtn.className = 'dialog-btn opt-fontset-btn';
-    fontSetBtn.textContent = '대표 글꼴 등록하기';
+    fontSetBtn.textContent = 'Edit representative font sets';
     fontSetBtn.addEventListener('click', () => {
       const dlg = new FontSetDialog();
       dlg.show();
@@ -166,18 +166,18 @@ export class OptionsDialog extends ModalDialog {
 
     panel.appendChild(fontSetSection);
 
-    // ── 로컬 글꼴 섹션 ──
+    // ── Local fonts section ──
     const localSection = document.createElement('div');
     localSection.className = 'dialog-section';
 
     const localTitle = document.createElement('div');
     localTitle.className = 'dialog-section-title';
-    localTitle.textContent = '로컬 글꼴';
+    localTitle.textContent = 'Local fonts';
     localSection.appendChild(localTitle);
 
     const localDesc = document.createElement('p');
     localDesc.className = 'opt-desc';
-    localDesc.textContent = 'PC에 설치된 글꼴을 감지하여 글꼴 목록에 추가합니다. (Chrome/Edge 지원)';
+    localDesc.textContent = 'Detect fonts installed on this computer and add them to the font list. (Chrome/Edge only)';
     localSection.appendChild(localDesc);
 
     const localRow = document.createElement('div');
@@ -185,29 +185,29 @@ export class OptionsDialog extends ModalDialog {
 
     const localBtn = document.createElement('button');
     localBtn.className = 'dialog-btn opt-fontset-btn';
-    localBtn.textContent = '로컬 글꼴 감지하기';
+    localBtn.textContent = 'Detect local fonts';
 
     const localStatus = document.createElement('span');
     localStatus.className = 'opt-local-status';
 
-    // 이미 감지된 글꼴이 있으면 상태 표시
+    // Show status if fonts were already detected
     const cached = getLocalFonts();
     if (cached.length > 0) {
-      localStatus.textContent = `${cached.length}개 로컬 글꼴 감지됨`;
+      localStatus.textContent = `${cached.length} local fonts detected`;
     }
 
     localBtn.addEventListener('click', async () => {
       if (!isLocalFontSupported()) {
-        localStatus.textContent = '이 브라우저는 로컬 글꼴 감지를 지원하지 않습니다.';
+        localStatus.textContent = 'This browser does not support local font detection.';
         return;
       }
       localBtn.disabled = true;
-      localStatus.textContent = '감지 중...';
+      localStatus.textContent = 'Detecting...';
       try {
         const fonts = await detectLocalFonts();
-        localStatus.textContent = `${fonts.length}개 로컬 글꼴 감지됨`;
+        localStatus.textContent = `${fonts.length} local fonts detected`;
       } catch {
-        localStatus.textContent = '글꼴 감지에 실패했습니다.';
+        localStatus.textContent = 'Failed to detect fonts.';
       }
       localBtn.disabled = false;
     });

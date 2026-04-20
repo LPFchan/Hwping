@@ -5,7 +5,7 @@
 // 3. dist/renderer/wasm/에 WASM 번들을 복사
 
 import { execSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync, chmodSync, readFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, rmSync, chmodSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -15,13 +15,12 @@ const ROOT = resolve(__dirname, '..', '..');
 const DIST = resolve(__dirname, 'dist');
 const APP_BUNDLE = resolve(DIST, 'Hwping.app');
 const APP_VERSION = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8')).version;
+const ELECTRON_BINARY = resolve(__dirname, 'node_modules', 'electron', 'dist', 'Electron.app', 'Contents', 'MacOS', 'Electron');
+const ELECTRON_ICON = resolve(__dirname, 'node_modules', 'electron', 'dist', 'Electron.app', 'Contents', 'Resources', 'electron.icns');
 const RUSTUP_CARGO = execSync('rustup which cargo', { encoding: 'utf-8' }).trim();
 const RUSTUP_BIN = dirname(RUSTUP_CARGO);
 const CARGO_HOME_BIN = resolve(homedir(), '.cargo', 'bin');
 const WASM_PACK = process.env.WASM_PACK_BIN ?? 'wasm-pack';
-const ELECTRON_BIN = process.env.ELECTRON_BIN
-  ? resolve(process.env.ELECTRON_BIN)
-  : resolve(__dirname, 'node_modules', 'electron', 'dist', 'Electron.app', 'Contents', 'MacOS', 'Electron');
 
 function run(cmd, cwd = __dirname, extraEnv = {}) {
   console.log(`> ${cmd}`);
@@ -61,7 +60,17 @@ function buildAppBundle() {
   const resourcesApp = resolve(contents, 'Resources', 'app');
 
   mkdirSync(macos, { recursive: true });
+  mkdirSync(resolve(contents, 'Resources'), { recursive: true });
+
   mkdirSync(resourcesApp, { recursive: true });
+  copy(ELECTRON_ICON, resolve(contents, 'Resources', 'electron.icns'));
+  writeText(resolve(macos, 'Hwping'), `#!/bin/bash
+set -euo pipefail
+
+APP_DIR="$(cd "$(dirname "$0")/../Resources/app" && pwd)"
+exec "${ELECTRON_BINARY}" "\${APP_DIR}" "\$@"
+`);
+  makeExecutable(resolve(macos, 'Hwping'));
 
   writeText(resolve(contents, 'Info.plist'), `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -71,6 +80,8 @@ function buildAppBundle() {
   <string>en</string>
   <key>CFBundleDisplayName</key>
   <string>Hwping</string>
+  <key>CFBundleIconFile</key>
+  <string>electron.icns</string>
   <key>CFBundleExecutable</key>
   <string>Hwping</string>
   <key>CFBundleIdentifier</key>
@@ -108,30 +119,6 @@ function buildAppBundle() {
 </dict>
 </plist>
 `);
-
-  writeText(resolve(macos, 'Hwping'), `#!/bin/sh
-set -eu
-SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-ELECTRON_BIN="${ELECTRON_BIN}"
-
-if [ -n "\${HWPING_LAUNCH_LOG:-}" ]; then
-  {
-    printf '%s [launcher:boot] script_dir=%s pwd=%s argv=%s\n' "$(date -u +%FT%TZ)" "$SCRIPT_DIR" "$(pwd)" "$*"
-    printf '%s [launcher:electron] path=%s executable=%s\n' "$(date -u +%FT%TZ)" "$ELECTRON_BIN" "$([ -x "$ELECTRON_BIN" ] && printf yes || printf no)"
-  } >> "$HWPING_LAUNCH_LOG" 2>/dev/null || true
-fi
-
-if [ ! -x "$ELECTRON_BIN" ]; then
-  if [ -n "\${HWPING_LAUNCH_LOG:-}" ]; then
-    printf '%s [launcher:error] Electron runtime not found: %s\n' "$(date -u +%FT%TZ)" "$ELECTRON_BIN" >> "$HWPING_LAUNCH_LOG" 2>/dev/null || true
-  fi
-  echo "Electron runtime not found: $ELECTRON_BIN" >&2
-  exit 1
-fi
-
-exec "$ELECTRON_BIN" "$SCRIPT_DIR/../Resources/app" "$@"
-`);
-  makeExecutable(resolve(macos, 'Hwping'));
 
   copy(resolve(__dirname, 'main.mjs'), resolve(resourcesApp, 'main.mjs'));
   copy(resolve(__dirname, 'preload.mjs'), resolve(resourcesApp, 'preload.mjs'));

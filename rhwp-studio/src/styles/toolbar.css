@@ -50,7 +50,7 @@
   display: block;
   width: 18px;
   height: 18px;
-  background-image: url(/images/icon_small_ko.svg);
+  background-image: url(../images/icon_small_ko.svg);
   background-repeat: no-repeat;
   flex-shrink: 0;
 }

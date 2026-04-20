@@ -1331,7 +1331,8 @@ export class InputHandler {
   /** 편집 후 처리: 재렌더링 + 캐럿 갱신 */
   private afterEdit(): void {
     this.lastCellKey = null; // 편집 후 셀 bbox 캐시 무효화
-    this.eventBus.emit('document-modified');
+    this.eventBus.emit('document-modified', { undoable: true });
+    this.eventBus.emit('document-history-changed');
     this.eventBus.emit('document-changed');
     this.updateCaret();
   }
@@ -2049,6 +2050,9 @@ export class InputHandler {
 
   /** Redo 가능한가? */
   canRedo(): boolean { return this.history.canRedo(); }
+
+  /** 현재 undo 스택 깊이 */
+  getHistoryDepth(): number { return this.history.getUndoDepth(); }
 
   /** Undo 실행 (커맨드 시스템용) */
   performUndo(): void { this.handleUndo(); }

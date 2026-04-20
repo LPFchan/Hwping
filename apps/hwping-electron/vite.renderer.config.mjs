@@ -9,6 +9,7 @@ const studioPkg = JSON.parse(readFileSync(resolve(ROOT, 'rhwp-studio', 'package.
 
 export default defineConfig({
   root: resolve(ROOT, 'rhwp-studio'),
+  base: './',
   define: {
     __APP_VERSION__: JSON.stringify(studioPkg.version),
   },
