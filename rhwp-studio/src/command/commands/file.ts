@@ -1,4 +1,4 @@
-import type { CommandDef } from '../types';
+import type { CommandDef, CommandServices } from '../types';
 import { PageSetupDialog } from '@/ui/page-setup-dialog';
 import { AboutDialog } from '@/ui/about-dialog';
 import { showConfirm } from '@/ui/confirm-dialog';
@@ -9,6 +9,39 @@ import {
   saveDocumentToFileSystem,
   type FileSystemWindowLike,
 } from '@/command/file-system-access';
+
+interface SavePayload {
+  blob: Blob;
+  bytes: Uint8Array;
+  sourceFormat: string;
+  isHwpx: boolean;
+}
+
+function createSavePayload(services: CommandServices): SavePayload {
+  const sourceFormat = services.wasm.getSourceFormat();
+  const isHwpx = sourceFormat === 'hwpx';
+  const bytes = isHwpx ? services.wasm.exportHwpx() : services.wasm.exportHwp();
+  const mimeType = isHwpx ? 'application/hwp+zip' : 'application/x-hwp';
+  return {
+    blob: new Blob([bytes as unknown as BlobPart], { type: mimeType }),
+    bytes,
+    sourceFormat,
+    isHwpx,
+  };
+}
+
+function triggerBlobDownload(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
 
 export const fileCommands: CommandDef[] = [
   {
@@ -63,11 +96,7 @@ export const fileCommands: CommandDef[] = [
     async execute(services) {
       try {
         const saveName = services.wasm.fileName;
-        const sourceFormat = services.wasm.getSourceFormat();
-        const isHwpx = sourceFormat === 'hwpx';
-        const bytes = isHwpx ? services.wasm.exportHwpx() : services.wasm.exportHwp();
-        const mimeType = isHwpx ? 'application/hwp+zip' : 'application/x-hwp';
-        const blob = new Blob([bytes as unknown as BlobPart], { type: mimeType });
+        const { sourceFormat, isHwpx, bytes, blob } = createSavePayload(services);
         console.log(`[file:save] format=${sourceFormat}, isHwpx=${isHwpx}, ${bytes.length} bytes`);
 
         // 1) 기존 파일 handle이 있으면 같은 파일에 저장, 없으면 save picker 시도
@@ -88,7 +117,7 @@ export const fileCommands: CommandDef[] = [
           }
         } catch (e) {
           // 사용자가 취소하면 AbortError 발생 — 무시
-          if (e instanceof DOMException && e.name === 'AbortError') return;
+          if (isAbortError(e)) return;
           // 그 외 오류는 폴백으로 진행
           console.warn('[file:save] File System Access API 실패, 폴백:', e);
         }
@@ -104,18 +133,65 @@ export const fileCommands: CommandDef[] = [
         }
 
         // 3) Blob 다운로드
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = downloadName;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        triggerBlobDownload(blob, downloadName);
 
         services.eventBus.emit('document-saved');
         console.log(`[file:save] ${downloadName} (${(bytes.length / 1024).toFixed(1)}KB)`);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error('[file:save] 저장 실패:', msg);
+        alert(`파일 저장에 실패했습니다:\n${msg}`);
+      }
+    },
+  },
+  {
+    id: 'file:save-as',
+    label: '다른 이름으로 저장',
+    shortcutLabel: 'Ctrl+Shift+S',
+    // #196: HWPX 출처는 저장 비활성화 (베타 단계, #197 완전 변환기 완료 시까지)
+    canExecute: (ctx) => ctx.hasDocument && ctx.sourceFormat !== 'hwpx',
+    async execute(services) {
+      try {
+        const saveName = services.wasm.fileName;
+        const { sourceFormat, isHwpx, bytes, blob } = createSavePayload(services);
+        console.log(`[file:save-as] format=${sourceFormat}, isHwpx=${isHwpx}, ${bytes.length} bytes`);
+
+        // Save As는 항상 새 경로를 물어본다.
+        try {
+          const saveResult = await saveDocumentToFileSystem({
+            blob,
+            suggestedName: saveName,
+            currentHandle: null,
+            windowLike: window as FileSystemWindowLike,
+          });
+
+          if (saveResult.method !== 'fallback') {
+            services.wasm.currentFileHandle = saveResult.handle;
+            services.wasm.fileName = saveResult.fileName;
+            services.eventBus.emit('document-saved');
+            console.log(`[file:save-as] ${saveResult.fileName} (${(bytes.length / 1024).toFixed(1)}KB)`);
+            return;
+          }
+        } catch (e) {
+          // 사용자가 취소하면 AbortError 발생 — 무시
+          if (isAbortError(e)) return;
+          // 그 외 오류는 폴백으로 진행
+          console.warn('[file:save-as] File System Access API 실패, 폴백:', e);
+        }
+
+        // 폴백: 자체 파일이름 대화상자로 이름 입력 후 다운로드
+        const baseName = saveName.replace(/\.(hwp|hwpx)$/i, '');
+        const downloadName = await showSaveAs(baseName || 'document');
+        if (!downloadName) return;
+
+        services.wasm.currentFileHandle = null;
+        services.wasm.fileName = downloadName;
+        triggerBlobDownload(blob, downloadName);
+        services.eventBus.emit('document-saved');
+        console.log(`[file:save-as] ${downloadName} (${(bytes.length / 1024).toFixed(1)}KB)`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[file:save-as] 저장 실패:', msg);
         alert(`파일 저장에 실패했습니다:\n${msg}`);
       }
     },

@@ -110,10 +110,10 @@ export class MenuBar {
       const cmdId = el.dataset.cmd!;
       const enabled = this.dispatcher.isEnabled(cmdId);
       el.classList.toggle('disabled', !enabled);
-      // #196: file:save 가 비활성이면 베타 안내 툴팁 표시
-      if (cmdId === 'file:save' && !enabled) {
+      // #196: 저장 계열 커맨드가 비활성이면 베타 안내 툴팁 표시
+      if ((cmdId === 'file:save' || cmdId === 'file:save-as') && !enabled) {
         el.title = 'HWPX 직접 저장은 현재 베타 단계로 비활성화되어 있습니다. 다음 업데이트에서 지원 예정입니다.';
-      } else if (cmdId === 'file:save') {
+      } else if (cmdId === 'file:save' || cmdId === 'file:save-as') {
         el.removeAttribute('title');
       }
     }
