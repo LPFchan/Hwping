@@ -4,11 +4,13 @@
  * 탭 구조: [글꼴] (향후 [편집], [보기] 등 탭 추가 가능)
  */
 import { ModalDialog } from './dialog';
-import { userSettings } from '@/core/user-settings';
+import { userSettings, type ThemeMode } from '@/core/user-settings';
 import { FontSetDialog } from './font-set-dialog';
 import { isLocalFontSupported, detectLocalFonts, getLocalFonts } from '@/core/local-fonts';
+import { setThemeMode } from '@/core/theme';
 
 export class OptionsDialog extends ModalDialog {
+  private themeModeSelect!: HTMLSelectElement;
   private showRecentCheck!: HTMLInputElement;
   private recentCountInput!: HTMLInputElement;
 
@@ -56,6 +58,47 @@ export class OptionsDialog extends ModalDialog {
   private createFontPanel(): HTMLElement {
     const panel = document.createElement('div');
     const fs = userSettings.getFontSettings();
+    const appearance = userSettings.getAppearanceSettings();
+
+    // ── 화면 모양 섹션 ──
+    const appearanceSection = document.createElement('div');
+    appearanceSection.className = 'dialog-section';
+
+    const appearanceTitle = document.createElement('div');
+    appearanceTitle.className = 'dialog-section-title';
+    appearanceTitle.textContent = '화면 모양';
+    appearanceSection.appendChild(appearanceTitle);
+
+    const appearanceRow = document.createElement('div');
+    appearanceRow.className = 'dialog-row opt-row';
+
+    const appearanceLabel = document.createElement('label');
+    appearanceLabel.className = 'dialog-label opt-inline-label';
+    appearanceLabel.htmlFor = 'opt-theme-mode';
+    appearanceLabel.textContent = '테마';
+
+    this.themeModeSelect = document.createElement('select');
+    this.themeModeSelect.id = 'opt-theme-mode';
+    this.themeModeSelect.className = 'dialog-select opt-theme-select';
+
+    const themeOptions: Array<[value: string, label: string]> = [
+      ['system', '시스템 설정 따르기'],
+      ['light', '라이트'],
+      ['dark', '다크'],
+    ];
+    for (const [value, label] of themeOptions) {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      this.themeModeSelect.appendChild(option);
+    }
+    this.themeModeSelect.value = appearance.themeMode;
+
+    appearanceRow.appendChild(appearanceLabel);
+    appearanceRow.appendChild(this.themeModeSelect);
+    appearanceSection.appendChild(appearanceRow);
+
+    panel.appendChild(appearanceSection);
 
     // ── 글꼴 보기 섹션 ──
     const viewSection = document.createElement('div');
@@ -180,6 +223,8 @@ export class OptionsDialog extends ModalDialog {
 
   protected onConfirm(): void {
     const count = Math.min(5, Math.max(1, parseInt(this.recentCountInput.value) || 3));
+    const themeMode = this.themeModeSelect.value as ThemeMode;
+    setThemeMode(themeMode);
     userSettings.updateFontSettings({
       showRecentFonts: this.showRecentCheck.checked,
       recentFontCount: count,

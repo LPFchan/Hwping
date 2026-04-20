@@ -27,10 +27,20 @@ export interface FontSettings {
   recentFontCount: number;
 }
 
+/** 테마 모드 */
+export type ThemeMode = 'system' | 'light' | 'dark';
+
+/** 표시 환경 설정 */
+export interface AppearanceSettings {
+  /** 테마 모드: 시스템/라이트/다크 */
+  themeMode: ThemeMode;
+}
+
 /** 전체 설정 구조 */
 export interface AppSettings {
   version: number;
   font: FontSettings;
+  appearance: AppearanceSettings;
 }
 
 /** 언어 인덱스 상수 (HWP 7개 언어) */
@@ -77,14 +87,24 @@ export const BUILTIN_FONT_SETS: readonly FontSet[] = [
 ];
 
 const STORAGE_KEY = 'rhwp-settings';
+const VALID_THEME_MODES: readonly ThemeMode[] = ['system', 'light', 'dark'];
+
+function normalizeThemeMode(value: unknown): ThemeMode {
+  return typeof value === 'string' && VALID_THEME_MODES.includes(value as ThemeMode)
+    ? value as ThemeMode
+    : 'system';
+}
 
 function defaultSettings(): AppSettings {
   return {
-    version: 1,
+    version: 2,
     font: {
       fontSets: [],
       showRecentFonts: true,
       recentFontCount: 3,
+    },
+    appearance: {
+      themeMode: 'system',
     },
   };
 }
@@ -110,6 +130,11 @@ class UserSettingsService {
           ...defaults.font,
           ...(parsed.font ?? {}),
         },
+        appearance: {
+          ...defaults.appearance,
+          ...(parsed.appearance ?? {}),
+          themeMode: normalizeThemeMode(parsed.appearance?.themeMode),
+        },
       };
     } catch {
       return defaultSettings();
@@ -133,6 +158,24 @@ class UserSettingsService {
   /** 글꼴 설정 업데이트 */
   updateFontSettings(partial: Partial<FontSettings>): void {
     Object.assign(this.data.font, partial);
+    this.save();
+  }
+
+  /** 표시 설정 반환 */
+  getAppearanceSettings(): AppearanceSettings {
+    return this.data.appearance;
+  }
+
+  /** 표시 설정 업데이트 */
+  updateAppearanceSettings(partial: Partial<AppearanceSettings>): void {
+    const themeMode = partial.themeMode === undefined
+      ? this.data.appearance.themeMode
+      : normalizeThemeMode(partial.themeMode);
+    this.data.appearance = {
+      ...this.data.appearance,
+      ...partial,
+      themeMode,
+    };
     this.save();
   }
 

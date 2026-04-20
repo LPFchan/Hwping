@@ -82,6 +82,58 @@
   /* mobile: ~767px, tablet: 768~1023px, desktop: 1024px~ */
 }
 
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* 브랜드 */
+  --color-primary: #8aa8ff;
+  --color-primary-dark: #c5d4ff;
+  --color-primary-light: #9eb8ff;
+  --color-primary-hover: #6f87c8;
+  --color-primary-subtle: #5f74aa;
+  --color-accent-bg: #2a3448;
+  --color-accent-bg-light: #33415b;
+
+  /* 표면 */
+  --color-surface: #20242c;
+  --color-surface-raised: #272d36;
+  --color-bg: #171b22;
+  --color-bg-light: #20252e;
+
+  /* 테두리 */
+  --color-border: #4a5360;
+  --color-border-light: #54606f;
+  --color-border-lighter: #5f6d80;
+  --color-border-dark: #424b58;
+  --color-border-input: #5a6575;
+
+  /* 텍스트 */
+  --color-text: #e3e7ee;
+  --color-text-secondary: #ced4df;
+  --color-text-muted: #aeb7c7;
+  --color-text-hint: #98a2b5;
+  --color-text-disabled: #7d8697;
+  --color-text-placeholder: #8f99ab;
+
+  /* 상호작용 */
+  --color-hover-bg: #2b3442;
+  --color-active-bg: #3a4556;
+  --color-selected-bg: #2d4264;
+  --color-focus-border: #8aa8ff;
+
+  /* 그림자 */
+  --shadow-dropdown: 0 10px 24px rgba(0, 0, 0, 0.45);
+  --shadow-dialog: 0 12px 28px rgba(0, 0, 0, 0.5);
+  --shadow-light: 0 6px 16px rgba(0, 0, 0, 0.4);
+
+  /* 오버레이 */
+  --overlay-bg: rgba(0, 0, 0, 0.55);
+}
+
 /* ─── 리셋 ──────────────────────────────────────────── */
 * {
   margin: 0;

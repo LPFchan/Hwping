@@ -25,6 +25,18 @@
   "optionsTitle": {
     "message": "rhwp Settings"
   },
+  "optionsTheme": {
+    "message": "Theme"
+  },
+  "optionsThemeSystem": {
+    "message": "Use system setting"
+  },
+  "optionsThemeLight": {
+    "message": "Light"
+  },
+  "optionsThemeDark": {
+    "message": "Dark"
+  },
   "optionsAutoOpen": {
     "message": "Automatically open HWP/HWPX files in viewer when downloaded"
   },
