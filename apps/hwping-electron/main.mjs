@@ -17,6 +17,7 @@ let rendererReady = false;
 let rendererPort = 0;
 let rendererServer = null;
 const pendingOpenPaths = [];
+const pendingRendererMenuCommands = [];
 const recentDocuments = [];
 const commandCatalog = new Map();
 const commandState = new Map();
@@ -97,26 +98,28 @@ function isCommandEnabled(commandId) {
   return Boolean(commandState.get(commandId));
 }
 
-function menuLabelForCommand(commandId, accelerator) {
-  const label = getCommandLabel(commandId);
-  const shortcutLabel = getCommandShortcutLabel(commandId);
-  if (!accelerator && shortcutLabel) {
-    return `${label}\t${shortcutLabel}`;
-  }
-  return label;
-}
-
 function buildCommandMenuItem(commandId, extras = {}) {
   const {
     commandId: _ignoredCommandId,
     items: _ignoredItems,
     type: _ignoredType,
+    transport: _ignoredTransport,
+    params,
+    label: explicitLabel,
     ...menuExtras
   } = extras;
+  const catalogEntry = getCatalogEntry(commandId);
+  const isRegisteredCommand = Boolean(catalogEntry) || _ignoredTransport === 'main';
+  const shortcutLabel = getCommandShortcutLabel(commandId);
+  const baseLabel = explicitLabel ?? getCommandLabel(commandId);
   const item = {
-    label: menuLabelForCommand(commandId, menuExtras.accelerator),
-    enabled: isCommandEnabled(commandId),
-    click: () => sendMenuCommand(commandId),
+    label: !menuExtras.accelerator && shortcutLabel
+      ? `${baseLabel}\t${shortcutLabel}`
+      : baseLabel,
+    enabled: isRegisteredCommand
+      ? (_ignoredTransport === 'main' ? true : isCommandEnabled(commandId))
+      : false,
+    click: () => handleMenuCommand(commandId, params, _ignoredTransport),
     ...menuExtras,
   };
   if (menuExtras.accelerator) {
@@ -125,13 +128,51 @@ function buildCommandMenuItem(commandId, extras = {}) {
   return item;
 }
 
+async function handleMainMenuCommand(commandId, params = {}) {
+  traceLaunch('menu:main', `${commandId} params=${JSON.stringify(params)}`);
+  if (commandId === 'file:open') {
+    const window = mainWindow ?? BrowserWindow.getFocusedWindow() ?? undefined;
+    const result = await dialog.showOpenDialog(window, {
+      properties: ['openFile'],
+      filters: HWP_FILTERS,
+    });
+    if (result.canceled || result.filePaths.length === 0) {
+      return;
+    }
+    await openPathInRenderer(result.filePaths[0]);
+    showMainWindow();
+    return;
+  }
+
+  if (commandId === 'file:about') {
+    await dialog.showMessageBox(mainWindow ?? undefined, {
+      type: 'info',
+      title: 'Hwping',
+      message: 'Hwping',
+      detail: `Hwping ${app.getVersion()}`,
+    });
+    return;
+  }
+
+  sendMenuCommand(commandId, params);
+}
+
+function handleMenuCommand(commandId, params = {}, transport = 'renderer') {
+  traceLaunch('menu:click', `${commandId} transport=${transport} params=${JSON.stringify(params)}`);
+  if (transport === 'main') {
+    void handleMainMenuCommand(commandId, params);
+    return;
+  }
+  sendMenuCommand(commandId, params);
+}
+
 function buildAppMenuTemplate() {
   return {
     label: app.getName(),
     submenu: desktopAppMenuItems.map((item) => {
       if (item.type === 'separator') return { type: 'separator' };
       if (item.role) return { role: item.role };
-      if (item.commandId) return buildCommandMenuItem(item.commandId);
+      if (item.commandId) return buildCommandMenuItem(item.commandId, item);
       return { type: 'separator' };
     }),
   };
@@ -148,6 +189,16 @@ function buildRecentDocumentsSubmenu() {
   }));
 }
 
+function isMenuNodeEnabled(item) {
+  if (!item) return false;
+  if (item.type === 'separator') return true;
+  if (item.type === 'recent') return recentDocuments.length > 0;
+  if (item.role) return true;
+  if (item.items) return item.items.some((child) => isMenuNodeEnabled(child));
+  if (item.commandId) return Boolean(getCatalogEntry(item.commandId)) && isCommandEnabled(item.commandId);
+  return true;
+}
+
 function buildNestedMenuItems(items) {
   return items.map((item) => {
     if (item.type === 'separator') {
@@ -162,6 +213,7 @@ function buildNestedMenuItems(items) {
     if (item.items) {
       return {
         label: item.label,
+        enabled: isMenuNodeEnabled(item),
         submenu: buildNestedMenuItems(item.items),
       };
     }
@@ -231,9 +283,24 @@ function refreshMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(buildMenuTemplate()));
 }
 
-function sendMenuCommand(command) {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  mainWindow.webContents.send('hwping:menu-command', command);
+function sendMenuCommand(command, params = {}) {
+  if (!rendererReady || !mainWindow || mainWindow.isDestroyed()) {
+    pendingRendererMenuCommands.push({ command, params });
+    traceLaunch('menu:queued', `${command} params=${JSON.stringify(params)}`);
+    return;
+  }
+  traceLaunch('menu:renderer', `${command} params=${JSON.stringify(params)}`);
+  mainWindow.webContents.send('hwping:menu-command', { command, params });
+}
+
+function flushPendingRendererMenuCommands() {
+  if (!rendererReady || !mainWindow || mainWindow.isDestroyed()) return;
+  while (pendingRendererMenuCommands.length > 0) {
+    const item = pendingRendererMenuCommands.shift();
+    if (!item) continue;
+    traceLaunch('menu:renderer', `${item.command} params=${JSON.stringify(item.params)}`);
+    mainWindow.webContents.send('hwping:menu-command', item);
+  }
 }
 
 function addRecentDocument(filePath) {
@@ -384,6 +451,7 @@ function setupIpc() {
   ipcMain.on('hwping:renderer-ready', () => {
     rendererReady = true;
     flushPendingOpenPaths();
+    flushPendingRendererMenuCommands();
   });
 }
 

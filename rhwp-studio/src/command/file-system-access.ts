@@ -30,6 +30,11 @@ export interface ElectronMenuStateEntry {
   enabled: boolean;
 }
 
+export interface ElectronMenuCommandPayload {
+  command: string;
+  params?: Record<string, unknown>;
+}
+
 export interface ElectronDesktopBridge {
   openFileDialog?: (options?: {
     excludeAcceptAllOption?: boolean;
@@ -42,7 +47,7 @@ export interface ElectronDesktopBridge {
   }) => Promise<ElectronFileDialogResult | null>;
   readFile?: (filePath: string) => Promise<Uint8Array | ArrayBuffer>;
   writeFile?: (filePath: string, data: Uint8Array) => Promise<void>;
-  onMenuCommand?: (listener: (command: string) => void) => () => void;
+  onMenuCommand?: (listener: (payload: string | ElectronMenuCommandPayload) => void) => () => void;
   onOpenDocument?: (listener: (payload: ElectronOpenDocumentPayload) => void) => () => void;
   syncMenuCatalog?: (catalog: ElectronMenuCatalogEntry[]) => void;
   syncMenuState?: (state: ElectronMenuStateEntry[]) => void;
@@ -145,20 +150,6 @@ export function createElectronFileHandle(
 }
 
 export async function pickOpenFileHandle(windowLike: FileSystemWindowLike): Promise<FileSystemFileHandleLike | null> {
-  if (windowLike.showOpenFilePicker) {
-    try {
-      const handles = await windowLike.showOpenFilePicker({
-        excludeAcceptAllOption: true,
-        multiple: false,
-        types: HWP_PICKER_TYPES,
-      });
-      return handles[0] ?? null;
-    } catch (error) {
-      if (isAbortError(error)) return null;
-      throw error;
-    }
-  }
-
   if (windowLike.hwpingDesktop?.openFileDialog) {
     try {
       const result = await windowLike.hwpingDesktop.openFileDialog({
@@ -167,6 +158,20 @@ export async function pickOpenFileHandle(windowLike: FileSystemWindowLike): Prom
         types: HWP_PICKER_TYPES,
       });
       return result ? createElectronFileHandle(windowLike, result) : null;
+    } catch (error) {
+      if (isAbortError(error)) return null;
+      throw error;
+    }
+  }
+
+  if (windowLike.showOpenFilePicker) {
+    try {
+      const handles = await windowLike.showOpenFilePicker({
+        excludeAcceptAllOption: true,
+        multiple: false,
+        types: HWP_PICKER_TYPES,
+      });
+      return handles[0] ?? null;
     } catch (error) {
       if (isAbortError(error)) return null;
       throw error;
@@ -196,19 +201,6 @@ export async function saveDocumentToFileSystem(options: SaveDocumentOptions): Pr
     };
   }
 
-  if (windowLike.showSaveFilePicker) {
-    const handle = await windowLike.showSaveFilePicker({
-      suggestedName,
-      types: HWP_PICKER_TYPES,
-    });
-    await writeBlobToHandle(handle, blob);
-    return {
-      method: 'save-picker',
-      handle,
-      fileName: handle.name,
-    };
-  }
-
   if (windowLike.hwpingDesktop?.saveFileDialog) {
     const result = await windowLike.hwpingDesktop.saveFileDialog({
       suggestedName,
@@ -225,6 +217,19 @@ export async function saveDocumentToFileSystem(options: SaveDocumentOptions): Pr
       method: 'save-picker',
       handle,
       fileName: result.name,
+    };
+  }
+
+  if (windowLike.showSaveFilePicker) {
+    const handle = await windowLike.showSaveFilePicker({
+      suggestedName,
+      types: HWP_PICKER_TYPES,
+    });
+    await writeBlobToHandle(handle, blob);
+    return {
+      method: 'save-picker',
+      handle,
+      fileName: handle.name,
     };
   }
 

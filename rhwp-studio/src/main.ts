@@ -28,6 +28,7 @@ import { Ruler } from '@/view/ruler';
 import {
   createElectronFileHandle,
   type ElectronOpenDocumentPayload,
+  type ElectronMenuCommandPayload,
 } from '@/command/file-system-access';
 import type {
   CommandMenuCatalogEntry,
@@ -136,8 +137,12 @@ function setupDesktopBridge(): void {
   desktopBridgeReady = true;
   document.body?.classList.add('desktop-shell');
 
-  desktop.onMenuCommand?.((command) => {
-    dispatcher.dispatch(command);
+  desktop.onMenuCommand?.((payload: string | ElectronMenuCommandPayload) => {
+    if (typeof payload === 'string') {
+      dispatcher.dispatch(payload);
+      return;
+    }
+    dispatcher.dispatch(payload.command, payload.params as Record<string, unknown> | undefined);
   });
 
   desktop.onOpenDocument?.((payload: ElectronOpenDocumentPayload) => {
@@ -153,7 +158,6 @@ function setupDesktopBridge(): void {
 
   syncDesktopMenuCatalog();
   syncDesktopMenuState();
-  desktop.ready?.();
 }
 
 function syncDesktopMenuStateIfReady(): void {
@@ -164,6 +168,7 @@ function syncDesktopMenuStateIfReady(): void {
 async function initialize(): Promise<void> {
   const msg = sbMessage();
   try {
+    setupDesktopBridge();
     msg.textContent = '웹폰트 로딩 중...';
     await loadWebFonts([]);  // CSS @font-face 등록 + CRITICAL 폰트만 로드
     msg.textContent = 'WASM 로딩 중...';
@@ -253,8 +258,8 @@ async function initialize(): Promise<void> {
     setupZoomControls();
     setupEventListeners();
     setupGlobalShortcuts();
-    setupDesktopBridge();
     loadFromUrlParam();
+    window.hwpingDesktop?.ready?.();
 
     // E2E 테스트용 전역 노출 (개발 모드 전용)
     if (import.meta.env.DEV) {
