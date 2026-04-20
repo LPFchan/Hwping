@@ -19,7 +19,9 @@ const RUSTUP_CARGO = execSync('rustup which cargo', { encoding: 'utf-8' }).trim(
 const RUSTUP_BIN = dirname(RUSTUP_CARGO);
 const CARGO_HOME_BIN = resolve(homedir(), '.cargo', 'bin');
 const WASM_PACK = process.env.WASM_PACK_BIN ?? 'wasm-pack';
-const ELECTRON_BIN = resolve(__dirname, 'node_modules', '.bin', 'electron');
+const ELECTRON_BIN = process.env.ELECTRON_BIN
+  ? resolve(process.env.ELECTRON_BIN)
+  : resolve(__dirname, 'node_modules', 'electron', 'dist', 'Electron.app', 'Contents', 'MacOS', 'Electron');
 
 function run(cmd, cwd = __dirname, extraEnv = {}) {
   console.log(`> ${cmd}`);
