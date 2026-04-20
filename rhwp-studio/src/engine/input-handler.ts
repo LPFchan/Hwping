@@ -578,6 +578,7 @@ export class InputHandler {
         polygonPoints: pointsHwp,
       });
       if (result.ok) {
+        this.eventBus.emit('document-modified');
         this.eventBus.emit('document-changed');
         this.cursor.enterPictureObjectSelectionDirect(sec, result.paraIdx, result.controlIdx, 'shape');
         this.caret.hide();
@@ -795,6 +796,7 @@ export class InputHandler {
         lineFlipY,
       });
       if (result.ok) {
+        this.eventBus.emit('document-modified');
         this.eventBus.emit('document-changed');
         // 생성된 도형을 선택 상태로 진입
         const selType = (this.shapePlacementType === 'line' || this.shapePlacementType.startsWith('connector-')) ? 'line' : 'shape';
@@ -1329,6 +1331,7 @@ export class InputHandler {
   /** 편집 후 처리: 재렌더링 + 캐럿 갱신 */
   private afterEdit(): void {
     this.lastCellKey = null; // 편집 후 셀 bbox 캐시 무효화
+    this.eventBus.emit('document-modified');
     this.eventBus.emit('document-changed');
     this.updateCaret();
   }

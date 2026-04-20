@@ -641,6 +641,7 @@ export class CellBorderBgDialog extends ModalDialog {
     } else {
       this.wasm.setCellProperties(sec, ppi, ci, this.cellIdx, newProps as Partial<CellProperties>);
     }
+    this.eventBus.emit('document-modified');
     this.eventBus.emit('document-changed');
   }
 

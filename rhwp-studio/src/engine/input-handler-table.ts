@@ -191,6 +191,7 @@ export function finishResizeDrag(this: any, e: MouseEvent): void {
       state.tableRef.ci,
       updates,
     );
+    this.eventBus.emit('document-modified');
     this.eventBus.emit('document-changed');
     if (inCellSel) this.updateCellSelection();
   } catch (err) {
@@ -298,6 +299,7 @@ export function finishImagePlacement(this: any, e: MouseEvent): void {
   try {
     const result = this.wasm.insertPicture(sec, paraIdx, charOffset, imgData.data, wHwp, hHwp, imgData.naturalWidth, imgData.naturalHeight, imgData.ext, desc);
     if (result.ok) {
+      this.eventBus.emit('document-modified');
       this.eventBus.emit('document-changed');
     }
   } catch (err) {
@@ -335,6 +337,7 @@ export function moveSelectedTable(this: any, key: 'ArrowUp' | 'ArrowDown' | 'Arr
     if (result.ppi !== ref.ppi || result.ci !== ref.ci) {
       this.cursor.updateSelectedTableRef(ref.sec, result.ppi, result.ci);
     }
+    this.eventBus.emit('document-modified');
     this.eventBus.emit('document-changed');
     this.renderTableObjectSelection();
   } catch (err) {
@@ -376,6 +379,7 @@ export function moveSelectedPicture(this: any, key: 'ArrowUp' | 'ArrowDown' | 'A
     }
     // 연결선 자동 추적
     try { this.wasm.updateConnectorsInSection(targets[0].sec); } catch { /* ignore */ }
+    this.eventBus.emit('document-modified');
     this.eventBus.emit('document-changed');
     this.renderPictureObjectSelection();
   } catch (err) {
@@ -417,6 +421,7 @@ export function updateMoveDrag(this: any, e: MouseEvent): void {
     this.moveDragState.lastPageY = py;
     this.moveDragState.totalDeltaH += deltaH;
     this.moveDragState.totalDeltaV += deltaV;
+    this.eventBus.emit('document-modified');
     this.eventBus.emit('document-changed');
     this.renderTableObjectSelection();
   } catch (err) {
@@ -494,6 +499,7 @@ export function resizeCellByKeyboard(this: any, key: 'ArrowUp' | 'ArrowDown' | '
 
   try {
     this.wasm.resizeTableCells(ctx.sec, ctx.ppi, ctx.ci, updates);
+    this.eventBus.emit('document-modified');
     this.eventBus.emit('document-changed');
     this.updateCellSelection();
   } catch (err) {
@@ -526,6 +532,7 @@ export function resizeTableProportional(this: any, key: 'ArrowUp' | 'ArrowDown' 
     }
 
     this.wasm.resizeTableCells(ctx.sec, ctx.ppi, ctx.ci, updates);
+    this.eventBus.emit('document-modified');
     this.eventBus.emit('document-changed');
     this.updateCellSelection();
   } catch (err) {

@@ -51,6 +51,7 @@ function hfTemplateItems({ isHeader, applyTo, noun }) {
 
 export const desktopAppMenuItems = [
   cmd('file:about', '제품 정보', { transport: 'main' }),
+  cmd('tool:options', '환경 설정', { accelerator: 'CommandOrControl+,' }),
   sep(),
   { role: 'hide' },
   { role: 'hideOthers' },
@@ -65,12 +66,11 @@ export const desktopMenuGroups = [
     items: [
       cmd('file:new-doc', '새로 만들기', { accelerator: 'CommandOrControl+N' }),
       cmd('file:open', '열기', { accelerator: 'CommandOrControl+O', transport: 'main' }),
+      recent(),
       cmd('file:save', '저장', { accelerator: 'CommandOrControl+S' }),
       sep(),
       cmd('file:page-setup', '편집 용지', { accelerator: 'F7' }),
       cmd('file:print', '인쇄', { accelerator: 'CommandOrControl+P' }),
-      sep(),
-      recent(),
       sep(),
       cmd('file:about', '제품 정보', { transport: 'main' }),
     ],
@@ -284,12 +284,6 @@ export const desktopMenuGroups = [
       cmd('table:thousand-sep', '1,000 단위 구분 쉼표'),
       cmd('table:decimal-add', '자릿점 넣기'),
       cmd('table:decimal-remove', '자릿점 빼기'),
-    ],
-  },
-  {
-    label: '도구',
-    items: [
-      cmd('tool:options', '환경 설정', { accelerator: 'CommandOrControl+,' }),
     ],
   },
   {

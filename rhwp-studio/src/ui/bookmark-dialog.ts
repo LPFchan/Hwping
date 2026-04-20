@@ -285,6 +285,7 @@ export class BookmarkDialog {
     );
 
     if (result.ok) {
+      this.services.eventBus.emit('document-modified');
       this.services.eventBus.emit('document-changed');
       this.hide();
     } else {
@@ -321,6 +322,7 @@ export class BookmarkDialog {
 
     const result = this.services.wasm.deleteBookmark(bm.sec, bm.para, bm.ctrlIdx);
     if (result.ok) {
+      this.services.eventBus.emit('document-modified');
       this.services.eventBus.emit('document-changed');
       this.refreshList();
       this.statusLabel.textContent = '';
@@ -335,6 +337,7 @@ export class BookmarkDialog {
 
     const result = this.services.wasm.renameBookmark(bm.sec, bm.para, bm.ctrlIdx, newName.trim());
     if (result.ok) {
+      this.services.eventBus.emit('document-modified');
       this.services.eventBus.emit('document-changed');
       this.refreshList();
     } else {

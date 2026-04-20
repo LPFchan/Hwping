@@ -211,6 +211,7 @@ export class PageSetupDialog extends ModalDialog {
 
     const result = this.wasm.setPageDef(this.sectionIdx, newDef);
     if (result.ok) {
+      this.eventBus.emit('document-modified');
       this.eventBus.emit('document-changed');
     }
   }

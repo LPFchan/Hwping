@@ -35,6 +35,7 @@ export const tableCommands: CommandDef[] = [
             rows, cols,
           );
           if (result.ok) {
+            services.eventBus.emit('document-modified');
             services.eventBus.emit('document-changed');
             // 표 생성 후 첫 번째 셀로 커서 이동
             const ih = services.getInputHandler();
@@ -113,6 +114,7 @@ export const tableCommands: CommandDef[] = [
       const cellInfo = services.wasm.getCellInfo(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, pos.cellIndex);
       try {
         services.wasm.insertTableRow(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, cellInfo.row, false);
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (e) {
         console.error('줄 추가 실패:', e);
@@ -131,6 +133,7 @@ export const tableCommands: CommandDef[] = [
       const cellInfo = services.wasm.getCellInfo(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, pos.cellIndex);
       try {
         services.wasm.insertTableRow(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, cellInfo.row, true);
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (e) {
         console.error('줄 추가 실패:', e);
@@ -150,6 +153,7 @@ export const tableCommands: CommandDef[] = [
       const cellInfo = services.wasm.getCellInfo(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, pos.cellIndex);
       try {
         services.wasm.insertTableColumn(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, cellInfo.col, false);
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (e) {
         console.error('칸 추가 실패:', e);
@@ -168,6 +172,7 @@ export const tableCommands: CommandDef[] = [
       const cellInfo = services.wasm.getCellInfo(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, pos.cellIndex);
       try {
         services.wasm.insertTableColumn(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, cellInfo.col, true);
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (e) {
         console.error('칸 추가 실패:', e);
@@ -186,6 +191,7 @@ export const tableCommands: CommandDef[] = [
       const cellInfo = services.wasm.getCellInfo(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, pos.cellIndex);
       try {
         services.wasm.deleteTableRow(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, cellInfo.row);
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (e) {
         console.error('줄 지우기 실패:', e);
@@ -205,6 +211,7 @@ export const tableCommands: CommandDef[] = [
       const cellInfo = services.wasm.getCellInfo(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, pos.cellIndex);
       try {
         services.wasm.deleteTableColumn(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex, cellInfo.col);
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (e) {
         console.error('칸 지우기 실패:', e);
@@ -250,6 +257,7 @@ export const tableCommands: CommandDef[] = [
               nRows, mCols, equalHeight, mergeFirst,
             );
           }
+          services.eventBus.emit('document-modified');
           services.eventBus.emit('document-changed');
         } catch (e) {
           console.error('셀 나누기 실패:', e);
@@ -273,6 +281,7 @@ export const tableCommands: CommandDef[] = [
       try {
         services.wasm.mergeTableCells(tableCtx.sec, tableCtx.ppi, tableCtx.ci, range.startRow, range.startCol, range.endRow, range.endCol);
         ih.exitCellSelectionMode();
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (e) {
         console.error('셀 합치기 실패:', e);
@@ -291,6 +300,7 @@ export const tableCommands: CommandDef[] = [
       if (ref) {
         try {
           services.wasm.deleteTableControl(ref.sec, ref.ppi, ref.ci);
+          services.eventBus.emit('document-modified');
           services.eventBus.emit('document-changed');
         } catch (e) {
           console.error('표 지우기 실패:', e);
@@ -302,6 +312,7 @@ export const tableCommands: CommandDef[] = [
       if (pos.parentParaIndex === undefined || pos.controlIndex === undefined) return;
       try {
         services.wasm.deleteTableControl(pos.sectionIndex, pos.parentParaIndex, pos.controlIndex);
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (e) {
         console.error('표 지우기 실패:', e);
@@ -334,6 +345,7 @@ export const tableCommands: CommandDef[] = [
         try {
           const result: any = services.wasm.setTableProperties(sec, ppi, ci, { hasCaption: true });
           charOffset = result?.captionCharOffset ?? 3;
+          services.eventBus.emit('document-modified');
           services.eventBus.emit('document-changed');
         } catch (e) { console.error('표 캡션 생성 실패:', e); return; }
       } else {

@@ -48,6 +48,7 @@ let inputHandler: InputHandler | null = null;
 let toolbar: Toolbar | null = null;
 let ruler: Ruler | null = null;
 let desktopBridgeReady = false;
+let documentDirty = false;
 
 
 // ─── 커맨드 시스템 ─────────────────────────────
@@ -130,6 +131,27 @@ function syncDesktopMenuState(): void {
   desktop.syncMenuState(collectCommandState());
 }
 
+function getWindowTitle(): string {
+  if (wasm.pageCount === 0) return 'Hwping';
+  const baseTitle = wasm.fileName?.trim() || 'Hwping';
+  return documentDirty ? `${baseTitle} *` : baseTitle;
+}
+
+function syncWindowTitle(): void {
+  document.title = getWindowTitle();
+}
+
+function markDocumentPristine(): void {
+  documentDirty = false;
+  syncWindowTitle();
+}
+
+function markDocumentDirty(): void {
+  if (wasm.pageCount === 0) return;
+  documentDirty = true;
+  syncWindowTitle();
+}
+
 function setupDesktopBridge(): void {
   const desktop = window.hwpingDesktop;
   if (!desktop) return;
@@ -172,6 +194,7 @@ async function initialize(): Promise<void> {
   const msg = sbMessage();
   try {
     setupDesktopBridge();
+    syncWindowTitle();
     msg.textContent = '웹폰트 로딩 중...';
     await loadWebFonts([]);  // CSS @font-face 등록 + CRITICAL 폰트만 로드
     msg.textContent = 'WASM 로딩 중...';
@@ -529,6 +552,7 @@ async function initializeDocument(docInfo: DocumentInfo, displayName: string): P
     } catch (e) {
       console.warn('[validation] 감지/보정 실패 (치명적이지 않음):', e);
     }
+    markDocumentPristine();
   } catch (error) {
     console.error('[initDoc] 오류:', error);
     if (window.innerWidth < 768) alert(`초기화 오류: ${error}`);
@@ -617,6 +641,14 @@ eventBus.on('open-document-bytes', async (payload) => {
   await loadBytes(data.bytes, data.fileName, data.fileHandle);
 });
 eventBus.on('command-state-changed', () => {
+  syncDesktopMenuStateIfReady();
+});
+eventBus.on('document-modified', () => {
+  markDocumentDirty();
+  syncDesktopMenuStateIfReady();
+});
+eventBus.on('document-saved', () => {
+  markDocumentPristine();
   syncDesktopMenuStateIfReady();
 });
 eventBus.on('document-changed', () => {

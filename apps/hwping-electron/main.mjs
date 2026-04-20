@@ -22,6 +22,7 @@ const recentDocuments = [];
 const commandCatalog = new Map();
 const commandState = new Map();
 const launchLogPath = process.env.HWPING_LAUNCH_LOG?.trim() || '';
+const APP_NAME = 'Hwping';
 
 function traceLaunch(stage, details = '') {
   if (!launchLogPath) return;
@@ -93,6 +94,32 @@ function getCommandShortcutLabel(commandId) {
   return getCatalogEntry(commandId)?.shortcutLabel ?? null;
 }
 
+function shouldShowShortcutLabel(shortcutLabel) {
+  if (!shortcutLabel) return false;
+  if (shortcutLabel.includes(',')) return false;
+
+  const modifierTokens = new Set([
+    'ctrl',
+    'control',
+    'command',
+    'commandorcontrol',
+    'cmd',
+    'meta',
+    'alt',
+    'option',
+    'shift',
+    'num',
+    'numpad',
+    'numlock',
+  ]);
+  const nonModifierTokens = shortcutLabel
+    .split('+')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => !modifierTokens.has(part.toLowerCase()));
+  return nonModifierTokens.length <= 1;
+}
+
 function isCommandEnabled(commandId) {
   if (!commandState.has(commandId)) return true;
   return Boolean(commandState.get(commandId));
@@ -113,7 +140,7 @@ function buildCommandMenuItem(commandId, extras = {}) {
   const shortcutLabel = getCommandShortcutLabel(commandId);
   const baseLabel = explicitLabel ?? getCommandLabel(commandId);
   const item = {
-    label: !menuExtras.accelerator && shortcutLabel
+    label: !menuExtras.accelerator && shouldShowShortcutLabel(shortcutLabel)
       ? `${baseLabel}\t${shortcutLabel}`
       : baseLabel,
     enabled: isRegisteredCommand
@@ -148,9 +175,9 @@ async function handleMainMenuCommand(commandId, params = {}) {
   if (commandId === 'file:about') {
     await dialog.showMessageBox(mainWindow ?? undefined, {
       type: 'info',
-      title: 'Hwping',
-      message: 'Hwping',
-      detail: `Hwping ${app.getVersion()}`,
+      title: APP_NAME,
+      message: APP_NAME,
+      detail: `${APP_NAME} ${app.getVersion()}`,
     });
     return;
   }
@@ -169,7 +196,7 @@ function handleMenuCommand(commandId, params = {}, transport = 'renderer') {
 
 function buildAppMenuTemplate() {
   return {
-    label: app.getName(),
+    label: APP_NAME,
     submenu: desktopAppMenuItems.map((item) => {
       if (item.type === 'separator') return { type: 'separator' };
       if (item.role) return { role: item.role };
@@ -369,7 +396,7 @@ async function createWindow() {
     width: 1440,
     height: 1024,
     backgroundColor: '#f4efe8',
-    title: 'Hwping',
+    title: APP_NAME,
     webPreferences: {
       preload: resolve(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -385,6 +412,10 @@ async function createWindow() {
   });
   mainWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
     traceLaunch('renderer:console', `level=${level} ${sourceId}:${line} ${message}`);
+  });
+  mainWindow.on('page-title-updated', (event, title) => {
+    event.preventDefault();
+    mainWindow?.setTitle(title);
   });
   mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
     traceLaunch('did-fail-load', `code=${errorCode} mainFrame=${isMainFrame} url=${validatedURL} desc=${errorDescription}`);
@@ -488,7 +519,7 @@ async function main() {
   }
   traceLaunch('main:single-instance-lock', 'granted');
 
-  app.setName('Hwping');
+  app.setName(APP_NAME);
 
   app.on('second-instance', (_event, argv) => {
     traceLaunch('app:second-instance', `argv=${JSON.stringify(argv)}`);

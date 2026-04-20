@@ -318,10 +318,12 @@ export const formatCommands: CommandDef[] = [
           // "이전 번호 이어": 현재 numbering_id 유지
           ih.applyNumbering(nid);
         }
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       };
       dialog.onApplyBullet = (bulletChar) => {
         ih.applyBullet(bulletChar);
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       };
       dialog.onClose = () => ih.focus();

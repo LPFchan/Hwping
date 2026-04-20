@@ -333,6 +333,7 @@ export const pageCommands: CommandDef[] = [
       try {
         const result = JSON.parse(services.wasm.insertPageBreak(pos.sectionIndex, pos.paragraphIndex, pos.charOffset));
         if (result.ok) {
+          services.eventBus.emit('document-modified');
           services.eventBus.emit('document-changed');
         }
       } catch (err) {
@@ -365,6 +366,7 @@ export const pageCommands: CommandDef[] = [
             false, false, false, false, false, true,
           );
         }
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (err) {
         console.warn('[page:hide] 감추기 실패:', err);
@@ -383,6 +385,7 @@ export const pageCommands: CommandDef[] = [
       try {
         const result = JSON.parse(services.wasm.insertColumnBreak(pos.sectionIndex, pos.paragraphIndex, pos.charOffset));
         if (result.ok) {
+          services.eventBus.emit('document-modified');
           services.eventBus.emit('document-changed');
         }
       } catch (err) {
@@ -406,6 +409,7 @@ export const pageCommands: CommandDef[] = [
       try {
         // 일반 다단(0), 같은 너비(1), 간격 8mm=2268HU
         services.wasm.setColumnDef(pos.sectionIndex, def.cols, 0, 1, 2268);
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (err) {
         console.warn(`[${def.id}] 다단 설정 실패:`, err);
@@ -421,6 +425,7 @@ export const pageCommands: CommandDef[] = [
       if (!ih) return;
       try {
         services.wasm.setColumnDef(ih.getPosition().sectionIndex, 2, 0, 0, 2268);
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (err) { console.warn('[page:col-left]', err); }
     },
@@ -434,6 +439,7 @@ export const pageCommands: CommandDef[] = [
       if (!ih) return;
       try {
         services.wasm.setColumnDef(ih.getPosition().sectionIndex, 2, 0, 0, 2268);
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } catch (err) { console.warn('[page:col-right]', err); }
     },

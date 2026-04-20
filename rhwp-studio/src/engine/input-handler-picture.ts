@@ -377,6 +377,7 @@ export function updatePictureResizeDrag(this: any, e: MouseEvent): void {
         if (deltaV !== 0) updated['vertOffset'] = ((r.origVertOffset + deltaV) >>> 0);
         setObjectProperties.call(this, r, updated);
       }
+      this.eventBus.emit('document-modified');
       this.eventBus.emit('document-changed');
     } catch { /* ignore */ }
   }
@@ -394,6 +395,7 @@ export function updatePictureResizeDrag(this: any, e: MouseEvent): void {
         horzOffset: (newHorzOffset >>> 0),
         vertOffset: (newVertOffset >>> 0),
       });
+      this.eventBus.emit('document-modified');
       this.eventBus.emit('document-changed');
     } catch { /* ignore */ }
   }
@@ -434,6 +436,7 @@ export function finishPictureResizeDrag(this: any, e: MouseEvent): void {
         if (deltaV !== 0) updated['vertOffset'] = ((r.origVertOffset + deltaV) >>> 0);
         setObjectProperties.call(this, r, updated);
       }
+      this.eventBus.emit('document-modified');
       this.eventBus.emit('document-changed');
     } catch (err) {
       console.warn('[InputHandler] 다중 개체 리사이즈 실패:', err);
@@ -460,6 +463,7 @@ export function finishPictureResizeDrag(this: any, e: MouseEvent): void {
     if (newVertOffset !== origVertOffset) updated['vertOffset'] = (newVertOffset >>> 0);
     if (Object.keys(updated).length > 0) {
       setObjectProperties.call(this, state.ref, updated);
+      this.eventBus.emit('document-modified');
       this.eventBus.emit('document-changed');
     }
   } catch (err) {
@@ -554,6 +558,7 @@ export function updatePictureMoveDrag(this: any, e: MouseEvent): void {
     this.pictureMoveState.totalDeltaV += deltaV;
     // 연결선 자동 추적
     try { this.wasm.updateConnectorsInSection(targets[0].sec); } catch { /* ignore */ }
+    this.eventBus.emit('document-modified');
     this.eventBus.emit('document-changed');
     this.renderPictureObjectSelection();
   } catch (err) {
@@ -613,6 +618,7 @@ export function updatePictureRotateDrag(this: any, e: MouseEvent): void {
 
   try {
     setObjectProperties.call(this, s.ref, { rotationAngle: Math.round(newAngle) });
+    this.eventBus.emit('document-modified');
     this.eventBus.emit('document-changed');
     // 드래그 중에는 핸들 고정 — renderPictureObjectSelection 호출 안 함
   } catch (err) {

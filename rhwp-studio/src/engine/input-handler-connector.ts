@@ -239,6 +239,7 @@ export function finishConnectorDrawing(
       endSubjectIndex: endPt.index,
     });
     if (result.ok) {
+      this.eventBus.emit('document-modified');
       this.eventBus.emit('document-changed');
       this.cursor.enterPictureObjectSelectionDirect(sec, result.paraIdx, result.controlIdx, 'line');
       this.caret.hide();

@@ -333,6 +333,7 @@ export class EquationEditorDialog {
     if (Object.keys(updated).length > 0) {
       try {
         this.wasm.setEquationProperties(this.sec, this.para, this.ci, this.cellIdx, this.cellParaIdx, updated);
+        this.eventBus.emit('document-modified');
         this.eventBus.emit('document-changed');
       } catch (err) {
         console.warn('[EquationEditor] 수식 속성 설정 실패:', err);

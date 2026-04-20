@@ -104,6 +104,7 @@ export const insertCommands: CommandDef[] = [
         const result = services.wasm.insertFootnote(pos.sectionIndex, pos.paragraphIndex, pos.charOffset);
         console.log('[footnote] result:', result);
         if (result.ok) {
+          services.eventBus.emit('document-modified');
           services.eventBus.emit('document-changed');
         }
       } catch (err) {
@@ -204,6 +205,7 @@ export const insertCommands: CommandDef[] = [
         }
         // "그림 N " 끝 위치를 Rust가 반환
         charOffset = result?.captionCharOffset ?? 4;
+        services.eventBus.emit('document-modified');
         services.eventBus.emit('document-changed');
       } else {
         // 이미 캡션이 있으면 캡션 텍스트 끝에 캐럿
@@ -389,6 +391,7 @@ function applyRotationDelta(services: import('../types').CommandServices, delta:
   next = ((next % 360) + 360) % 360;
   if (next > 180) next -= 360;
   setProps(services, ref, { rotationAngle: next });
+  services.eventBus.emit('document-modified');
   services.eventBus.emit('document-changed');
 }
 
@@ -401,5 +404,6 @@ function toggleFlip(services: import('../types').CommandServices, key: 'horzFlip
   const props = getProps(services, ref);
   const cur = !!props[key];
   setProps(services, ref, { [key]: !cur });
+  services.eventBus.emit('document-modified');
   services.eventBus.emit('document-changed');
 }

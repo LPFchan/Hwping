@@ -161,6 +161,7 @@ export class SectionSettingsDialog extends ModalDialog {
       result = this.wasm.setSectionDef(this.sectionIdx, newDef);
     }
     if (result.ok) {
+      this.eventBus.emit('document-modified');
       this.eventBus.emit('document-changed');
     }
   }

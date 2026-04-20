@@ -184,6 +184,7 @@ export const editCommands: CommandDef[] = [
         );
         console.log('[field:edit] updateResult:', result);
         if (result.ok) {
+          services.eventBus.emit('document-modified');
           services.eventBus.emit('document-changed');
         }
       };

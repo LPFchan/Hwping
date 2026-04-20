@@ -229,6 +229,8 @@ export class FormulaDialog extends ModalDialog {
         } catch { /* 쉼표 포맷 기록 실패 시 기본값 유지 */ }
       }
 
+      this.eventBus.emit('document-modified');
+
       this.eventBus.emit('document-changed');
       return true; // 성공 → 대화상자 닫기
     } catch (e: any) {

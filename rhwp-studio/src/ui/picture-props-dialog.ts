@@ -2119,6 +2119,7 @@ export class PicturePropsDialog {
       } else {
         this.wasm.setPictureProperties(this.sec, this.para, this.ci, updated);
       }
+      this.eventBus.emit('document-modified');
       this.eventBus.emit('document-changed');
     }
     this.hide();

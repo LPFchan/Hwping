@@ -1410,6 +1410,8 @@ export class TableCellPropsDialog extends ModalDialog {
 
     this.wasm.setTableProperties(sec, ppi, ci, newTableProps as Partial<TableProperties>);
 
+    this.eventBus.emit('document-modified');
+
     this.eventBus.emit('document-changed');
   }
 

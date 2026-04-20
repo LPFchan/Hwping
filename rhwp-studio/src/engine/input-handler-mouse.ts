@@ -991,6 +991,7 @@ export function onMouseMove(this: any, e: MouseEvent): void {
           ? [newX, newY, gx2, gy2]
           : [gx1, gy1, newX, newY];
         this.wasm.moveLineEndpoint(st.ref.sec, st.ref.ppi, st.ref.ci, sx, sy, ex, ey);
+        this.eventBus.emit('document-modified');
         this.eventBus.emit('document-changed');
         this.renderPictureObjectSelection();
       } catch { /* ignore */ }

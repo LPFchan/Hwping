@@ -306,6 +306,7 @@ export class SymbolsDialog {
       kind: 'command',
       command: new InsertTextCommand(pos, this.selectedChar),
     });
+    this.services.eventBus.emit('document-modified');
     this.services.eventBus.emit('document-changed');
 
     // hidden textarea 포커스 복원 (후속 타이핑 가능하도록)
