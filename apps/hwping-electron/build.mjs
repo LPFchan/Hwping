@@ -112,7 +112,17 @@ set -eu
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 ELECTRON_BIN="${ELECTRON_BIN}"
 
+if [ -n "\${HWPING_LAUNCH_LOG:-}" ]; then
+  {
+    printf '%s [launcher:boot] script_dir=%s pwd=%s argv=%s\n' "$(date -u +%FT%TZ)" "$SCRIPT_DIR" "$(pwd)" "$*"
+    printf '%s [launcher:electron] path=%s executable=%s\n' "$(date -u +%FT%TZ)" "$ELECTRON_BIN" "$([ -x "$ELECTRON_BIN" ] && printf yes || printf no)"
+  } >> "$HWPING_LAUNCH_LOG" 2>/dev/null || true
+fi
+
 if [ ! -x "$ELECTRON_BIN" ]; then
+  if [ -n "\${HWPING_LAUNCH_LOG:-}" ]; then
+    printf '%s [launcher:error] Electron runtime not found: %s\n' "$(date -u +%FT%TZ)" "$ELECTRON_BIN" >> "$HWPING_LAUNCH_LOG" 2>/dev/null || true
+  fi
   echo "Electron runtime not found: $ELECTRON_BIN" >&2
   exit 1
 fi

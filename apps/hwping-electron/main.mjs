@@ -1,5 +1,6 @@
 import { app, BrowserWindow, Menu, dialog, ipcMain } from 'electron';
 import { createServer } from 'node:http';
+import { appendFileSync } from 'node:fs';
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { basename, dirname, extname, resolve, sep } from 'node:path';
@@ -19,6 +20,27 @@ const pendingOpenPaths = [];
 const recentDocuments = [];
 const commandCatalog = new Map();
 const commandState = new Map();
+const launchLogPath = process.env.HWPING_LAUNCH_LOG?.trim() || '';
+
+function traceLaunch(stage, details = '') {
+  if (!launchLogPath) return;
+  const suffix = details ? ` ${details}` : '';
+  try {
+    appendFileSync(launchLogPath, `${new Date().toISOString()} [${stage}]${suffix}\n`, 'utf8');
+  } catch {
+    // Logging is best-effort and must never block app startup.
+  }
+}
+
+traceLaunch('boot', `argv=${JSON.stringify(process.argv)} cwd=${process.cwd()} execPath=${process.execPath} resourcesPath=${process.resourcesPath}`);
+
+process.on('uncaughtException', (error) => {
+  traceLaunch('uncaughtException', String(error?.stack || error));
+});
+
+process.on('unhandledRejection', (error) => {
+  traceLaunch('unhandledRejection', String(error?.stack || error));
+});
 
 function ensureRendererBuilt() {
   const indexHtml = resolve(RENDERER_ROOT, 'index.html');
@@ -258,6 +280,7 @@ function flushPendingOpenPaths() {
 }
 
 async function createWindow() {
+  traceLaunch('createWindow:start');
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 1024,
@@ -273,10 +296,15 @@ async function createWindow() {
 
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'allow' }));
   mainWindow.on('closed', () => {
+    traceLaunch('createWindow:closed');
     mainWindow = null;
+  });
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    traceLaunch('render-process-gone', JSON.stringify(details));
   });
 
   await mainWindow.loadURL(`http://127.0.0.1:${rendererPort}/`);
+  traceLaunch('createWindow:loaded', `url=http://127.0.0.1:${rendererPort}/`);
 }
 
 function queueStartupDocuments() {
@@ -360,14 +388,18 @@ function setupIpc() {
 }
 
 async function main() {
+  traceLaunch('main:start');
   if (!app.requestSingleInstanceLock()) {
+    traceLaunch('main:single-instance-lock', 'denied');
     app.quit();
     return;
   }
+  traceLaunch('main:single-instance-lock', 'granted');
 
   app.setName('Hwping');
 
   app.on('second-instance', (_event, argv) => {
+    traceLaunch('app:second-instance', `argv=${JSON.stringify(argv)}`);
     const extraDocs = argv.filter((arg) => /\.(hwp|hwpx)$/i.test(arg));
     for (const doc of extraDocs) {
       pendingOpenPaths.push(resolve(doc));
@@ -380,6 +412,7 @@ async function main() {
   });
 
   app.on('open-file', (event, filePath) => {
+    traceLaunch('app:open-file', `filePath=${filePath}`);
     event.preventDefault();
     pendingOpenPaths.push(resolve(filePath));
     flushPendingOpenPaths();
@@ -387,14 +420,26 @@ async function main() {
 
   setupIpc();
   queueStartupDocuments();
+  traceLaunch('main:startup-documents', `count=${pendingOpenPaths.length}`);
+
+  app.on('before-quit', () => {
+    traceLaunch('app:before-quit');
+  });
+
+  app.on('will-quit', () => {
+    traceLaunch('app:will-quit');
+  });
 
   await app.whenReady();
+  traceLaunch('app:ready');
   await startRendererServer();
+  traceLaunch('renderer:server-started', `port=${rendererPort}`);
   await createWindow();
   refreshMenu();
   flushPendingOpenPaths();
 
   app.on('activate', async () => {
+    traceLaunch('app:activate', `windows=${BrowserWindow.getAllWindows().length}`);
     if (BrowserWindow.getAllWindows().length === 0) {
       await createWindow();
       refreshMenu();
@@ -403,6 +448,7 @@ async function main() {
   });
 
   app.on('window-all-closed', () => {
+    traceLaunch('app:window-all-closed', `platform=${process.platform}`);
     if (process.platform !== 'darwin') {
       app.quit();
     }
