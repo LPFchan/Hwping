@@ -1,11 +1,10 @@
 import { app, BrowserWindow, Menu, dialog, ipcMain } from 'electron';
-import { createServer } from 'node:http';
 import { appendFileSync } from 'node:fs';
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { basename, dirname, extname, resolve, sep } from 'node:path';
+import { basename, dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { desktopAppMenuItems, desktopMenuGroups } from './menu-model.mjs';
+import { desktopAppMenuItems, desktopMenuGroups, translateMenuLabel } from './menu-model.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RENDERER_ROOT = resolve(__dirname, 'dist', 'renderer');
@@ -14,15 +13,16 @@ const MAX_RECENTS = 8;
 
 let mainWindow = null;
 let rendererReady = false;
-let rendererPort = 0;
-let rendererServer = null;
 const pendingOpenPaths = [];
 const pendingRendererMenuCommands = [];
 const recentDocuments = [];
 const commandCatalog = new Map();
 const commandState = new Map();
-const launchLogPath = process.env.HWPING_LAUNCH_LOG?.trim() || '';
+const launchLogPath = process.env.HWPING_LAUNCH_LOG?.trim() || '/tmp/hwping-launch.log';
 const APP_NAME = 'Hwping';
+
+app.setName(APP_NAME);
+process.title = APP_NAME;
 
 function traceLaunch(stage, details = '') {
   if (!launchLogPath) return;
@@ -72,14 +72,6 @@ function contentTypeForPath(filePath) {
     case '.wasm': return 'application/wasm';
     default: return 'application/octet-stream';
   }
-}
-
-function safeResolveRendererPath(requestPath) {
-  const decoded = decodeURIComponent(requestPath.split('?')[0].split('#')[0] || '/');
-  const relative = decoded === '/' ? 'index.html' : decoded.replace(/^\/+/, '');
-  const resolved = resolve(RENDERER_ROOT, relative);
-  if (resolved !== RENDERER_ROOT && !resolved.startsWith(RENDERER_ROOT + sep)) return null;
-  return resolved;
 }
 
 function getCatalogEntry(commandId) {
@@ -138,7 +130,7 @@ function buildCommandMenuItem(commandId, extras = {}) {
   const catalogEntry = getCatalogEntry(commandId);
   const isRegisteredCommand = Boolean(catalogEntry) || _ignoredTransport === 'main';
   const shortcutLabel = getCommandShortcutLabel(commandId);
-  const baseLabel = explicitLabel ?? getCommandLabel(commandId);
+  const baseLabel = translateMenuLabel(explicitLabel ?? getCommandLabel(commandId));
   const item = {
     label: !menuExtras.accelerator && shouldShowShortcutLabel(shortcutLabel)
       ? `${baseLabel}\t${shortcutLabel}`
@@ -172,16 +164,6 @@ async function handleMainMenuCommand(commandId, params = {}) {
     return;
   }
 
-  if (commandId === 'file:about') {
-    await dialog.showMessageBox(mainWindow ?? undefined, {
-      type: 'info',
-      title: APP_NAME,
-      message: APP_NAME,
-      detail: `${APP_NAME} ${app.getVersion()}`,
-    });
-    return;
-  }
-
   sendMenuCommand(commandId, params);
 }
 
@@ -199,8 +181,15 @@ function buildAppMenuTemplate() {
     label: APP_NAME,
     submenu: desktopAppMenuItems.map((item) => {
       if (item.type === 'separator') return { type: 'separator' };
-      if (item.role) return { role: item.role };
       if (item.commandId) return buildCommandMenuItem(item.commandId, item);
+      if (item.type === 'app-action') {
+        return {
+          label: item.label,
+          accelerator: item.accelerator,
+          enabled: true,
+          click: () => handleAppMenuAction(item.action),
+        };
+      }
       return { type: 'separator' };
     }),
   };
@@ -208,7 +197,7 @@ function buildAppMenuTemplate() {
 
 function buildRecentDocumentsSubmenu() {
   if (recentDocuments.length === 0) {
-    return [{ label: '최근 문서 없음', enabled: false }];
+    return [{ label: translateMenuLabel('최근 문서 없음'), enabled: false }];
   }
 
   return recentDocuments.map((filePath) => ({
@@ -233,14 +222,14 @@ function buildNestedMenuItems(items) {
       return { type: 'separator' };
     }
     if (item.type === 'recent') {
-      return { label: '최근 문서', submenu: buildRecentDocumentsSubmenu() };
+      return { label: translateMenuLabel('최근 문서'), submenu: buildRecentDocumentsSubmenu() };
     }
     if (item.role) {
       return { role: item.role };
     }
     if (item.items) {
       return {
-        label: item.label,
+        label: translateMenuLabel(item.label),
         enabled: isMenuNodeEnabled(item),
         submenu: buildNestedMenuItems(item.items),
       };
@@ -249,62 +238,36 @@ function buildNestedMenuItems(items) {
   });
 }
 
-async function startRendererServer() {
-  ensureRendererBuilt();
-
-  rendererServer = createServer(async (req, res) => {
-    try {
-      const url = req.url || '/';
-      let filePath = safeResolveRendererPath(url);
-      if (!filePath) {
-        res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('Forbidden');
-        return;
-      }
-
-      try {
-        const fileStat = await stat(filePath);
-        if (fileStat.isDirectory()) {
-          filePath = resolve(filePath, 'index.html');
-        }
-      } catch {
-        if (!filePath.endsWith('index.html')) {
-          filePath = resolve(RENDERER_ROOT, 'index.html');
-        }
-      }
-
-      const body = await readFile(filePath);
-      res.writeHead(200, {
-        'Content-Type': contentTypeForPath(filePath),
-        'Cache-Control': 'no-store',
-      });
-      res.end(body);
-    } catch (error) {
-      res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end(String(error));
-    }
-  });
-
-  await new Promise((resolvePromise) => {
-    rendererServer.listen(0, '127.0.0.1', () => {
-      const address = rendererServer.address();
-      if (address && typeof address === 'object') {
-        rendererPort = address.port;
-      }
-      resolvePromise();
-    });
-  });
-}
-
 function buildMenuTemplate() {
   const template = [buildAppMenuTemplate()];
   for (const group of desktopMenuGroups) {
     template.push({
-      label: group.label,
+      label: translateMenuLabel(group.label),
       submenu: buildNestedMenuItems(group.items),
     });
   }
   return template;
+}
+
+function handleAppMenuAction(action) {
+  traceLaunch('menu:app-action', action);
+  switch (action) {
+    case 'hide':
+      app.hide();
+      break;
+    case 'hide-others':
+      Menu.sendActionToFirstResponder('hideOtherApplications:');
+      break;
+    case 'show-all':
+      Menu.sendActionToFirstResponder('unhideAllApplications:');
+      break;
+    case 'quit':
+      app.quit();
+      break;
+    default:
+      traceLaunch('menu:app-action:unknown', action);
+      break;
+  }
 }
 
 function refreshMenu() {
@@ -424,8 +387,9 @@ async function createWindow() {
     traceLaunch('render-process-gone', JSON.stringify(details));
   });
 
-  await mainWindow.loadURL(`http://127.0.0.1:${rendererPort}/`);
-  traceLaunch('createWindow:loaded', `url=http://127.0.0.1:${rendererPort}/`);
+  const indexHtml = resolve(RENDERER_ROOT, 'index.html');
+  await mainWindow.loadFile(indexHtml);
+  traceLaunch('createWindow:loaded', `file=${indexHtml}`);
 }
 
 function queueStartupDocuments() {
@@ -519,8 +483,6 @@ async function main() {
   }
   traceLaunch('main:single-instance-lock', 'granted');
 
-  app.setName(APP_NAME);
-
   app.on('second-instance', (_event, argv) => {
     traceLaunch('app:second-instance', `argv=${JSON.stringify(argv)}`);
     const extraDocs = argv.filter((arg) => /\.(hwp|hwpx)$/i.test(arg));
@@ -555,8 +517,7 @@ async function main() {
 
   await app.whenReady();
   traceLaunch('app:ready');
-  await startRendererServer();
-  traceLaunch('renderer:server-started', `port=${rendererPort}`);
+  app.setAboutPanelOptions?.({ applicationName: APP_NAME });
   await createWindow();
   refreshMenu();
   flushPendingOpenPaths();
@@ -580,6 +541,6 @@ async function main() {
 
 main().catch((error) => {
   console.error('[hwping-electron] failed to start', error);
-  dialog.showErrorBox('Hwping Electron 시작 실패', String(error));
+  dialog.showErrorBox(`${APP_NAME} 시작 실패`, String(error));
   app.quit();
 });

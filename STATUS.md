@@ -4,7 +4,7 @@ This document tracks current operational truth.
 
 ## Snapshot
 
-- Last updated: `2026-04-20`
+- Last updated: `2026-04-21`
 - Overall posture: `active`
 - Current focus: validate the Chrome packaging path and the phase 1 `Hwping.app` wrapper while continuing the shared-engine boundary work
 - Highest-priority blocker: Chrome runtime smoke coverage, `Hwping.app` bundle validation, native menu synchronization, and Quick Look preview/thumbnail integration are still finishing work
@@ -13,7 +13,7 @@ This document tracks current operational truth.
 
 ## Current State Summary
 
-Hwping has completed the Cargo workspace split and the initial typed facade and FFI boundary work. As of 2026-04-20, the repository has shifted to a Chrome-packaging and Electron-first desktop rollout, the `rhwp-chrome/` browser-extension surface is restored from upstream, the Chrome packaging path builds end-to-end, the Electron package now emits a local `dist/Hwping.app` bundle that hosts the shared renderer through a local HTTP server and preload bridge, and the Quick Look support layer is scaffolded under `extensions/hwping-ql-support/`. The native macOS shell remains the later phase 2 implementation work.
+Hwping has completed the Cargo workspace split and the initial typed facade and FFI boundary work. As of 2026-04-21, the repository has shifted to a Chrome-packaging and Electron-first desktop rollout, the `rhwp-chrome/` browser-extension surface is restored from upstream, the Chrome packaging path builds end-to-end, the Electron package now emits a local `dist/Hwping.app` bundle that launches through a thin `Hwping` shell wrapper into the packaged Electron binary, loads the shared renderer from the bundled app directory, and the Quick Look support layer is scaffolded under `extensions/hwping-ql-support/`. The native macOS shell remains the later phase 2 implementation work.
 
 ## Active Phases Or Tracks
 
@@ -63,6 +63,18 @@ Hwping has completed the Cargo workspace split and the initial typed facade and 
 
 ## Recent Changes To Project Reality
 
+- Date: `2026-04-21`
+  - Change: the native app menu labels are now locale-aware, defaulting to the detected system language with Korean preserved as the default path and English available through the same translation table; the app menu shell actions are now explicit app actions instead of localized macOS role text
+  - Why it matters: Korean users keep Korean menu labels, English locales get English labels, and the macOS app menu no longer depends on system-localized role text for the core shell actions
+  - Related ids: `DEC-20260420-003`
+- Date: `2026-04-21`
+  - Change: the Hwping launcher was simplified into a thin shell wrapper that execs the packaged Electron binary directly, the renderer now loads from the bundled app directory instead of a localhost server, and the icon asset path was adjusted so the packaged build stays file-backed and Finder-safe
+  - Why it matters: the phase-1 `Hwping.app` bundle now starts reliably from Finder without depending on the copied Chromium runtime layout, and the renderer packaging no longer depends on a local HTTP service at launch
+  - Related ids: `DEC-20260420-003`
+- Date: `2026-04-21`
+  - Change: the Electron wrapper bundle was reworked to launch from a copied `Hwping` executable inside `Hwping.app`, the app identity now shows as `Hwping` instead of `Electron`, the native app menu keeps the About action routed into the shared about dialog, the undo/dirty-state baseline now clears correctly when the document returns to its saved state, and the preferences dialog now has English strings
+  - Why it matters: the phase-1 desktop wrapper now behaves like a real Hwping app instead of a renamed Electron shell, and the title/dirty-state behavior matches what users expect from a normal desktop document app
+  - Related ids: `DEC-20260420-003`
 - Date: `2026-04-20`
   - Change: product direction shifted to a Chrome-packaging and Electron-first desktop rollout, `rhwp-chrome/`, `rhwp-studio/`, and `web/fonts/` were restored from upstream, the Chrome packaging path now builds successfully, `apps/hwping-electron/` now emits a local `Hwping.app` bundle, and the Quick Look support package was scaffolded under `extensions/hwping-ql-support/`
   - Why it matters: Hwping now has an explicit browser ship target, a shippable desktop wrapper, and a phase-1 Quick Look companion path before the native macOS shell, so the remaining work can be sequenced instead of defining the whole product

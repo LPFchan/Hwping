@@ -1,10 +1,176 @@
-const cmd = (commandId, label, options = {}) => ({ commandId, label, ...options });
+const MENU_LABEL_TRANSLATIONS = {
+  '파일': 'File',
+  '편집': 'Edit',
+  '보기': 'View',
+  '입력': 'Insert',
+  '서식': 'Format',
+  '쪽': 'Page',
+  '표': 'Table',
+  'Hwping 정보': 'About Hwping',
+  '환경 설정…': 'Preferences…',
+  'Hwping 숨기기': 'Hide Hwping',
+  '다른 앱 숨기기': 'Hide Others',
+  '모두 보기': 'Show All',
+  'Hwping 종료': 'Quit Hwping',
+  '새로 만들기': 'New',
+  '열기': 'Open',
+  '최근 문서': 'Open Recent',
+  '최근 문서 없음': 'No Recent Documents',
+  '저장': 'Save',
+  '편집 용지': 'Page Setup...',
+  '인쇄': 'Print',
+  '되돌리기': 'Undo',
+  '다시 실행': 'Redo',
+  '오려 두기': 'Cut',
+  '복사하기': 'Copy',
+  '붙이기': 'Paste',
+  '모양 복사': 'Copy Formatting',
+  '지우기': 'Delete',
+  '모두 선택': 'Select All',
+  '찾기': 'Find',
+  '찾아 바꾸기': 'Replace',
+  '다시 찾기': 'Find Again',
+  '찾아가기': 'Go To...',
+  '누름틀 고치기': 'Edit Field',
+  '누름틀 지우기': 'Remove Field',
+  '확대': 'Zoom In',
+  '축소': 'Zoom Out',
+  '배율': 'Zoom',
+  '쪽 맞춤': 'Fit Page',
+  '폭 맞춤': 'Fit Width',
+  '조판 부호': 'Show Control Codes',
+  '문단 부호': 'Show Paragraph Marks',
+  '투명 선': 'Transparent Border',
+  '잘림 보기': 'Clip to Page',
+  '격자 설정': 'Grid Settings',
+  '도구 상자': 'Toolbox',
+  '기본': 'Basic',
+  '서식': 'Format',
+  '도형': 'Shapes',
+  '그림': 'Picture',
+  '글상자': 'Text Box',
+  '필드 입력': 'Insert Field',
+  '왼쪽 위': 'Top Left',
+  '왼쪽 가운데': 'Middle Left',
+  '왼쪽 아래': 'Bottom Left',
+  '오른쪽 위': 'Top Right',
+  '오른쪽 가운데': 'Middle Right',
+  '오른쪽 아래': 'Bottom Right',
+  '아래': 'Bottom',
+  '문단 띠': 'Paragraph Band',
+  '주석': 'Comment',
+  '각주': 'Footnote',
+  '미주': 'Endnote',
+  '문자표': 'Character Map',
+  '하이퍼링크': 'Hyperlink',
+  '책갈피': 'Bookmark',
+  '회전/대칭': 'Rotate / Flip',
+  '오른쪽 90° 회전': 'Rotate 90° Right',
+  '왼쪽 90° 회전': 'Rotate 90° Left',
+  '좌우 대칭': 'Flip Horizontally',
+  '상하 대칭': 'Flip Vertically',
+  '개체 속성': 'Object Properties',
+  '수식 편집': 'Edit Equation',
+  '진하게': 'Bold',
+  '기울임': 'Italic',
+  '밑줄': 'Underline',
+  '글자 모양': 'Character Shape',
+  '문단 모양': 'Paragraph Shape',
+  '문단 번호 모양': 'Paragraph Number Shape',
+  '글머리표 모양': 'Bullet Shape',
+  '한 수준 증가': 'Increase Level',
+  '한 수준 감소': 'Decrease Level',
+  '글자 크기 크게': 'Increase Font Size',
+  '글자 크기 작게': 'Decrease Font Size',
+  '왼쪽 정렬': 'Align Left',
+  '가운데 정렬': 'Align Center',
+  '오른쪽 정렬': 'Align Right',
+  '양쪽 정렬': 'Justify',
+  '배분 정렬': 'Distribute',
+  '줄 간격 늘림': 'Increase Line Spacing',
+  '줄 간격 줄임': 'Decrease Line Spacing',
+  '스타일': 'Style',
+  '양쪽': 'Both Pages',
+  '홀수 쪽': 'Odd Pages',
+  '짝수 쪽': 'Even Pages',
+  '머리말': 'Header',
+  '머리말 편집...': 'Edit Header...',
+  '꼬리말': 'Footer',
+  '꼬리말 편집...': 'Edit Footer...',
+  '머리말/꼬리말 닫기': 'Close Header/Footer',
+  '머리말/꼬리말 삭제': 'Delete Header/Footer',
+  '이전 머리말/꼬리말': 'Previous Header/Footer',
+  '다음 머리말/꼬리말': 'Next Header/Footer',
+  '머리말/꼬리말 현재 쪽 감추기': 'Hide Header/Footer on Current Page',
+  '새 번호로 시작': 'Restart Numbering',
+  '현재 쪽만 감추기': 'Hide This Page Only',
+  '쪽 나누기': 'Page Break',
+  '단 나누기': 'Column Break',
+  '단': 'Columns',
+  '하나': 'One',
+  '둘': 'Two',
+  '셋': 'Three',
+  '왼쪽': 'Left',
+  '오른쪽': 'Right',
+  '다단 설정': 'Column Settings',
+  '구역 설정': 'Section Settings',
+  '표 만들기': 'Create Table',
+  '표/셀 속성': 'Table / Cell Properties',
+  '셀 테두리/배경': 'Cell Border / Background',
+  '각 셀마다 적용': 'Apply to Each Cell',
+  '하나의 셀처럼 적용': 'Apply as Single Cell',
+  '위쪽에 줄 추가하기': 'Insert Row Above',
+  '아래쪽에 줄 추가하기': 'Insert Row Below',
+  '왼쪽에 칸 추가하기': 'Insert Column Left',
+  '오른쪽에 칸 추가하기': 'Insert Column Right',
+  '줄 지우기': 'Delete Row',
+  '칸 지우기': 'Delete Column',
+  '셀 나누기': 'Split Cell',
+  '셀 합치기': 'Merge Cells',
+  '셀 높이를 같게': 'Equalize Cell Height',
+  '셀 너비를 같게': 'Equalize Cell Width',
+  '계산식': 'Formula',
+  '블록 계산식': 'Block Formula',
+  '블록 합계': 'Block Sum',
+  '블록 평균': 'Block Average',
+  '블록 곱': 'Block Product',
+  '1,000 단위 구분 쉼표': 'Thousands Separator',
+  '자릿점 넣기': 'Insert Decimal Separator',
+  '자릿점 빼기': 'Remove Decimal Separator',
+};
+
+function resolveMenuLanguage() {
+  const override = process.env.HWPING_MENU_LANGUAGE?.trim().toLowerCase();
+  if (override?.startsWith('en')) return 'en';
+  if (override?.startsWith('ko')) return 'ko';
+
+  const intlLocale = Intl.DateTimeFormat().resolvedOptions().locale?.trim().toLowerCase() ?? '';
+  if (intlLocale.startsWith('en')) return 'en';
+  if (intlLocale.startsWith('ko')) return 'ko';
+
+  const envLocale = process.env.LANG?.trim().toLowerCase() ?? '';
+  if (envLocale.startsWith('en')) return 'en';
+  if (envLocale.startsWith('ko')) return 'ko';
+
+  return 'ko';
+}
+
+const MENU_LANGUAGE = resolveMenuLanguage();
+
+export function translateMenuLabel(label) {
+  if (MENU_LANGUAGE !== 'en') {
+    return label;
+  }
+  return MENU_LABEL_TRANSLATIONS[label] ?? label;
+}
+
+const cmd = (commandId, label, options = {}) => ({ commandId, label: translateMenuLabel(label), ...options });
 const sep = () => ({ type: 'separator' });
-const sub = (label, items) => ({ label, items });
+const sub = (label, items) => ({ label: translateMenuLabel(label), items });
+const appAction = (action, label, options = {}) => ({ type: 'app-action', action, label: translateMenuLabel(label), ...options });
 const recent = () => ({ type: 'recent' });
 
 function hfTemplateItems({ isHeader, applyTo, noun }) {
-  const strong = ' (굵게)';
   const paramsBase = {
     isHeader: String(isHeader),
     applyTo: String(applyTo),
@@ -31,33 +197,33 @@ function hfTemplateItems({ isHeader, applyTo, noun }) {
       params: { ...paramsBase, templateId: '5' },
     }),
     sep(),
-    cmd('page:apply-hf-template', `왼쪽 쪽 번호${strong}`, {
+    cmd('page:apply-hf-template', '왼쪽 쪽 번호 (굵게)', {
       params: { ...paramsBase, templateId: '6' },
     }),
-    cmd('page:apply-hf-template', `가운데 쪽 번호${strong}`, {
+    cmd('page:apply-hf-template', '가운데 쪽 번호 (굵게)', {
       params: { ...paramsBase, templateId: '7' },
     }),
-    cmd('page:apply-hf-template', `오른쪽 쪽 번호${strong}`, {
+    cmd('page:apply-hf-template', '오른쪽 쪽 번호 (굵게)', {
       params: { ...paramsBase, templateId: '8' },
     }),
-    cmd('page:apply-hf-template', `쪽 번호 + 파일 이름${strong}`, {
+    cmd('page:apply-hf-template', '쪽 번호 + 파일 이름 (굵게)', {
       params: { ...paramsBase, templateId: '9' },
     }),
-    cmd('page:apply-hf-template', `파일 이름 + 쪽 번호${strong}`, {
+    cmd('page:apply-hf-template', '파일 이름 + 쪽 번호 (굵게)', {
       params: { ...paramsBase, templateId: '10' },
     }),
   ];
 }
 
 export const desktopAppMenuItems = [
-  cmd('file:about', '제품 정보', { transport: 'main' }),
-  cmd('tool:options', '환경 설정', { accelerator: 'CommandOrControl+,' }),
+  cmd('file:about', 'Hwping 정보', { transport: 'renderer' }),
+  cmd('tool:options', '환경 설정…', { accelerator: 'CommandOrControl+,' }),
   sep(),
-  { role: 'hide' },
-  { role: 'hideOthers' },
-  { role: 'unhide' },
+  appAction('hide', 'Hwping 숨기기'),
+  appAction('hide-others', '다른 앱 숨기기'),
+  appAction('show-all', '모두 보기'),
   sep(),
-  { role: 'quit' },
+  appAction('quit', 'Hwping 종료'),
 ];
 
 export const desktopMenuGroups = [
@@ -71,8 +237,6 @@ export const desktopMenuGroups = [
       sep(),
       cmd('file:page-setup', '편집 용지', { accelerator: 'F7' }),
       cmd('file:print', '인쇄', { accelerator: 'CommandOrControl+P' }),
-      sep(),
-      cmd('file:about', '제품 정보', { transport: 'main' }),
     ],
   },
   {
@@ -284,12 +448,6 @@ export const desktopMenuGroups = [
       cmd('table:thousand-sep', '1,000 단위 구분 쉼표'),
       cmd('table:decimal-add', '자릿점 넣기'),
       cmd('table:decimal-remove', '자릿점 빼기'),
-    ],
-  },
-  {
-    label: '도움말',
-    items: [
-      cmd('file:about', '제품 정보', { transport: 'main' }),
     ],
   },
 ];

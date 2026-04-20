@@ -1,5 +1,6 @@
 {
   "name": "hwping-electron",
+  "productName": "Hwping",
   "version": "0.1.0",
   "description": "Hwping Electron desktop shell",
   "license": "MIT",

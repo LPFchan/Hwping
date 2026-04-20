@@ -30,6 +30,7 @@ import {
   type ElectronOpenDocumentPayload,
   type ElectronMenuCommandPayload,
 } from '@/command/file-system-access';
+import { initializeThemePreference } from '@/core/theme';
 import type {
   CommandMenuCatalogEntry,
   CommandMenuStateEntry,
@@ -49,6 +50,7 @@ let toolbar: Toolbar | null = null;
 let ruler: Ruler | null = null;
 let desktopBridgeReady = false;
 let documentDirty = false;
+let savedHistoryDepth = 0;
 
 
 // ─── 커맨드 시스템 ─────────────────────────────
@@ -131,6 +133,10 @@ function syncDesktopMenuState(): void {
   desktop.syncMenuState(collectCommandState());
 }
 
+function getHistoryDepth(): number {
+  return inputHandler?.getHistoryDepth() ?? 0;
+}
+
 function getWindowTitle(): string {
   if (wasm.pageCount === 0) return 'Hwping';
   const baseTitle = wasm.fileName?.trim() || 'Hwping';
@@ -142,6 +148,7 @@ function syncWindowTitle(): void {
 }
 
 function markDocumentPristine(): void {
+  savedHistoryDepth = getHistoryDepth();
   documentDirty = false;
   syncWindowTitle();
 }
@@ -149,6 +156,16 @@ function markDocumentPristine(): void {
 function markDocumentDirty(): void {
   if (wasm.pageCount === 0) return;
   documentDirty = true;
+  syncWindowTitle();
+}
+
+function syncDocumentDirtyFromHistory(): void {
+  if (wasm.pageCount === 0) {
+    documentDirty = false;
+    syncWindowTitle();
+    return;
+  }
+  documentDirty = getHistoryDepth() !== savedHistoryDepth;
   syncWindowTitle();
 }
 
@@ -193,6 +210,7 @@ function syncDesktopMenuStateIfReady(): void {
 async function initialize(): Promise<void> {
   const msg = sbMessage();
   try {
+    await initializeThemePreference();
     setupDesktopBridge();
     syncWindowTitle();
     msg.textContent = '웹폰트 로딩 중...';
@@ -643,8 +661,15 @@ eventBus.on('open-document-bytes', async (payload) => {
 eventBus.on('command-state-changed', () => {
   syncDesktopMenuStateIfReady();
 });
-eventBus.on('document-modified', () => {
-  markDocumentDirty();
+eventBus.on('document-modified', (payload) => {
+  const meta = payload as { undoable?: boolean } | undefined;
+  if (!meta?.undoable) {
+    markDocumentDirty();
+  }
+  syncDesktopMenuStateIfReady();
+});
+eventBus.on('document-history-changed', () => {
+  syncDocumentDirtyFromHistory();
   syncDesktopMenuStateIfReady();
 });
 eventBus.on('document-saved', () => {
@@ -652,6 +677,7 @@ eventBus.on('document-saved', () => {
   syncDesktopMenuStateIfReady();
 });
 eventBus.on('document-changed', () => {
+  syncDocumentDirtyFromHistory();
   syncDesktopMenuStateIfReady();
 });
 eventBus.on('table-object-selection-changed', () => {
