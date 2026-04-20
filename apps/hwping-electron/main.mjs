@@ -4,6 +4,7 @@ import { readFile, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { basename, dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { desktopAppMenuItems, desktopMenuGroups } from './menu-model.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RENDERER_ROOT = resolve(__dirname, 'dist', 'renderer');
@@ -16,6 +17,8 @@ let rendererPort = 0;
 let rendererServer = null;
 const pendingOpenPaths = [];
 const recentDocuments = [];
+const commandCatalog = new Map();
+const commandState = new Map();
 
 function ensureRendererBuilt() {
   const indexHtml = resolve(RENDERER_ROOT, 'index.html');
@@ -53,6 +56,89 @@ function safeResolveRendererPath(requestPath) {
   const resolved = resolve(RENDERER_ROOT, relative);
   if (resolved !== RENDERER_ROOT && !resolved.startsWith(RENDERER_ROOT + sep)) return null;
   return resolved;
+}
+
+function getCatalogEntry(commandId) {
+  return commandCatalog.get(commandId) ?? null;
+}
+
+function getCommandLabel(commandId) {
+  return getCatalogEntry(commandId)?.label ?? commandId;
+}
+
+function getCommandShortcutLabel(commandId) {
+  return getCatalogEntry(commandId)?.shortcutLabel ?? null;
+}
+
+function isCommandEnabled(commandId) {
+  if (!commandState.has(commandId)) return true;
+  return Boolean(commandState.get(commandId));
+}
+
+function menuLabelForCommand(commandId, accelerator) {
+  const label = getCommandLabel(commandId);
+  const shortcutLabel = getCommandShortcutLabel(commandId);
+  if (!accelerator && shortcutLabel) {
+    return `${label}\t${shortcutLabel}`;
+  }
+  return label;
+}
+
+function buildCommandMenuItem(commandId, extras = {}) {
+  const item = {
+    label: menuLabelForCommand(commandId, extras.accelerator),
+    enabled: isCommandEnabled(commandId),
+    click: () => sendMenuCommand(commandId),
+    ...extras,
+  };
+  if (extras.accelerator) {
+    item.accelerator = extras.accelerator;
+  }
+  return item;
+}
+
+function buildAppMenuTemplate() {
+  return {
+    label: app.getName(),
+    submenu: desktopAppMenuItems.map((item) => {
+      if (item.type === 'separator') return { type: 'separator' };
+      if (item.role) return { role: item.role };
+      if (item.commandId) return buildCommandMenuItem(item.commandId);
+      return { type: 'separator' };
+    }),
+  };
+}
+
+function buildRecentDocumentsSubmenu() {
+  if (recentDocuments.length === 0) {
+    return [{ label: '최근 문서 없음', enabled: false }];
+  }
+
+  return recentDocuments.map((filePath) => ({
+    label: basename(filePath),
+    click: () => void openPathInRenderer(filePath),
+  }));
+}
+
+function buildNestedMenuItems(items) {
+  return items.map((item) => {
+    if (item.type === 'separator') {
+      return { type: 'separator' };
+    }
+    if (item.type === 'recent') {
+      return { label: '최근 문서', submenu: buildRecentDocumentsSubmenu() };
+    }
+    if (item.role) {
+      return { role: item.role };
+    }
+    if (item.items) {
+      return {
+        label: item.label,
+        submenu: buildNestedMenuItems(item.items),
+      };
+    }
+    return buildCommandMenuItem(item.commandId, item);
+  });
 }
 
 async function startRendererServer() {
@@ -103,71 +189,14 @@ async function startRendererServer() {
 }
 
 function buildMenuTemplate() {
-  return [
-    {
-      label: '파일',
-      submenu: [
-        {
-          label: '열기...',
-          accelerator: 'CmdOrCtrl+O',
-          click: () => sendMenuCommand('file:open'),
-        },
-        {
-          label: '저장',
-          accelerator: 'CmdOrCtrl+S',
-          click: () => sendMenuCommand('file:save'),
-        },
-        {
-          label: '인쇄',
-          accelerator: 'CmdOrCtrl+P',
-          click: () => sendMenuCommand('file:print'),
-        },
-        { type: 'separator' },
-        {
-          label: '최근 문서',
-          submenu: buildRecentDocumentsSubmenu(),
-        },
-        { type: 'separator' },
-        {
-          label: '종료',
-          accelerator: 'CmdOrCtrl+Q',
-          click: () => app.quit(),
-        },
-      ],
-    },
-    {
-      label: '편집',
-      submenu: [
-        { role: 'undo', label: '되돌리기' },
-        { role: 'redo', label: '다시 실행' },
-        { type: 'separator' },
-        { role: 'cut', label: '오려 두기' },
-        { role: 'copy', label: '복사하기' },
-        { role: 'paste', label: '붙이기' },
-        { role: 'selectAll', label: '모두 선택' },
-      ],
-    },
-    {
-      label: '도움말',
-      submenu: [
-        {
-          label: '제품 정보',
-          click: () => sendMenuCommand('file:about'),
-        },
-      ],
-    },
-  ];
-}
-
-function buildRecentDocumentsSubmenu() {
-  if (recentDocuments.length === 0) {
-    return [{ label: '최근 문서 없음', enabled: false }];
+  const template = [buildAppMenuTemplate()];
+  for (const group of desktopMenuGroups) {
+    template.push({
+      label: group.label,
+      submenu: buildNestedMenuItems(group.items),
+    });
   }
-
-  return recentDocuments.map((filePath) => ({
-    label: basename(filePath),
-    click: () => void openPathInRenderer(filePath),
-  }));
+  return template;
 }
 
 function refreshMenu() {
@@ -298,6 +327,24 @@ function setupIpc() {
     await writeFile(filePath, Buffer.from(bytes));
     addRecentDocument(filePath);
     return true;
+  });
+
+  ipcMain.on('hwping:menu-catalog', (_event, catalog = []) => {
+    commandCatalog.clear();
+    for (const entry of catalog) {
+      if (!entry?.id) continue;
+      commandCatalog.set(entry.id, entry);
+    }
+    refreshMenu();
+  });
+
+  ipcMain.on('hwping:menu-state', (_event, state = []) => {
+    commandState.clear();
+    for (const entry of state) {
+      if (!entry?.id) continue;
+      commandState.set(entry.id, Boolean(entry.enabled));
+    }
+    refreshMenu();
   });
 
   ipcMain.on('hwping:renderer-ready', () => {

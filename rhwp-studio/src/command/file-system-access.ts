@@ -19,6 +19,17 @@ export interface ElectronOpenDocumentPayload extends ElectronFileDialogResult {
   bytes: Uint8Array | ArrayBuffer;
 }
 
+export interface ElectronMenuCatalogEntry {
+  id: string;
+  label: string;
+  shortcutLabel?: string;
+}
+
+export interface ElectronMenuStateEntry {
+  id: string;
+  enabled: boolean;
+}
+
 export interface ElectronDesktopBridge {
   openFileDialog?: (options?: {
     excludeAcceptAllOption?: boolean;
@@ -33,6 +44,8 @@ export interface ElectronDesktopBridge {
   writeFile?: (filePath: string, data: Uint8Array) => Promise<void>;
   onMenuCommand?: (listener: (command: string) => void) => () => void;
   onOpenDocument?: (listener: (payload: ElectronOpenDocumentPayload) => void) => () => void;
+  syncMenuCatalog?: (catalog: ElectronMenuCatalogEntry[]) => void;
+  syncMenuState?: (state: ElectronMenuStateEntry[]) => void;
   ready?: () => void;
 }
 
@@ -47,6 +60,12 @@ export interface FileSystemWindowLike {
     types?: { description: string; accept: Record<string, string[]> }[];
   }) => Promise<FileSystemFileHandleLike>;
   hwpingDesktop?: ElectronDesktopBridge;
+}
+
+declare global {
+  interface Window {
+    hwpingDesktop?: ElectronDesktopBridge;
+  }
 }
 
 export interface FileHandleReadResult {

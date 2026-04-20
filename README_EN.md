@@ -5,8 +5,8 @@
 <h1 align="center">Hwping</h1>
 
 <p align="center">
-  <strong>Downstream fork for a Chrome-packaged HWP product with an Electron-first desktop shell</strong><br/>
-  <em>Tracks upstream `rhwp` while keeping the Chrome extension, Electron shell, and macOS companion surfaces Hwping actually needs.</em>
+  <strong>Downstream fork for a Chrome-packaged HWP product with a shippable `Hwping.app` wrapper</strong><br/>
+  <em>Tracks upstream `rhwp` while keeping the Chrome extension, Electron wrapper, and macOS companion surfaces Hwping actually needs.</em>
 </p>
 
 <p align="center">
@@ -20,9 +20,9 @@ Hwping is a Chrome-packaged downstream fork that tracks upstream `rhwp`.
 This repository has two goals.
 
 - Keep the HWP/HWPX engine syncable with upstream
-- Ship the Chrome extension as the first browser surface, ship Electron as the first desktop shell, and keep macOS companion integrations small and focused
+- Ship the Chrome extension as the first browser surface, ship Electron as the phase-1 `Hwping.app` wrapper, and keep macOS companion integrations small and focused
 
-This fork still does not treat the web demo, npm distribution, or VS Code extension as first-class deliverables. The repository now includes the `rhwp-chrome/` browser-extension surface and the `apps/hwping-electron/` desktop shell as active ship targets, plus the structure needed for the companion macOS product layers.
+This fork still does not treat the web demo, npm distribution, or VS Code extension as first-class deliverables. The repository now includes the `rhwp-chrome/` browser-extension surface and the `apps/hwping-electron/` `Hwping.app` wrapper as active ship targets, plus the structure needed for the companion macOS product layers.
 
 For the current direction, see [PLANS.md](PLANS.md) and [DEC-20260420-002-electron-first-desktop-rollout-with-chrome-packaging.md](records/decisions/DEC-20260420-002-electron-first-desktop-rollout-with-chrome-packaging.md).
 
@@ -34,7 +34,8 @@ For the current direction, see [PLANS.md](PLANS.md) and [DEC-20260420-002-electr
 - HWP serialization plus PDF/SVG export paths
 - CLI-based debugging tools and regression samples
 - Chrome extension packaging and browser-reader surface work
-- Electron desktop shell packaging and browser-reader surface work
+- Electron `Hwping.app` wrapper packaging and browser-reader surface work
+- Quick Look preview/thumbnail support work
 - macOS file integration, Quick Look, Finder, and menu bar companion work
 
 ## Quick Start
@@ -89,8 +90,8 @@ crates/rhwp/src/
 crates/hwping-core/   app-facing facade boundary
 crates/hwping-ffi/    Swift-facing FFI boundary
 rhwp-chrome/          browser-extension product surface
-apps/hwping-electron/ Electron desktop shell
-apps/hwping-macos/    native macOS shell
+apps/hwping-electron/ Electron `Hwping.app` wrapper
+apps/hwping-macos/    future native macOS shell
 extensions/           Quick Look and other macOS companion targets
 
 samples/             regression documents

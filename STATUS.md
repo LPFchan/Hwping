@@ -6,14 +6,14 @@ This document tracks current operational truth.
 
 - Last updated: `2026-04-20`
 - Overall posture: `active`
-- Current focus: validate the Chrome packaging path and the phase 1 Electron shell while continuing the shared-engine boundary work
-- Highest-priority blocker: Chrome runtime smoke coverage, Electron runtime smoke coverage, and the native macOS file extension, Quick Look, and menu bar targets are still future work rather than finished product targets
+- Current focus: validate the Chrome packaging path and the phase 1 `Hwping.app` wrapper while continuing the shared-engine boundary work
+- Highest-priority blocker: Chrome runtime smoke coverage, `Hwping.app` bundle validation, native menu synchronization, and Quick Look preview/thumbnail integration are still finishing work
 - Next operator decision needed: none immediately
-- Related decisions: `DEC-20260409-001`, `DEC-20260420-001`, `DEC-20260420-002`
+- Related decisions: `DEC-20260409-001`, `DEC-20260420-001`, `DEC-20260420-002`, `DEC-20260420-003`
 
 ## Current State Summary
 
-Hwping has completed the Cargo workspace split and the initial typed facade and FFI boundary work. As of 2026-04-20, the repository has shifted to a Chrome-packaging and Electron-first desktop rollout, the `rhwp-chrome/` browser-extension surface is restored from upstream, the Chrome packaging path builds end-to-end, the Electron package builds and hosts the shared renderer through a local HTTP server and preload bridge, and the native macOS shell remains phase 2 implementation work.
+Hwping has completed the Cargo workspace split and the initial typed facade and FFI boundary work. As of 2026-04-20, the repository has shifted to a Chrome-packaging and Electron-first desktop rollout, the `rhwp-chrome/` browser-extension surface is restored from upstream, the Chrome packaging path builds end-to-end, the Electron package now emits a local `dist/Hwping.app` bundle that hosts the shared renderer through a local HTTP server and preload bridge, and the Quick Look support layer is scaffolded under `extensions/hwping-ql-support/`. The native macOS shell remains the later phase 2 implementation work.
 
 ## Active Phases Or Tracks
 
@@ -28,27 +28,27 @@ Hwping has completed the Cargo workspace split and the initial typed facade and 
 - Risks: partial adoption would leave competing documentation habits in place
 - Related ids: `DEC-20260409-001`, `LOG-20260410-225424-codex`, `DEC-20260420-002`
 
-### Chrome Packaging And Electron Shell Rollout
+### Chrome Packaging And Hwping.app Wrapper
 
-- Goal: ship `rhwp-chrome/` as the first public browser surface and use `apps/hwping-electron/` as the phase 1 desktop shell
+- Goal: ship `rhwp-chrome/` as the first public browser surface and use `apps/hwping-electron/` as the phase 1 `Hwping.app` wrapper
 - Status: `in progress`
-- Why this matters now: the product direction depends on a browser surface and a thin desktop shell before the native macOS shell fills out
-- Current work: `rhwp-chrome/` has been restored from upstream, `rhwp-studio/` and `web/fonts/` are back in the tree, the Chrome build now runs through `wasm-pack` plus Vite, and `apps/hwping-electron/` now hosts the shared renderer through a local HTTP server plus preload bridge
-- Exit criteria: the Chrome extension can open documents, the Electron shell can open/save/recent/print through shared boundaries, and the next macOS shell phase can reuse the same document outputs
+- Why this matters now: the product direction depends on a browser surface and a shippable desktop wrapper before the native macOS shell fills out
+- Current work: `rhwp-chrome/` has been restored from upstream, `rhwp-studio/` and `web/fonts/` are back in the tree, the Chrome build now runs through `wasm-pack` plus Vite, `apps/hwping-electron/` now emits a local `dist/Hwping.app` bundle, the native app menu is synced from the shared command registry, and `extensions/hwping-ql-support/` now holds fresh Quick Look support code
+- Exit criteria: the Chrome extension can open documents, `Hwping.app` can open/save/recent/print through shared boundaries, the macOS app menu works with native shortcuts, and the Quick Look preview/thumbnail path can reuse the same document outputs
 - Dependencies: shared-core rendering correctness, stable facade design, and continued browser/Electron/macOS boundary discipline
 - Risks: browser-specific or Electron-specific code may drift into engine code if the boundary is not held firmly
-- Related ids: `DEC-20260420-002`
+- Related ids: `DEC-20260420-002`, `DEC-20260420-003`
 
 ### Native macOS Shell Phase 2
 
-- Goal: grow the macOS file integration, Quick Look, Finder, and menu bar surfaces after the Electron shell stabilizes
+- Goal: grow the future native AppKit/SwiftUI shell after the `Hwping.app` wrapper stabilizes
 - Status: `planned`
-- Why this matters now: the operator still wants native macOS entry points, but only after the Chrome and Electron rollout proves out
+- Why this matters now: the operator still wants a native macOS shell, but only after the wrapper proves out
 - Current work: `crates/hwping-core/` and `crates/hwping-ffi/` still exist, and `apps/hwping-macos/ffi-smoke` proves the current FFI path
-- Exit criteria: the macOS companion surfaces can open documents and produce preview output through the shared boundaries
-- Dependencies: phase 1 Electron stabilization, shared-core renderer correctness, stable facade design, and continued upstream alignment
+- Exit criteria: the native shell can open documents and reuse the same shared boundaries without reintroducing product logic into `crates/rhwp/`
+- Dependencies: phase 1 wrapper stabilization, shared-core renderer correctness, stable facade design, and continued upstream alignment
 - Risks: product code may drift into engine code if boundaries are not held firmly
-- Related ids: `DEC-20260409-001`, `DEC-20260409-003`, `DEC-20260409-004`, `DEC-20260420-002`
+- Related ids: `DEC-20260409-001`, `DEC-20260409-003`, `DEC-20260409-004`, `DEC-20260420-003`
 
 ### Upstream Intake Cadence
 
@@ -64,9 +64,9 @@ Hwping has completed the Cargo workspace split and the initial typed facade and 
 ## Recent Changes To Project Reality
 
 - Date: `2026-04-20`
-  - Change: product direction shifted to a Chrome-packaging and Electron-first desktop rollout, `rhwp-chrome/`, `rhwp-studio/`, and `web/fonts/` were restored from upstream, the Chrome packaging path now builds successfully, and `apps/hwping-electron/` now builds successfully too
-  - Why it matters: Hwping now has an explicit browser ship target and a thin desktop shell before the native macOS shell, so the remaining companion work can be sequenced instead of defining the whole product
-  - Related ids: `DEC-20260420-002`
+  - Change: product direction shifted to a Chrome-packaging and Electron-first desktop rollout, `rhwp-chrome/`, `rhwp-studio/`, and `web/fonts/` were restored from upstream, the Chrome packaging path now builds successfully, `apps/hwping-electron/` now emits a local `Hwping.app` bundle, and the Quick Look support package was scaffolded under `extensions/hwping-ql-support/`
+  - Why it matters: Hwping now has an explicit browser ship target, a shippable desktop wrapper, and a phase-1 Quick Look companion path before the native macOS shell, so the remaining work can be sequenced instead of defining the whole product
+  - Related ids: `DEC-20260420-002`, `DEC-20260420-003`
 - Date: `2026-04-05`
   - Change: the repository root became a Cargo workspace and the upstream-aligned engine moved under `crates/rhwp/`
   - Why it matters: this made the downstream product boundary explicit and reduced sync pressure on the engine core
@@ -86,7 +86,11 @@ Hwping has completed the Cargo workspace split and the initial typed facade and 
   - Effect: Hwping can build the new rollout path, but it still needs real browser and desktop validation before it can ship the full product direction
   - Owner: Hwping maintainer
   - Mitigation: keep browser, Electron, and macOS product code outside `crates/rhwp/` and reuse the same document boundary everywhere
-  - Related ids: `DEC-20260420-002`
+- Blocker or risk: `Hwping.app` bundle packaging and Quick Look wrapper glue still need validation
+  - Effect: the repo now has the right shape, but the wrapper and companion pieces still need real runtime smoke checks and any missing Apple-project integration
+  - Owner: Hwping maintainer
+  - Mitigation: validate the bundle on macOS, then finish the thin extension wrappers around `extensions/hwping-ql-support/`
+  - Related ids: `DEC-20260420-003`
 - Blocker or risk: provenance discipline depends on habit until tooling improves
   - Effect: commits or artifacts may drift back into ad hoc patterns if contributors do not use stable IDs and trailers consistently
   - Owner: Hwping maintainer and collaborating agents
@@ -99,14 +103,18 @@ Hwping has completed the Cargo workspace split and the initial typed facade and 
   - Owner: maintainers and orchestrator agents
   - Trigger: the next task that produces durable planning, research, decision, or execution history
   - Related ids: `DEC-20260420-002`
-- Next: smoke the rebuilt Chrome extension in a real browser session and continue the Electron desktop shell work
+- Next: smoke the rebuilt Chrome extension in a real browser session and continue the `Hwping.app` wrapper work
   - Owner: Hwping maintainer
   - Trigger: the next browser-validation pass after packaging
-  - Related ids: `DEC-20260420-002`
-- Next: begin the native macOS shell phase after Electron stabilizes
+  - Related ids: `DEC-20260420-002`, `DEC-20260420-003`
+- Next: finish the thin Quick Look wrappers around `extensions/hwping-ql-support/`
   - Owner: Hwping maintainer
-  - Trigger: the phase 1 Electron rollout proves out
-  - Related ids: `DEC-20260420-002`
+  - Trigger: the phase 1 wrapper proof pass or a later Apple-project scaffold
+  - Related ids: `DEC-20260420-003`
+- Next: begin the native macOS shell phase after the wrapper stabilizes
+  - Owner: Hwping maintainer
+  - Trigger: the phase 1 wrapper proves out
+  - Related ids: `DEC-20260420-003`
 - Next: keep future upstream reviews in `UPS-*` format and update carry-forward notes when a review establishes standing knowledge
   - Owner: maintainers and upstream-intake agents
   - Trigger: the next upstream compare window or sync candidate

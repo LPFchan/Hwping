@@ -19,14 +19,18 @@ contextBridge.exposeInMainWorld('hwpingDesktop', {
   readFile: async (filePath) => ipcRenderer.invoke('hwping:read-file', filePath),
   writeFile: async (filePath, bytes) => ipcRenderer.invoke('hwping:write-file', { filePath, bytes }),
   ready: () => ipcRenderer.send('hwping:renderer-ready'),
+  syncMenuCatalog: (catalog) => ipcRenderer.send('hwping:menu-catalog', catalog),
+  syncMenuState: (state) => ipcRenderer.send('hwping:menu-state', state),
   onMenuCommand: (listener) => {
     const channel = 'hwping:menu-command';
     const handler = (_event, command) => listener(command);
     ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
   },
   onOpenDocument: (listener) => {
     const channel = 'hwping:open-document';
     const handler = (_event, payload) => listener(payload);
     ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
   },
 });

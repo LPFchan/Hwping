@@ -5,8 +5,8 @@
 <h1 align="center">Hwping</h1>
 
 <p align="center">
-  <strong>macOS 중심 HWP 제품을 위한 downstream fork</strong><br/>
-  <em>upstream `rhwp` 엔진을 추적하면서 Hwping에 필요한 코드만 유지합니다.</em>
+  <strong>Chrome 패키지 HWP 제품과 `Hwping.app` 래퍼를 위한 downstream fork</strong><br/>
+  <em>upstream `rhwp` 엔진을 추적하면서 Hwping에 필요한 브라우저, 데스크톱 래퍼, macOS 보조 표면만 유지합니다.</em>
 </p>
 
 <p align="center">
@@ -15,14 +15,14 @@
 
 ---
 
-Hwping은 `rhwp`를 upstream으로 추적하는 macOS 중심 downstream fork입니다.
+Hwping은 `rhwp`를 upstream으로 추적하는 Chrome 패키지 중심 downstream fork입니다.
 
 이 저장소의 목표는 두 가지입니다.
 
 - HWP/HWPX 엔진을 upstream과 계속 sync 가능한 상태로 유지하기
 - Hwping 제품에 직접 필요하지 않은 web, npm, VS Code 표면을 가지치기해서 포크를 가볍게 유지하기
 
-현재 이 저장소는 웹 데모, npm 패키지 배포, VS Code 확장을 기본 제공 대상으로 보지 않습니다. 이 포크는 엔진, CLI, 샘플, 회귀 검증 도구, 그리고 Hwping용 구조 정리에 집중합니다.
+현재 이 저장소는 웹 데모, npm 패키지 배포, VS Code 확장을 기본 제공 대상으로 보지 않습니다. 현재 제품 경로는 `rhwp-chrome/` 브라우저 표면, `apps/hwping-electron/`의 `Hwping.app` 래퍼, 그리고 Quick Look / macOS 보조 표면입니다. 이 포크는 엔진, CLI, 샘플, 회귀 검증 도구, 그리고 Hwping용 구조 정리에 집중합니다.
 
 자세한 방향은 [PLANS.md](PLANS.md)와 [records/decisions/DEC-20260409-005-hwping-repo-boundary-and-upstream-sync-model.md](records/decisions/DEC-20260409-005-hwping-repo-boundary-and-upstream-sync-model.md)를 참조하세요.
 
@@ -33,6 +33,9 @@ Hwping은 `rhwp`를 upstream으로 추적하는 macOS 중심 downstream fork입�
 - 페이지네이션, 머리말/꼬리말, 바탕쪽, 각주 처리
 - HWP 저장기와 PDF/SVG 출력 경로
 - CLI 기반 디버깅 도구와 회귀 검증 샘플
+- Chrome 확장 브라우저 표면
+- `Hwping.app` Electron 래퍼
+- Quick Look 미리보기 / 썸네일 보조 표면
 
 ## 빠른 시작
 
@@ -85,8 +88,8 @@ crates/rhwp/src/
 
 crates/hwping-core/  app-facing facade 경계
 crates/hwping-ffi/   Swift-facing FFI 경계
-apps/hwping-macos/   macOS 앱 타깃 자리 표시자
-extensions/          Quick Look 확장 타깃 자리 표시자
+apps/hwping-macos/   future native macOS shell
+extensions/          Quick Look support and extension targets
 
 samples/             회귀 검증용 문서 샘플
 mydocs/              계획, 보고, 기술 문서

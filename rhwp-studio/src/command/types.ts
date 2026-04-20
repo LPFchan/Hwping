@@ -52,6 +52,19 @@ export interface CommandDef {
   execute: (services: CommandServices, params?: Record<string, unknown>) => void;
 }
 
+/** Electron 앱 메뉴 동기화용 커맨드 카탈로그 항목 */
+export interface CommandMenuCatalogEntry {
+  id: string;
+  label: string;
+  shortcutLabel?: string;
+}
+
+/** Electron 앱 메뉴 동기화용 커맨드 상태 항목 */
+export interface CommandMenuStateEntry {
+  id: string;
+  enabled: boolean;
+}
+
 /** 커맨드 execute()에 주입되는 서비스 */
 export interface CommandServices {
   eventBus: EventBus;

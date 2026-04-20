@@ -29,6 +29,10 @@ import {
   createElectronFileHandle,
   type ElectronOpenDocumentPayload,
 } from '@/command/file-system-access';
+import type {
+  CommandMenuCatalogEntry,
+  CommandMenuStateEntry,
+} from '@/command/types';
 
 const wasm = new WasmBridge();
 const eventBus = new EventBus();
@@ -42,6 +46,7 @@ let canvasView: CanvasView | null = null;
 let inputHandler: InputHandler | null = null;
 let toolbar: Toolbar | null = null;
 let ruler: Ruler | null = null;
+let desktopBridgeReady = false;
 
 
 // ─── 커맨드 시스템 ─────────────────────────────
@@ -92,9 +97,44 @@ const sbPage = () => document.getElementById('sb-page')!;
 const sbSection = () => document.getElementById('sb-section')!;
 const sbZoomVal = () => document.getElementById('sb-zoom-val')!;
 
+function collectCommandCatalog(): CommandMenuCatalogEntry[] {
+  return registry.getAllIds().map((id) => {
+    const def = registry.get(id);
+    return {
+      id,
+      label: def?.label ?? id,
+      shortcutLabel: def?.shortcutLabel,
+    };
+  });
+}
+
+function collectCommandState(): CommandMenuStateEntry[] {
+  return registry.getAllIds().map((id) => ({
+    id,
+    enabled: dispatcher.isEnabled(id),
+  }));
+}
+
+function syncDesktopMenuCatalog(): void {
+  if (!desktopBridgeReady) return;
+  const desktop = window.hwpingDesktop;
+  if (!desktop?.syncMenuCatalog) return;
+  desktop.syncMenuCatalog(collectCommandCatalog());
+}
+
+function syncDesktopMenuState(): void {
+  if (!desktopBridgeReady) return;
+  const desktop = window.hwpingDesktop;
+  if (!desktop?.syncMenuState) return;
+  desktop.syncMenuState(collectCommandState());
+}
+
 function setupDesktopBridge(): void {
   const desktop = window.hwpingDesktop;
   if (!desktop) return;
+
+  desktopBridgeReady = true;
+  document.body?.classList.add('desktop-shell');
 
   desktop.onMenuCommand?.((command) => {
     dispatcher.dispatch(command);
@@ -111,7 +151,14 @@ function setupDesktopBridge(): void {
     void loadBytes(bytes, payload.name, fileHandle);
   });
 
+  syncDesktopMenuCatalog();
+  syncDesktopMenuState();
   desktop.ready?.();
+}
+
+function syncDesktopMenuStateIfReady(): void {
+  if (!desktopBridgeReady) return;
+  syncDesktopMenuState();
 }
 
 async function initialize(): Promise<void> {
@@ -454,6 +501,7 @@ async function initializeDocument(docInfo: DocumentInfo, displayName: string): P
     console.log('[initDoc] 7. inputHandler activateWithCaretPosition');
     inputHandler?.activateWithCaretPosition();
     console.log('[initDoc] 8. 완료');
+    syncDesktopMenuState();
 
     // #177: HWPX 비표준 lineseg 감지 → 경고 있으면 모달로 사용자 선택 요청
     try {
@@ -557,6 +605,18 @@ eventBus.on('open-document-bytes', async (payload) => {
     fileHandle: typeof wasm.currentFileHandle;
   };
   await loadBytes(data.bytes, data.fileName, data.fileHandle);
+});
+eventBus.on('command-state-changed', () => {
+  syncDesktopMenuStateIfReady();
+});
+eventBus.on('document-changed', () => {
+  syncDesktopMenuStateIfReady();
+});
+eventBus.on('table-object-selection-changed', () => {
+  syncDesktopMenuStateIfReady();
+});
+eventBus.on('picture-object-selection-changed', () => {
+  syncDesktopMenuStateIfReady();
 });
 
 // 수식 더블클릭 → 수식 편집 대화상자
