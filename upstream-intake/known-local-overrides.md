@@ -16,13 +16,21 @@ Only record stable, intentional divergences here. Do not use this file for tempo
 
 ## Current Entries
 
-- Area: Product-surface pruning
-- Local surface: `apps/hwping-macos/`, `extensions/`, `crates/hwping-core/`, `crates/hwping-ffi/`, and the absence of web, npm, browser-only, and VS Code distribution paths in the main product direction
-- Upstream surface: upstream web demo, npm packages, browser-only workflows, and VS Code distribution surfaces
-- Why the fork diverged: Hwping is a macOS-focused downstream fork that keeps only the code and docs needed for engine maintenance and the native product surface.
-- Collision rule to apply during intake: decline changes that only restore removed upstream product surfaces; adapt shared engine improvements without reintroducing those surfaces.
-- Revisit trigger: an explicit Hwping product decision to restore a non-macOS product surface
-- Related decision record: [../records/decisions/DEC-20260409-005-hwping-repo-boundary-and-upstream-sync-model.md](../records/decisions/DEC-20260409-005-hwping-repo-boundary-and-upstream-sync-model.md)
+- Area: Chrome-packaged browser surface and Electron shell rollout
+- Local surface: `rhwp-chrome/`, `apps/hwping-electron/`, browser-led reader surface work, and companion macOS integrations in `apps/` and `extensions/`
+- Upstream surface: upstream Chrome and Firefox extension packages plus browser-facing reader docs
+- Why the fork diverged: Hwping now wants Chrome as the browser lane, Electron as phase 1 desktop shell, and native macOS as phase 2. Firefox is deferred unless the operator reopens it later.
+- Collision rule to apply during intake: accept and adapt Chrome-extension and Electron-shell-adjacent renderer work into the main tree; defer Firefox-only browser surface work; decline unrelated upstream browser products such as web demo hosting, npm distribution, or VS Code surfaces unless the operator explicitly changes scope again.
+- Revisit trigger: another product-direction reversal
+- Related decision record: [../records/decisions/DEC-20260420-002-electron-first-desktop-rollout-with-chrome-packaging.md](../records/decisions/DEC-20260420-002-electron-first-desktop-rollout-with-chrome-packaging.md)
+
+- Area: Deferred Firefox extension surface
+- Local surface: `rhwp-firefox/`
+- Upstream surface: upstream Firefox extension package and browser-facing reader docs
+- Why the fork diverged: Hwping is not shipping Firefox as an active browser lane in the current rollout.
+- Collision rule to apply during intake: hold Firefox-only surface changes unless the operator reopens Firefox as a supported lane.
+- Revisit trigger: operator reopens Firefox as an active browser target
+- Related decision record: [../records/decisions/DEC-20260420-002-electron-first-desktop-rollout-with-chrome-packaging.md](../records/decisions/DEC-20260420-002-electron-first-desktop-rollout-with-chrome-packaging.md)
 
 - Area: Engine relocation inside a Cargo workspace
 - Local surface: `crates/rhwp/` as the upstream-aligned engine subtree inside the Hwping workspace

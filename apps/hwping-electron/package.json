@@ -1,0 +1,19 @@
+{
+  "name": "hwping-electron",
+  "version": "0.1.0",
+  "description": "Hwping Electron desktop shell",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "main.mjs",
+  "scripts": {
+    "build": "node build.mjs",
+    "clean": "rm -rf dist",
+    "dev": "electron .",
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "vite": "^8.0.8"
+  }
+}

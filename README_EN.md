@@ -5,8 +5,8 @@
 <h1 align="center">Hwping</h1>
 
 <p align="center">
-  <strong>Downstream fork for a macOS-focused HWP product</strong><br/>
-  <em>Tracks upstream `rhwp` while keeping only the code Hwping actually needs.</em>
+  <strong>Downstream fork for a Chrome-packaged HWP product with an Electron-first desktop shell</strong><br/>
+  <em>Tracks upstream `rhwp` while keeping the Chrome extension, Electron shell, and macOS companion surfaces Hwping actually needs.</em>
 </p>
 
 <p align="center">
@@ -15,16 +15,16 @@
 
 ---
 
-Hwping is a macOS-focused downstream fork that tracks upstream `rhwp`.
+Hwping is a Chrome-packaged downstream fork that tracks upstream `rhwp`.
 
 This repository has two goals.
 
 - Keep the HWP/HWPX engine syncable with upstream
-- Prune web, npm, and VS Code product surfaces that are not required to build Hwping
+- Ship the Chrome extension as the first browser surface, ship Electron as the first desktop shell, and keep macOS companion integrations small and focused
 
-This fork no longer treats the web demo, npm distribution, or VS Code extension as first-class deliverables. The repository is being narrowed to the engine, CLI tools, regression assets, and the structure needed for the Hwping product layers.
+This fork still does not treat the web demo, npm distribution, or VS Code extension as first-class deliverables. The repository now includes the `rhwp-chrome/` browser-extension surface and the `apps/hwping-electron/` desktop shell as active ship targets, plus the structure needed for the companion macOS product layers.
 
-For the current direction, see [PLANS.md](PLANS.md) and [DEC-20260409-005-hwping-repo-boundary-and-upstream-sync-model.md](records/decisions/DEC-20260409-005-hwping-repo-boundary-and-upstream-sync-model.md).
+For the current direction, see [PLANS.md](PLANS.md) and [DEC-20260420-002-electron-first-desktop-rollout-with-chrome-packaging.md](records/decisions/DEC-20260420-002-electron-first-desktop-rollout-with-chrome-packaging.md).
 
 ## Current Scope
 
@@ -33,6 +33,9 @@ For the current direction, see [PLANS.md](PLANS.md) and [DEC-20260409-005-hwping
 - Pagination, header/footer, master page, and footnote handling
 - HWP serialization plus PDF/SVG export paths
 - CLI-based debugging tools and regression samples
+- Chrome extension packaging and browser-reader surface work
+- Electron desktop shell packaging and browser-reader surface work
+- macOS file integration, Quick Look, Finder, and menu bar companion work
 
 ## Quick Start
 
@@ -83,10 +86,12 @@ crates/rhwp/src/
   serializer/        HWP writer
   wasm_api.rs        engine binding layer
 
-crates/hwping-core/  app-facing facade boundary
-crates/hwping-ffi/   Swift-facing FFI boundary
-apps/hwping-macos/   placeholder for the future macOS app target
-extensions/          placeholder Quick Look extension targets
+crates/hwping-core/   app-facing facade boundary
+crates/hwping-ffi/    Swift-facing FFI boundary
+rhwp-chrome/          browser-extension product surface
+apps/hwping-electron/ Electron desktop shell
+apps/hwping-macos/    native macOS shell
+extensions/           Quick Look and other macOS companion targets
 
 samples/             regression documents
 mydocs/              plans, reports, and technical notes
@@ -99,7 +104,7 @@ The root workspace now hosts multiple crates. The upstream-aligned engine crate 
 
 - Treat engine changes as upstreamable by default unless proven otherwise.
 - Keep Hwping-only product code out of the upstream-aligned engine core.
-- Do not mix AppKit, SwiftUI, Quick Look, or Finder integration into engine internals.
+- Do not mix browser-extension, Electron, AppKit, SwiftUI, Quick Look, or Finder integration into engine internals.
 - Web, npm, and VS Code surfaces that already exist upstream are not default preservation targets in this fork.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow details.

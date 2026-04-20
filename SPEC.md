@@ -10,45 +10,44 @@ It is not the implementation-status report or milestone tracker. Current state l
 - Canonical repo: `https://github.com/LPFchan/Hwping`
 - Project id: `hwping`
 - Operator: `LPFchan`
-- Last updated: `2026-04-10`
-- Key decisions: `DEC-20260409-001`, `DEC-20260409-002`, `DEC-20260409-003`, `DEC-20260409-004`, `DEC-20260409-005`
+- Last updated: `2026-04-20`
+- Key decisions: `DEC-20260409-001`, `DEC-20260409-002`, `DEC-20260409-003`, `DEC-20260409-004`, `DEC-20260409-005`, `DEC-20260420-001`, `DEC-20260420-002`
 
 ## What Hwping Is
 
-Hwping is a native macOS-focused HWP reader product and downstream fork of upstream `rhwp`.
+Hwping is a Chrome-extension-first HWP reader product and downstream fork of upstream `rhwp`.
 
-It is meant to let macOS users open `.hwp` and `.hwpx` documents from familiar Apple-platform surfaces, read them comfortably, preview them in Finder, automate simple read-only workflows, and export or print them without turning the shared document engine into app code.
+It is meant to let users open `.hwp` and `.hwpx` documents from a Chrome-packaged browser surface, then from a thin Electron desktop shell, then from native macOS companion surfaces, while keeping the shared document engine out of app code.
 
 ## Product Principles
 
 ### v1 Is A Reader
 
-- Prioritize opening, reading, navigation, search, printing, PDF export, Quick Look, and automation.
-- Favor Preview-like document viewing and TextEdit-like macOS document-app conventions.
+- Prioritize Chrome opening, reading, navigation, search, printing, PDF export, Electron desktop shell actions, macOS file integration, Quick Look, Finder integration, menu bar controls, and automation.
+- Favor browser-led reader UX and Preview-like document viewing plus TextEdit-like macOS document-app conventions where the companion surfaces need them.
 - Keep full editing, annotations, collaboration, cloud sync, and complex authoring workflows out of the v1 promise.
 
 ### Keep Engine And Product Separate
 
 - Rust owns the upstream-aligned HWP/HWPX parser, model, layout, renderer, serializer, and CLI behavior.
 - Downstream facade and FFI layers own the app-facing capability boundary.
-- Swift and Apple-platform targets own document lifecycle, windows, menus, Finder integration, Quick Look, App Intents, Shortcuts, and app UI.
-- AppKit, SwiftUI, PDFKit, Quick Look, Finder, App Intents, and Shortcuts behavior must not leak into `crates/rhwp/`.
+- Browser-extension, Electron desktop shell, and Apple-platform targets own document lifecycle, browser UI, windows, menus, Finder integration, Quick Look, App Intents, Shortcuts, and app UI.
+- Browser-extension UI, Electron shell behavior, AppKit, SwiftUI, PDFKit, Quick Look, Finder, App Intents, and Shortcuts behavior must not leak into `crates/rhwp/`.
 
 ### Share One Capability Boundary
 
-The main app, Quick Look Preview extension, Quick Look Thumbnail extension, Shortcuts/App Intents, smoke targets, and future automation should reuse one document-loading and rendering capability boundary instead of each surface inventing its own engine path.
+The Chrome extension, Electron shell, macOS file integration, Quick Look Preview extension, Quick Look Thumbnail extension, menu bar integration, Shortcuts/App Intents, smoke targets, and future automation should reuse one document-loading and rendering capability boundary instead of each surface inventing its own engine path.
 
 ## Intended System Shape
 
 ```text
 user document (.hwp / .hwpx)
-  -> Hwping.app (NSDocument-based)
-  -> Quick Look Preview extension
-  -> Quick Look Thumbnail extension
-  -> App Intents / Shortcuts
+  -> rhwp-chrome browser extension
+  -> hwping-electron desktop shell
+  -> macOS file integration / Quick Look / menu bar companions
 
 each surface
-  -> Apple-platform call layer
+  -> browser or Apple-platform call layer
     -> hwping-ffi
       -> hwping-core
         -> rhwp
@@ -92,39 +91,43 @@ Swift-facing ABI boundary.
 
 Owns conversion of strings, paths, bytes, handles, errors, metadata structs, preview bytes, ownership, and lifetime rules.
 
+### `rhwp-chrome/`
+
+Browser-extension product surface.
+
+Owns Chrome packaging, content scripts, background scripts, options UI, browser-specific downloads and context menus, and browser-led reader behavior.
+
 ### `apps/` And `extensions/`
 
-Downstream Apple-platform product targets.
+Downstream desktop companion targets.
 
 Intended targets:
 
-- main `NSDocument`-based Hwping app
+- Electron desktop shell
+- macOS file integration and menu bar companion surfaces
 - Quick Look Preview extension
 - Quick Look Thumbnail extension
-- smoke and integration targets needed to validate the app boundary
+- smoke and integration targets needed to validate the companion boundary
 
-## Native Reader Experience
+## Reader Experience
 
-The target app should behave like a normal macOS document app:
+The target product should behave like a normal reader across browser, Electron, and macOS companion surfaces:
 
-- Finder double-click opens a document in Hwping.
-- Recent documents, windows, tabs, state restoration, printing, and standard app menus behave consistently with macOS expectations.
+- Chrome opening gets a document into Hwping without requiring the full macOS app shell.
+- Electron opening gets a document into Hwping without requiring the native macOS shell.
+- Finder double-click opens a document in Hwping through macOS file integration.
+- Recent documents, windows, tabs, state restoration, printing, and standard app menus behave consistently with the surface they live on.
 - Space bar Quick Look preview works without launching the full app UI.
 - Finder thumbnails are fast enough not to make ordinary folder browsing feel broken.
-- Search, page movement, zooming, fit behavior, printing, and PDF export use one command model across menus, shortcuts, toolbar actions, intents, and automation when practical.
+- Search, page movement, zooming, fit behavior, printing, PDF export, and menu bar actions use one command model across browser, shortcuts, and macOS companions when practical.
 
 ## Viewing Strategy
 
-The accepted v1 direction favors a PDF-backed viewing path:
+The accepted v1 direction favors a Chrome-led viewing path backed by shared-core rendering.
 
-```text
-.hwp / .hwpx
-  -> rhwp parsing and layout
-  -> preview-ready PDF generation
-  -> native PDF-backed viewing or preview surface
-```
+The Chrome extension is the first ship target. Electron is phase 1 for the desktop shell. Companion macOS surfaces should use the same document outputs when that is the cheapest stable route for preview, printing, and export.
 
-This path should get Hwping to native scrolling, zooming, printing, and Preview-like behavior faster than a custom page view. It must not prevent a direct page renderer later if text selection, accessibility, overlays, search quality, or navigation demands it.
+This should not prevent a direct page renderer later if text selection, accessibility, overlays, search quality, or navigation demands it.
 
 ## Error, Cache, And Quality Expectations
 
@@ -148,6 +151,7 @@ Hwping uses the repo-template model, with Hwping-specific rules in `REPO.md`.
 - git commit history via `commit: LOG-*` holds useful execution history.
 - `research/` holds reusable exploration.
 - `upstream-intake/` holds recurring upstream-review artifacts.
+- `rhwp-chrome/` holds the browser-extension product surface.
 - `mydocs/tech/`, `mydocs/troubleshootings/`, and `mydocs/manual/` hold deeper shared technical, investigation, and manual material.
 
 Do not recreate a dedicated `mydocs/hwping/` tree.
@@ -157,17 +161,18 @@ Do not recreate a dedicated `mydocs/hwping/` tree.
 - full editing for v1
 - annotations and collaboration for v1
 - cloud sync for v1
-- an iOS release alongside the first macOS app
+- an iOS release alongside the first shipable reader surfaces
 - web demo hosting in the main Hwping tree
 - npm package distribution for old web or editor surfaces
 - VS Code extension distribution
-- legacy browser-only infrastructure kept only for history
 
 ## Success Criteria
 
 Hwping succeeds when:
 
-- a macOS user can open an HWP/HWPX document, preview it, navigate it, search it, print it, export it, and automate basic read-only tasks through native-feeling surfaces
+- a browser user can open an HWP/HWPX document in the Chrome extension and use the core read-only workflows
+- an Electron user can open an HWP/HWPX document in the desktop shell and use the core read-only workflows
+- macOS companion surfaces can preview, navigate, and expose the document through file integration, Quick Look, Finder, and menu bar entry points
 - shared engine correctness keeps improving without product code contaminating upstream-aligned code
 - upstream `rhwp` changes can be reviewed and adapted deliberately
 - maintainers can recover current truth, accepted direction, key decisions, research, execution history, and upstream-intake outcomes from the repo itself
