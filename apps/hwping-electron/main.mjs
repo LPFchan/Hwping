@@ -141,6 +141,7 @@ async function handleMainMenuCommand(commandId, params = {}) {
     }
     await openPathInRenderer(result.filePaths[0]);
     showMainWindow();
+    traceLaunch('menu:main:open-complete', `filePath=${result.filePaths[0]}`);
     return;
   }
 
@@ -283,6 +284,17 @@ function refreshMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(buildMenuTemplate()));
 }
 
+function showMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+  mainWindow.show();
+  mainWindow.focus();
+  app.activate?.();
+  mainWindow.moveTop?.();
+}
+
 function sendMenuCommand(command, params = {}) {
   if (!rendererReady || !mainWindow || mainWindow.isDestroyed()) {
     pendingRendererMenuCommands.push({ command, params });
@@ -316,6 +328,7 @@ function addRecentDocument(filePath) {
 async function openPathInRenderer(filePath) {
   try {
     const normalized = resolve(filePath);
+    traceLaunch('open-path:start', `filePath=${normalized}`);
     const bytes = normalizeBytes(await readFile(normalized));
     const payload = {
       filePath: normalized,
@@ -327,11 +340,14 @@ async function openPathInRenderer(filePath) {
 
     if (!rendererReady || !mainWindow || mainWindow.isDestroyed()) {
       pendingOpenPaths.push(normalized);
+      traceLaunch('open-path:queued', `filePath=${normalized}`);
       return;
     }
 
+    traceLaunch('open-path:send', `filePath=${normalized} bytes=${bytes.length}`);
     mainWindow.webContents.send('hwping:open-document', payload);
   } catch (error) {
+    traceLaunch('open-path:error', String(error?.stack || error));
     dialog.showErrorBox('파일 열기 실패', String(error));
   }
 }
@@ -341,6 +357,7 @@ function flushPendingOpenPaths() {
   while (pendingOpenPaths.length > 0) {
     const filePath = pendingOpenPaths.shift();
     if (filePath) {
+      traceLaunch('open-path:flush', `filePath=${filePath}`);
       void openPathInRenderer(filePath);
     }
   }
@@ -365,6 +382,12 @@ async function createWindow() {
   mainWindow.on('closed', () => {
     traceLaunch('createWindow:closed');
     mainWindow = null;
+  });
+  mainWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+    traceLaunch('renderer:console', `level=${level} ${sourceId}:${line} ${message}`);
+  });
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+    traceLaunch('did-fail-load', `code=${errorCode} mainFrame=${isMainFrame} url=${validatedURL} desc=${errorDescription}`);
   });
   mainWindow.webContents.on('render-process-gone', (_event, details) => {
     traceLaunch('render-process-gone', JSON.stringify(details));
@@ -449,6 +472,7 @@ function setupIpc() {
   });
 
   ipcMain.on('hwping:renderer-ready', () => {
+    traceLaunch('renderer:ready');
     rendererReady = true;
     flushPendingOpenPaths();
     flushPendingRendererMenuCommands();

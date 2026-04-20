@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+const { contextBridge, ipcRenderer } = require('electron');
 
 function isAbortPayload(payload) {
   return payload && typeof payload === 'object' && payload.canceled === true;

@@ -146,6 +146,7 @@ function setupDesktopBridge(): void {
   });
 
   desktop.onOpenDocument?.((payload: ElectronOpenDocumentPayload) => {
+    console.log('[desktop] open-document received', payload.filePath, payload.name, payload.bytes instanceof Uint8Array ? payload.bytes.length : 'buffer');
     const bytes = payload.bytes instanceof Uint8Array
       ? payload.bytes
       : new Uint8Array(payload.bytes);
@@ -153,7 +154,9 @@ function setupDesktopBridge(): void {
       filePath: payload.filePath,
       name: payload.name,
     });
-    void loadBytes(bytes, payload.name, fileHandle);
+    void loadBytes(bytes, payload.name, fileHandle).catch((error) => {
+      console.error('[desktop] open-document failed', error);
+    });
   });
 
   syncDesktopMenuCatalog();
@@ -554,6 +557,7 @@ async function loadBytes(
   fileHandle: typeof wasm.currentFileHandle,
   startTime = performance.now(),
 ): Promise<void> {
+  console.log('[loadBytes] start', fileName, data.length);
   const docInfo = wasm.loadDocument(data, fileName);
   wasm.currentFileHandle = fileHandle;
   const elapsed = performance.now() - startTime;
@@ -561,6 +565,7 @@ async function loadBytes(
   // HWPX 토스트는 모달과의 이벤트 충돌을 피하기 위해 모달 닫힌 후 표시.
   await initializeDocument(docInfo, `${fileName} — ${docInfo.pageCount}페이지 (${elapsed.toFixed(1)}ms)`);
   notifyHwpxBetaIfNeeded();
+  console.log('[loadBytes] done', fileName, docInfo.pageCount);
 }
 
 /**
