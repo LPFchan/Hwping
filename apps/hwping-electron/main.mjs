@@ -85,14 +85,20 @@ function menuLabelForCommand(commandId, accelerator) {
 }
 
 function buildCommandMenuItem(commandId, extras = {}) {
+  const {
+    commandId: _ignoredCommandId,
+    items: _ignoredItems,
+    type: _ignoredType,
+    ...menuExtras
+  } = extras;
   const item = {
-    label: menuLabelForCommand(commandId, extras.accelerator),
+    label: menuLabelForCommand(commandId, menuExtras.accelerator),
     enabled: isCommandEnabled(commandId),
     click: () => sendMenuCommand(commandId),
-    ...extras,
+    ...menuExtras,
   };
-  if (extras.accelerator) {
-    item.accelerator = extras.accelerator;
+  if (menuExtras.accelerator) {
+    item.accelerator = menuExtras.accelerator;
   }
   return item;
 }
