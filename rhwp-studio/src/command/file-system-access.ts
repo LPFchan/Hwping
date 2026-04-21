@@ -114,6 +114,11 @@ function normalizeBytes(bytes: Uint8Array | ArrayBuffer): Uint8Array {
   return bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
 }
 
+function toBlobSafeBytes(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
+  // TS 6 strict DOM lib expects BlobPart typed arrays backed by ArrayBuffer (not ArrayBufferLike).
+  return Uint8Array.from(bytes);
+}
+
 export function createElectronFileHandle(
   windowLike: FileSystemWindowLike,
   descriptor: ElectronFileDialogResult,
@@ -131,7 +136,7 @@ export function createElectronFileHandle(
     name: fileName,
     async getFile() {
       const bytes = normalizeBytes(await desktop.readFile!(filePath));
-      return new File([bytes], fileName, { type: getFileType(fileName) });
+      return new File([toBlobSafeBytes(bytes)], fileName, { type: getFileType(fileName) });
     },
     async createWritable() {
       let pendingBlob: Blob | null = null;

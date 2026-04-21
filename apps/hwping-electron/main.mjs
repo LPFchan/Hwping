@@ -55,6 +55,26 @@ function normalizeBytes(bytes) {
   return bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
 }
 
+function isSupportedDocumentPath(filePath) {
+  return /\.(hwp|hwpx)$/i.test(filePath);
+}
+
+function hydrateRecentDocumentsFromSystem() {
+  const systemRecents = app.getRecentDocuments?.() ?? [];
+  const seen = new Set();
+  recentDocuments.length = 0;
+
+  for (const filePath of systemRecents) {
+    if (!isSupportedDocumentPath(filePath)) continue;
+    const normalized = resolve(filePath);
+    if (seen.has(normalized)) continue;
+    if (!existsSync(normalized)) continue;
+    seen.add(normalized);
+    recentDocuments.push(normalized);
+    if (recentDocuments.length >= MAX_RECENTS) break;
+  }
+}
+
 function contentTypeForPath(filePath) {
   switch (extname(filePath).toLowerCase()) {
     case '.html': return 'text/html; charset=utf-8';
@@ -393,7 +413,7 @@ async function createWindow() {
 }
 
 function queueStartupDocuments() {
-  const startupDocs = process.argv.slice(1).filter((arg) => /\.(hwp|hwpx)$/i.test(arg));
+  const startupDocs = process.argv.slice(1).filter((arg) => isSupportedDocumentPath(arg));
   for (const doc of startupDocs) {
     pendingOpenPaths.push(resolve(doc));
   }
@@ -485,7 +505,7 @@ async function main() {
 
   app.on('second-instance', (_event, argv) => {
     traceLaunch('app:second-instance', `argv=${JSON.stringify(argv)}`);
-    const extraDocs = argv.filter((arg) => /\.(hwp|hwpx)$/i.test(arg));
+    const extraDocs = argv.filter((arg) => isSupportedDocumentPath(arg));
     for (const doc of extraDocs) {
       pendingOpenPaths.push(resolve(doc));
     }
@@ -518,6 +538,7 @@ async function main() {
   await app.whenReady();
   traceLaunch('app:ready');
   app.setAboutPanelOptions?.({ applicationName: APP_NAME });
+  hydrateRecentDocumentsFromSystem();
   await createWindow();
   refreshMenu();
   flushPendingOpenPaths();

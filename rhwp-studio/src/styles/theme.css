@@ -8,14 +8,14 @@
 }
 
 :root[data-theme='dark'] .menu-title:hover {
-  background: #3a4455;
-  border-color: #5b6780;
-  color: var(--color-primary-dark);
+  background: var(--color-hover-bg);
+  border-color: var(--color-border-light);
+  color: var(--color-text);
 }
 
 :root[data-theme='dark'] .menu-item.open > .menu-title {
-  background: #496dbd;
-  border-color: #6f94e6;
+  background: #4f4f4f;
+  border-color: #6f6f6f;
 }
 
 :root[data-theme='dark'] .menu-dropdown,
@@ -25,12 +25,12 @@
 
 :root[data-theme='dark'] .md-item:hover,
 :root[data-theme='dark'] .md-sub:hover {
-  background: #33405a;
+  background: var(--color-hover-bg);
 }
 
 :root[data-theme='dark'] .md-item.disabled .md-shortcut,
 :root[data-theme='dark'] .md-sub.disabled .md-arrow {
-  color: #677286;
+  color: #808080;
 }
 
 :root[data-theme='dark'] .md-sep {
@@ -38,7 +38,7 @@
 }
 
 :root[data-theme='dark'] #icon-toolbar {
-  background: linear-gradient(to bottom, #2b313a, #222932);
+  background: linear-gradient(to bottom, #2c2c2c, #252525);
   border-bottom-color: var(--color-border);
 }
 
@@ -46,17 +46,21 @@
   background: var(--color-border);
 }
 
+:root[data-theme='dark'] .tb-sprite {
+  filter: invert(1) hue-rotate(180deg) brightness(1.05) contrast(1.05);
+}
+
 :root[data-theme='dark'] .tb-btn:hover,
 :root[data-theme='dark'] .tb-split-item:hover {
-  background: #33405a;
-  border-color: #5b6780;
+  background: var(--color-hover-bg);
+  border-color: var(--color-border-light);
 }
 
 :root[data-theme='dark'] .tb-icon-text,
 :root[data-theme='dark'] .icon-ctrl-mark::before,
 :root[data-theme='dark'] .icon-para-mark::before,
 :root[data-theme='dark'] .tb-hf-label {
-  color: #92b4ff;
+  color: var(--color-text-secondary);
 }
 
 :root[data-theme='dark'] .tb-split-menu {
@@ -87,23 +91,23 @@
 
 :root[data-theme='dark'] .sb-size-unit,
 :root[data-theme='dark'] .sb-arrow {
-  background: #2f3744;
+  background: #323232;
 }
 
 :root[data-theme='dark'] .sb-arrow:hover {
-  background: #3a4558;
+  background: #404040;
 }
 
 :root[data-theme='dark'] .sb-btn:hover,
 :root[data-theme='dark'] .sb-dropdown-item:hover {
-  background: #33405a;
-  border-color: #5b6780;
+  background: var(--color-hover-bg);
+  border-color: var(--color-border-light);
 }
 
 :root[data-theme='dark'] .sb-btn.active,
 :root[data-theme='dark'] .sb-dropdown-item.active {
-  background: #3f4f68;
-  border-color: #7185a5;
+  background: #454545;
+  border-color: #6a6a6a;
 }
 
 :root[data-theme='dark'] .sb-dd {
@@ -119,11 +123,11 @@
 }
 
 :root[data-theme='dark'] .sb-hl-swatch {
-  border-color: #6a7485;
+  border-color: #6b6b6b;
 }
 
 :root[data-theme='dark'] .sb-hl-swatch.selected {
-  border-color: #f0f4ff;
+  border-color: #f0f0f0;
 }
 
 :root[data-theme='dark'] #status-bar {
@@ -132,11 +136,11 @@
 
 :root[data-theme='dark'] .stb-divider::after {
   border-left-color: var(--color-border);
-  border-right-color: #1f2530;
+  border-right-color: #242424;
 }
 
 :root[data-theme='dark'] .stb-message {
-  color: #99bbff;
+  color: var(--color-text-secondary);
 }
 
 :root[data-theme='dark'] .stb-icon-btn:hover {
@@ -147,21 +151,21 @@
 :root[data-theme='dark'] #ruler-corner,
 :root[data-theme='dark'] #h-ruler,
 :root[data-theme='dark'] #v-ruler {
-  background: #394352;
-  border-color: #566375;
+  background: var(--ruler-bg-margin);
+  border-color: var(--ruler-border);
 }
 
 :root[data-theme='dark'] #scroll-container {
-  background: #2a313d;
+  background: #2e2e2e;
 }
 
 :root[data-theme='dark'] #scroll-container.drag-over {
-  background: #37445b;
-  outline-color: #87a8ff;
+  background: #404040;
+  outline-color: #b8b8b8;
 }
 
 :root[data-theme='dark'] #scroll-container.hf-editing {
-  background: #2e3644;
+  background: #353535;
 }
 
 :root[data-theme='dark'] .cp-panel {
@@ -171,7 +175,7 @@
 
 :root[data-theme='dark'] .cp-input-wrap {
   border-bottom-color: var(--color-border);
-  background: #2a313b;
+  background: #2d2d2d;
 }
 
 :root[data-theme='dark'] .cp-slash,
@@ -188,10 +192,10 @@
 
 :root[data-theme='dark'] .cp-item:hover,
 :root[data-theme='dark'] .cp-item--selected {
-  background: #33405a;
+  background: var(--color-hover-bg);
 }
 
 :root[data-theme='dark'] .cp-item-shortcut {
-  background: #303949;
-  border-color: #566072;
+  background: #363636;
+  border-color: #5f5f5f;
 }

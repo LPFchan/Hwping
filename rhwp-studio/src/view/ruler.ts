@@ -10,18 +10,40 @@ const PX_PER_MM = 96 / 25.4;
 /** 눈금자 높이/너비 (CSS px) */
 const RULER_SIZE = 20;
 
-/** 눈금자 배경색 (여백 영역) */
-const BG_MARGIN = '#d0d0d0';
-/** 본문 영역 배경색 */
-const BG_BODY = '#ffffff';
-/** 눈금선 색상 */
-const TICK_COLOR = '#555555';
-/** 숫자 색상 */
-const TEXT_COLOR = '#333333';
-/** 문단 마커 색상 */
-const MARKER_COLOR = '#4080c0';
 /** 문단 마커 크기 (CSS px) */
 const MARKER_SIZE = 6;
+
+interface RulerColors {
+  bgMargin: string;
+  bgBody: string;
+  tick: string;
+  text: string;
+  marker: string;
+}
+
+const DEFAULT_RULER_COLORS: RulerColors = {
+  bgMargin: '#d0d0d0',
+  bgBody: '#ffffff',
+  tick: '#555555',
+  text: '#333333',
+  marker: '#4080c0',
+};
+
+function readCssColor(styles: CSSStyleDeclaration, propertyName: string, fallback: string): string {
+  const value = styles.getPropertyValue(propertyName).trim();
+  return value || fallback;
+}
+
+function getRulerColors(): RulerColors {
+  const rootStyles = getComputedStyle(document.documentElement);
+  return {
+    bgMargin: readCssColor(rootStyles, '--ruler-bg-margin', DEFAULT_RULER_COLORS.bgMargin),
+    bgBody: readCssColor(rootStyles, '--ruler-bg-body', DEFAULT_RULER_COLORS.bgBody),
+    tick: readCssColor(rootStyles, '--ruler-tick', DEFAULT_RULER_COLORS.tick),
+    text: readCssColor(rootStyles, '--ruler-text', DEFAULT_RULER_COLORS.text),
+    marker: readCssColor(rootStyles, '--ruler-marker', DEFAULT_RULER_COLORS.marker),
+  };
+}
 
 export class Ruler {
   private hCtx: CanvasRenderingContext2D | null;
@@ -42,6 +64,7 @@ export class Ruler {
   private inCell = false;
   private cellX = 0;
   private cellWidth = 0;
+  private themeObserver: MutationObserver | null = null;
 
   /** 커서의 x 좌표 (px, zoom=1, 페이지 좌표 기준) — 다단에서 현재 단 결정용 */
   private cursorColumnX = 0;
@@ -73,7 +96,23 @@ export class Ruler {
       }),
     );
 
+    this.observeThemeChanges();
     this.resize();
+  }
+
+  private observeThemeChanges(): void {
+    this.themeObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+          this.scheduleUpdate();
+          return;
+        }
+      }
+    });
+    this.themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
   }
 
   /** Canvas 물리 크기를 컨테이너에 맞춰 설정 */
@@ -181,6 +220,7 @@ export class Ruler {
   private drawHorizontal(): void {
     const ctx = this.hCtx;
     if (!ctx) return;
+    const colors = getRulerColors();
     const dpr = window.devicePixelRatio || 1;
     const canvasW = this.hCanvas.width / dpr;
     const canvasH = RULER_SIZE;
@@ -189,7 +229,7 @@ export class Ruler {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // 전체 배경 (여백색)
-    ctx.fillStyle = BG_MARGIN;
+    ctx.fillStyle = colors.bgMargin;
     ctx.fillRect(0, 0, canvasW, canvasH);
 
     if (this.wasm.pageCount === 0) {
@@ -213,7 +253,7 @@ export class Ruler {
       // 셀 모드: 셀 영역만 흰색, 나머지는 음영
       const cellLeftPx = pageScreenLeft + this.cellX * zoom;
       const cellRightPx = pageScreenLeft + (this.cellX + this.cellWidth) * zoom;
-      ctx.fillStyle = BG_BODY;
+      ctx.fillStyle = colors.bgBody;
       ctx.fillRect(cellLeftPx, 0, cellRightPx - cellLeftPx, canvasH);
     } else if (pageInfo.columns && pageInfo.columns.length > 1) {
       // 다단 모드: 현재 커서가 위치한 단만 흰색으로 표시
@@ -229,10 +269,10 @@ export class Ruler {
       const col = pageInfo.columns[activeCol];
       const colLeft = pageScreenLeft + col.x * zoom;
       const colRight = pageScreenLeft + (col.x + col.width) * zoom;
-      ctx.fillStyle = BG_BODY;
+      ctx.fillStyle = colors.bgBody;
       ctx.fillRect(colLeft, 0, colRight - colLeft, canvasH);
     } else {
-      ctx.fillStyle = BG_BODY;
+      ctx.fillStyle = colors.bgBody;
       ctx.fillRect(bodyLeftPx, 0, bodyRightPx - bodyLeftPx, canvasH);
     }
 
@@ -240,8 +280,8 @@ export class Ruler {
     const mmPx = PX_PER_MM * zoom;
     const pageWidthMm = Math.ceil(pageInfo.width / PX_PER_MM);
 
-    ctx.strokeStyle = TICK_COLOR;
-    ctx.fillStyle = TEXT_COLOR;
+    ctx.strokeStyle = colors.tick;
+    ctx.fillStyle = colors.text;
     ctx.lineWidth = 0.5;
     ctx.font = '9px sans-serif';
     ctx.textAlign = 'center';
@@ -275,7 +315,7 @@ export class Ruler {
 
     // 문단 들여쓰기 마커 (▽ 첫 줄, △ 나머지 줄, △ 오른쪽)
     if (this.hasParaInfo) {
-      ctx.fillStyle = MARKER_COLOR;
+      ctx.fillStyle = colors.marker;
 
       // 셀 안이면 셀 경계, 다단이면 현재 단 경계, 아니면 본문 영역 기준
       let refLeft: number;
@@ -328,6 +368,7 @@ export class Ruler {
   private drawVertical(): void {
     const ctx = this.vCtx;
     if (!ctx) return;
+    const colors = getRulerColors();
     const dpr = window.devicePixelRatio || 1;
     const canvasW = RULER_SIZE;
     const canvasH = this.vCanvas.height / dpr;
@@ -336,7 +377,7 @@ export class Ruler {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // 전체 배경 (여백색)
-    ctx.fillStyle = BG_MARGIN;
+    ctx.fillStyle = colors.bgMargin;
     ctx.fillRect(0, 0, canvasW, canvasH);
 
     if (this.wasm.pageCount === 0) {
@@ -360,14 +401,14 @@ export class Ruler {
       // 본문 영역 배경 (흰색)
       const bodyTopPx = pageScreenTop + (pageInfo.marginHeader + pageInfo.marginTop) * zoom;
       const bodyBottomPx = pageScreenTop + pageInfo.height * zoom - (pageInfo.marginFooter + pageInfo.marginBottom) * zoom;
-      ctx.fillStyle = BG_BODY;
+      ctx.fillStyle = colors.bgBody;
       ctx.fillRect(0, bodyTopPx, canvasW, bodyBottomPx - bodyTopPx);
 
       // mm 눈금 그리기
       const pageHeightMm = Math.ceil(pageInfo.height / PX_PER_MM);
 
-      ctx.strokeStyle = TICK_COLOR;
-      ctx.fillStyle = TEXT_COLOR;
+      ctx.strokeStyle = colors.tick;
+      ctx.fillStyle = colors.text;
       ctx.lineWidth = 0.5;
       ctx.font = '9px sans-serif';
       ctx.textAlign = 'center';
@@ -413,6 +454,8 @@ export class Ruler {
       cancelAnimationFrame(this.rafId);
       this.rafId = 0;
     }
+    this.themeObserver?.disconnect();
+    this.themeObserver = null;
     for (const unsub of this.unsubscribers) {
       unsub();
     }

@@ -13,24 +13,24 @@
 
 /* 눈금자 교차 코너 (좌상단) */
 #ruler-corner {
-  background: #d0d0d0;
-  border-right: 1px solid #999;
-  border-bottom: 1px solid #999;
+  background: var(--ruler-bg-margin);
+  border-right: 1px solid var(--ruler-border);
+  border-bottom: 1px solid var(--ruler-border);
 }
 
 /* 가로 눈금자 */
 #h-ruler {
   display: block;
-  border-bottom: 1px solid #999;
-  background: #d0d0d0;
+  border-bottom: 1px solid var(--ruler-border);
+  background: var(--ruler-bg-margin);
   cursor: default;
 }
 
 /* 세로 눈금자 */
 #v-ruler {
   display: block;
-  border-right: 1px solid #999;
-  background: #d0d0d0;
+  border-right: 1px solid var(--ruler-border);
+  background: var(--ruler-bg-margin);
   cursor: default;
 }
 

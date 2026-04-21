@@ -224,7 +224,7 @@ export const desktopAppMenuItems = [
   appAction('hide-others', '다른 앱 숨기기'),
   appAction('show-all', '모두 보기'),
   sep(),
-  appAction('quit', 'Hwping 종료'),
+  appAction('quit', 'Hwping 종료', { accelerator: 'CommandOrControl+Q' }),
 ];
 
 export const desktopMenuGroups = [

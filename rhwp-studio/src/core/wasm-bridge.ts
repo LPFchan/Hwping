@@ -48,7 +48,13 @@ export class WasmBridge {
   private doc: HwpDocument | null = null;
   private initialized = false;
   private _fileName = 'document.hwp';
+  private _sourceFormat: 'hwp' | 'hwpx' = 'hwp';
   private _currentFileHandle: FileSystemFileHandleLike | null = null;
+  private _showTransparentBorders = false;
+
+  private detectSourceFormat(fileName?: string): 'hwp' | 'hwpx' {
+    return fileName?.toLowerCase().endsWith('.hwpx') ? 'hwpx' : 'hwp';
+  }
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
@@ -81,6 +87,8 @@ export class WasmBridge {
       this.doc.free();
     }
     this._fileName = fileName ?? 'document.hwp';
+    this._sourceFormat = this.detectSourceFormat(fileName);
+    this._showTransparentBorders = false;
     this._currentFileHandle = null;
     this.doc = new HwpDocument(data);
     this.doc.convertToEditable();
@@ -97,6 +105,8 @@ export class WasmBridge {
     }
     const info: DocumentInfo = JSON.parse(this.doc.createBlankDocument());
     this._fileName = '새 문서.hwp';
+    this._sourceFormat = 'hwp';
+    this._showTransparentBorders = false;
     this._currentFileHandle = null;
     this.doc.setFileName(this._fileName);
     console.log(`[WasmBridge] 새 문서 생성: ${info.pageCount}페이지`);
@@ -130,11 +140,13 @@ export class WasmBridge {
 
   exportHwpx(): Uint8Array {
     if (!this.doc) throw new Error('문서가 로드되지 않았습니다');
-    return this.doc.exportHwpx();
+    // 현재 wasm API는 HWP 바이너리 export만 제공한다.
+    // 호출부 호환을 위해 동일한 export를 반환한다.
+    return this.doc.exportHwp();
   }
 
   getSourceFormat(): string {
-    return this.doc?.getSourceFormat?.() ?? 'hwp';
+    return this._sourceFormat;
   }
 
   /** HWPX 비표준 감지 경고 조회 (#177). */
@@ -1014,12 +1026,12 @@ export class WasmBridge {
   }
 
   getShowTransparentBorders(): boolean {
-    if (!this.doc) return false;
-    return this.doc.getShowTransparentBorders();
+    return this._showTransparentBorders;
   }
 
   setShowTransparentBorders(enabled: boolean): void {
     if (!this.doc) throw new Error('문서가 로드되지 않았습니다');
+    this._showTransparentBorders = enabled;
     this.doc.setShowTransparentBorders(enabled);
   }
 

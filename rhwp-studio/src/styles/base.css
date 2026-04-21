@@ -44,6 +44,14 @@
   /* 오버레이 */
   --overlay-bg: rgba(0, 0, 0, 0.2);
 
+  /* 눈금자 */
+  --ruler-bg-margin: #d0d0d0;
+  --ruler-bg-body: #ffffff;
+  --ruler-border: #999999;
+  --ruler-tick: #555555;
+  --ruler-text: #333333;
+  --ruler-marker: #4080c0;
+
   /* 타이포그래피 */
   --font-family-ui: -apple-system, BlinkMacSystemFont, '맑은 고딕', 'Malgun Gothic', 'Segoe UI', sans-serif;
   --font-family-mono: 'Consolas', 'Courier New', monospace;
@@ -90,40 +98,40 @@
   color-scheme: dark;
 
   /* 브랜드 */
-  --color-primary: #8aa8ff;
-  --color-primary-dark: #c5d4ff;
-  --color-primary-light: #9eb8ff;
-  --color-primary-hover: #6f87c8;
-  --color-primary-subtle: #5f74aa;
-  --color-accent-bg: #2a3448;
-  --color-accent-bg-light: #33415b;
+  --color-primary: #c7c7c7;
+  --color-primary-dark: #e6e6e6;
+  --color-primary-light: #d6d6d6;
+  --color-primary-hover: #969696;
+  --color-primary-subtle: #737373;
+  --color-accent-bg: #2e2e2e;
+  --color-accent-bg-light: #383838;
 
   /* 표면 */
-  --color-surface: #20242c;
-  --color-surface-raised: #272d36;
-  --color-bg: #171b22;
-  --color-bg-light: #20252e;
+  --color-surface: #232323;
+  --color-surface-raised: #2b2b2b;
+  --color-bg: #191919;
+  --color-bg-light: #212121;
 
   /* 테두리 */
-  --color-border: #4a5360;
-  --color-border-light: #54606f;
-  --color-border-lighter: #5f6d80;
-  --color-border-dark: #424b58;
-  --color-border-input: #5a6575;
+  --color-border: #4d4d4d;
+  --color-border-light: #5e5e5e;
+  --color-border-lighter: #707070;
+  --color-border-dark: #444444;
+  --color-border-input: #636363;
 
   /* 텍스트 */
-  --color-text: #e3e7ee;
-  --color-text-secondary: #ced4df;
-  --color-text-muted: #aeb7c7;
-  --color-text-hint: #98a2b5;
-  --color-text-disabled: #7d8697;
-  --color-text-placeholder: #8f99ab;
+  --color-text: #e4e4e4;
+  --color-text-secondary: #d4d4d4;
+  --color-text-muted: #b5b5b5;
+  --color-text-hint: #9c9c9c;
+  --color-text-disabled: #828282;
+  --color-text-placeholder: #949494;
 
   /* 상호작용 */
-  --color-hover-bg: #2b3442;
-  --color-active-bg: #3a4556;
-  --color-selected-bg: #2d4264;
-  --color-focus-border: #8aa8ff;
+  --color-hover-bg: #343434;
+  --color-active-bg: #424242;
+  --color-selected-bg: #3c3c3c;
+  --color-focus-border: #a8a8a8;
 
   /* 그림자 */
   --shadow-dropdown: 0 10px 24px rgba(0, 0, 0, 0.45);
@@ -132,6 +140,14 @@
 
   /* 오버레이 */
   --overlay-bg: rgba(0, 0, 0, 0.55);
+
+  /* 눈금자 */
+  --ruler-bg-margin: #3b3b3b;
+  --ruler-bg-body: #2f2f2f;
+  --ruler-border: #626262;
+  --ruler-tick: #c9c9c9;
+  --ruler-text: #e4e4e4;
+  --ruler-marker: #e0e0e0;
 }
 
 /* ─── 리셋 ──────────────────────────────────────────── */
