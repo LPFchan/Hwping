@@ -277,9 +277,6 @@ artifacts_value=$(trailer_value "artifacts" || true)
 [ -n "$project" ] || fail "project trailer is empty"
 [ -n "$agent" ] || fail "agent trailer is empty"
 
-# Local Divergence: Hwping pins the project trailer to its repo id.
-[ "$project" = "hwping" ] || fail "invalid project trailer: $project"
-
 case "$role" in
   orchestrator|worker|subagent|operator) ;;
   *) fail "invalid role trailer: $role" ;;

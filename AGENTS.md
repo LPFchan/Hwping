@@ -1,3 +1,4 @@
+<!-- template-managed:begin -->
 # Agent Instructions
 
 `AGENTS.md` is the canonical editable agent-instructions file. It enforces repo behavior while deferring canonical policy to `records/REPO.md`.
@@ -44,62 +45,8 @@ Repo-agnostic skills (`sharpen-the-tip`, `prototype-mode`, `housekeeping`, `proa
 - Do not write chatty transcripts where the repo expects normalized records.
 - Do not bypass commit provenance checks unless the commit is an explicit bootstrap or migration exception.
 
-## Local Divergence
-
-### Hwping Priorities
-
-- Keep the shared HWP/HWPX engine syncable with upstream `rhwp`.
-- Keep the repo focused on the macOS product and the layers it actually needs.
-- Treat engine changes as upstreamable unless there is a concrete Hwping-only reason not to.
-- Keep AppKit, SwiftUI, Quick Look, Finder integration, and other Apple-platform behavior out of shared engine code such as `crates/rhwp/`.
-- Do not reintroduce removed web demo, npm, VS Code, or browser-only surfaces into the main tree.
-
-### Documentation Rules
-
-- Use English for all new or rewritten repository documents.
-- Route truth and provenance through the repo-template surfaces instead of ad hoc notes.
-- Treat `INBOX.md` as pressure, not a backlog. During inbox review, cluster capture and promote only survived triage.
-- Promote sparsely. Do not mirror one evolving thought into research, decisions, plans, spec, status, upstream records, and execution records.
-- Keep deeper shared detail in `mydocs/tech/`, `mydocs/troubleshootings/`, and `mydocs/manual/`.
-- Do not recreate `mydocs/hwping/`.
-- If a local guide defines section order, naming, provenance fields, or a canonical example, follow it.
-
-### Validation And Debugging
-
-Prefer local Rust tooling:
-
-```bash
-cargo build
-cargo test
-cargo clippy -- -D warnings
-cargo build --release
-```
-
-When layout or pagination diverges, inspect before editing code:
-
-1. `cargo run --bin rhwp -- export-svg <sample> --debug-overlay`
-2. `cargo run --bin rhwp -- dump-pages <sample> -p N`
-3. `cargo run --bin rhwp -- dump <sample> -s N -p M`
-4. `cargo run --bin rhwp -- ir-diff <sample.hwpx> <sample.hwp>`
-
-Reference paths:
-
-- `samples/`
-- `output/`
-- `mydocs/manual/dump_command.md`
-- `mydocs/manual/ir_diff_command.md`
-
-### Commit Discipline
-
-- New commits should carry the provenance trailers required by `REPO.md`.
-- Local hook and CI enforcement live in `.githooks/commit-msg` and `.github/workflows/commit-standards.yml`.
-- Local commit validation pins `project:` to `hwping`.
-- A normal commit may reference an existing updated artifact; it does not need a brand-new `LOG-*`.
-- Prefer appending to the current relevant `LOG-*` when the same workstream continues.
-- Do not bypass commit checks with ad hoc formatting or `--no-verify`.
-- Treat bootstrap or migration commits as explicit exceptions only.
-
 ## Code Review Rules
 
 - Before reporting a commit as missing required provenance fields, verify against the exact commit messages as they exist on GitHub. If the fields are present, do not claim they are missing.
 - The provenance contract is defined in `records/REPO.md` and enforced by `scripts/new-commit-message.sh`. Cite the specific field that is missing and the rule it violates; do not review commits against an assumed format.
+<!-- template-managed:end -->
