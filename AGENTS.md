@@ -98,3 +98,8 @@ Reference paths:
 - Prefer appending to the current relevant `LOG-*` when the same workstream continues.
 - Do not bypass commit checks with ad hoc formatting or `--no-verify`.
 - Treat bootstrap or migration commits as explicit exceptions only.
+
+## Code Review Rules
+
+- Before reporting a commit as missing required provenance fields, verify against the exact commit messages as they exist on GitHub. If the fields are present, do not claim they are missing.
+- The provenance contract is defined in `records/REPO.md` and enforced by `scripts/new-commit-message.sh`. Cite the specific field that is missing and the rule it violates; do not review commits against an assumed format.
