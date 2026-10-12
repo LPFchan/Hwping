@@ -42,7 +42,7 @@ fn utf16le_bytes_to_string(
     }
 
     let u16_vec = bytes
-        .chunks_exact(2)
+        .as_chunks::<2>().0.iter()
         .map(|chunk| {
             u16::from_le_bytes(chunk.try_into().expect("should be converted"))
         })

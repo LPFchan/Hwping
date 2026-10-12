@@ -865,7 +865,7 @@ fn parse_ctrl_data_field_name(data: &[u8]) -> Option<String> {
         return None;
     }
     let wchars: Vec<u16> = name_bytes[..name_len * 2]
-        .chunks_exact(2)
+        .as_chunks::<2>().0.iter()
         .map(|c| u16::from_le_bytes([c[0], c[1]]))
         .collect();
     let name = String::from_utf16_lossy(&wchars);
