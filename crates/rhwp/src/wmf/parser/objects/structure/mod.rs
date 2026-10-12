@@ -42,9 +42,9 @@ fn utf16le_bytes_to_string(
     }
 
     let u16_vec = bytes
-        .as_chunks::<2>().0.iter()
+        .chunks(2).filter(|chunk| chunk.len() == 2)
         .map(|chunk| {
-            u16::from_le_bytes(*chunk)
+            u16::from_le_bytes(chunk.try_into().expect("should be converted"))
         })
         .collect::<Vec<_>>();
 
